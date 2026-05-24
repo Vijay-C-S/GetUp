@@ -1,5 +1,5 @@
 # RapidFast robots.txt
-# Keep sitemap structure intact and strengthen discovery signals.
+# https://rapidfast.page/
 
 User-agent: *
 Allow: /
@@ -8,10 +8,13 @@ Allow: /js/
 Allow: /images/
 Allow: /blogs/
 
+# Block Git and build artifacts from crawling
 Disallow: /.git/
 Disallow: /.gitignore
-Disallow: /category/
+Disallow: /743644fe6b8f4526a9a8.txt
 
-# Primary sitemap and www mirror for URL-prefix properties.
+# Crawl-delay for well-behaved bots (seconds)
+Crawl-delay: 10
+
+# Primary Sitemap
 Sitemap: https://rapidfast.page/sitemap.xml
-Sitemap: https://www.rapidfast.page/sitemap.xml
