@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F84NNX9ZX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-6F84NNX9ZX');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contact RapidFast - Reach out for questions, feedback, or collaboration on AI news and career guides.">
+    <meta name="robots" content="index, follow">
+    <title>Contact Us - RapidFast</title>
+    <link rel="icon" type="image/jpeg" href="images/favicon.jpg">
+    <link rel="canonical" href="https://rapidfast.page/contact.html">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://rapidfast.page/sitemap.xml">
+    <link rel="alternate" hreflang="en-in" href="https://rapidfast.page/contact.html">
+    <link rel="alternate" hreflang="x-default" href="https://rapidfast.page/contact.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Contact Us - RapidFast">
+    <meta property="og:description" content="Contact RapidFast - Reach out for questions, feedback, or collaboration on AI news and career guides.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rapidfast.page/contact.html">
+    <meta property="og:site_name" content="RapidFast">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://rapidfast.page/images/favicon.jpg">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Contact Us - RapidFast">
+    <meta name="twitter:description" content="Contact RapidFast - Reach out for questions, feedback, or collaboration on AI news and career guides.">
+    <meta name="twitter:image" content="https://rapidfast.page/images/favicon.jpg">
+
+    <!-- Schema.org ContactPage -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        "name": "Contact RapidFast",
+        "description": "Contact RapidFast for questions, feedback, or collaboration.",
+        "url": "https://rapidfast.page/contact.html",
+        "inLanguage": "en-IN",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "RapidFast",
+            "url": "https://rapidfast.page/"
+        }
+    }
+    </script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/contact.css">
+    <link rel="stylesheet" href="css/cookie-consent.css">
+
+    <style>
+        .contact-page {
+            padding: 120px 0 60px;
+            min-height: 100vh;
+        }
+
+        .contact-page-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .contact-page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .contact-page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .contact-page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            gap: 0.75rem;
+        }
+
+        .contact-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .contact-page-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .contact-info-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .contact-info-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .contact-info-text h4 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .contact-info-text p,
+        .contact-info-text a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .contact-info-text a:hover {
+            color: var(--primary);
+        }
+
+        .contact-page-form-wrap {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .contact-page-form-wrap h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.85rem 1.1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        .form-submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .form-submit-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-2px);
+        }
+
+        .privacy-note {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .privacy-note a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        @media (max-width: 900px) {
+            .contact-content-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-page-header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .contact-page-container {
+                padding: 0 1rem;
+            }
+
+            .contact-page-header h1 {
+                font-size: 1.65rem;
+                line-height: 1.3;
+            }
+
+            .contact-page-form-wrap {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4808455645499224" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Rapid<span class="highlight">Fast</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link active">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Page -->
+    <section class="contact-page">
+        <div class="contact-page-container">
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+
+            <div class="contact-page-header">
+                <span class="section-badge">Get In Touch</span>
+                <h1>Contact <span class="gradient-text">RapidFast</span></h1>
+                <p>Have a question, suggestion, or want to collaborate? We'd love to hear from you.</p>
+            </div>
+
+            <div class="contact-content-grid">
+                <!-- Contact Information -->
+                <div class="contact-page-info">
+                    <div class="contact-info-card">
+                        <div class="contact-info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h4>Email Us</h4>
+                            <a href="mailto:contact.us.RapidFast@gmail.com">contact.us.RapidFast@gmail.com</a>
+                        </div>
+                    </div>
+
+                    <div class="contact-info-card">
+                        <div class="contact-info-icon">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h4>WhatsApp Channel</h4>
+                            <a href="https://whatsapp.com/channel/0029Vb7OqCF3QxS6oVWKm83a" target="_blank" rel="noopener noreferrer">Join our WhatsApp Channel</a>
+                        </div>
+                    </div>
+
+                    <div class="contact-info-card">
+                        <div class="contact-info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h4>Location</h4>
+                            <p>Bangalore, India</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-info-card">
+                        <div class="contact-info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <h4>Response Time</h4>
+                            <p>We typically respond within 24–48 hours on weekdays.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="contact-page-form-wrap">
+                    <h2>Send Us a Message</h2>
+                    <form id="contact-form" novalidate>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contact-name">Your Name</label>
+                                <input type="text" id="contact-name" name="name" placeholder="e.g. Rahul Sharma" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-email">Email Address</label>
+                                <input type="email" id="contact-email" name="email" placeholder="you@example.com" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-subject">Subject</label>
+                            <input type="text" id="contact-subject" name="subject" placeholder="What's this about?">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-message">Message</label>
+                            <textarea id="contact-message" name="message" placeholder="Tell us how we can help..." required></textarea>
+                        </div>
+                        <button type="submit" class="form-submit-btn">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                        <p class="privacy-note">
+                            By submitting this form, you agree to our <a href="/privacy-policy.html">Privacy Policy</a>.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="logo">
+                        <span class="logo-text">Rapid<span class="highlight">Fast</span></span>
+                    </a>
+                    <p>Your go-to blog for tech insights, AI news, and career guides.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/blogs.html">Blogs</a></li>
+                        <li><a href="/about.html">About</a></li>
+                        <li><a href="/contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="/blogs.html">Blogs</a></li>
+                        <li><a href="/about.html">About Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                        <li><a href="/disclaimer.html">Disclaimer</a></li>
+                        <li><a href="/about.html">About Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 RapidFast. All rights reserved. Made with love in India</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, and improve our content. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/cookie-consent.js" defer></script>
+</body>
+
+</html>
