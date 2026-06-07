@@ -3,6 +3,28 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- Google Consent Mode Default (MUST be before gtag) -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'wait_for_update': 500
+        });
+    </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F84NNX9ZX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-6F84NNX9ZX');
+    </script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4808455645499224" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Page not found - The page you are looking for does not exist on RapidFast. Return to our homepage or browse our blogs.">
     <meta name="robots" content="noindex, follow">
@@ -156,9 +178,6 @@
             <div class="helpful-links">
                 <h3>Or jump to one of these popular pages:</h3>
                 <ul>
-                    <li><a href="/blogs/chatgpt-vs-gemini-vs-claude-comparison-2026.html">ChatGPT vs Claude vs Gemini</a></li>
-                    <li><a href="/blogs/claude-opus-4-7-capabilities.html">Claude Opus 4.7 Guide</a></li>
-                    <li><a href="/blogs/kiro-ai-coding-assistant-review.html">Kiro AI Review</a></li>
                     <li><a href="/about.html">About RapidFast</a></li>
                     <li><a href="/contact.html">Contact Us</a></li>
                     <li><a href="/sitemap-page.html">Full Sitemap</a></li>
@@ -167,6 +186,28 @@
         </div>
     </section>
 
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:#fff;padding:1rem 1.5rem;z-index:9999;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
+        <p style="margin:0;font-size:0.9rem;flex:1;min-width:250px;">We use cookies and similar technologies to improve your experience and show relevant ads. See our <a href="/privacy-policy.html" style="color:#7c3aed;text-decoration:underline;">Privacy Policy</a> and <a href="/cookie-policy.html" style="color:#7c3aed;text-decoration:underline;">Cookie Policy</a>.</p>
+        <div style="display:flex;gap:0.75rem;flex-shrink:0;">
+            <button id="cookie-decline" style="background:transparent;border:1px solid #666;color:#ccc;padding:0.5rem 1.25rem;border-radius:6px;cursor:pointer;font-size:0.9rem;">Decline</button>
+            <button id="cookie-accept" style="background:#7c3aed;border:none;color:#fff;padding:0.5rem 1.25rem;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:600;">Accept</button>
+        </div>
+    </div>
+    <script>
+        (function(){
+            if(!localStorage.getItem('cookieConsent')){document.getElementById('cookie-banner').style.display='flex';}
+            document.getElementById('cookie-accept').addEventListener('click',function(){
+                localStorage.setItem('cookieConsent','accepted');
+                document.getElementById('cookie-banner').style.display='none';
+                gtag('consent','update',{'analytics_storage':'granted','ad_storage':'granted','ad_user_data':'granted','ad_personalization':'granted'});
+            });
+            document.getElementById('cookie-decline').addEventListener('click',function(){
+                localStorage.setItem('cookieConsent','declined');
+                document.getElementById('cookie-banner').style.display='none';
+            });
+        })();
+    </script>
     <script src="/script.js" defer></script>
 </body>
 

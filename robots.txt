@@ -8,10 +8,16 @@ Allow: /js/
 Allow: /images/
 Allow: /blogs/
 
-# Block Git and build artifacts from crawling
+# Block Git, build artifacts, and dev tools from crawling
 Disallow: /.git/
 Disallow: /.gitignore
+Disallow: /.venv/
+Disallow: /.vscode/
+Disallow: /.agent/
+Disallow: /.github/
+Disallow: /sections/
 Disallow: /743644fe6b8f4526a9a8.txt
+Disallow: /fix-adsense.ps1
 
 # Crawl-delay for well-behaved bots (seconds)
 Crawl-delay: 10

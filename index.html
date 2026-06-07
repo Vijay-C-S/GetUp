@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -30,7 +30,7 @@
         content="Practical AI updates, tool explainers, and career guidance for students and early-career builders.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rapidfast.page/">
-    <meta property="og:image" content="https://rapidfast.page/images/chatgpt-vs-gemini-vs-claude.webp">
+    <meta property="og:image" content="https://rapidfast.page/images/Zealos.webp">
     <meta property="og:site_name" content="RapidFast">
     <meta property="og:locale" content="en_IN">
 
@@ -38,7 +38,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="RapidFast - Practical AI News and Career Guides">
     <meta name="twitter:description" content="Practical AI updates, tool explainers, and career guidance for students and early-career builders.">
-    <meta name="twitter:image" content="https://rapidfast.page/images/chatgpt-vs-gemini-vs-claude.webp">
+    <meta name="twitter:image" content="https://rapidfast.page/images/Zealos.webp">
 
     <title>RapidFast - Practical AI News and Career Guides</title>
     <link rel="icon" type="image/jpeg" href="images/favicon.jpg">
@@ -382,6 +382,18 @@
         }
     </style>
 
+    <!-- Google Consent Mode Default (MUST be before gtag) -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'wait_for_update': 500
+        });
+    </script>
     <!-- Analytics (deferred to not block rendering) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F84NNX9ZX"></script>
     <script>
@@ -398,6 +410,14 @@
 </head>
 
 <body class="home-v2">
+    <!-- Skip to content for accessibility -->
+    <a href="#home" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:var(--primary,#6366f1);color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 8px 0;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 8px 0;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <!-- Noscript fallback -->
+    <noscript>
+        <div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">
+            This website works best with JavaScript enabled. Please enable JavaScript for the full experience, including ads and interactive features.
+        </div>
+    </noscript>
 
     <!-- Silently normalize /index.html to / without redirect (SEO: prevents duplicate URL) -->
     <script>
@@ -419,12 +439,12 @@
                 <a href="/contact.html" class="nav-link">Contact</a>
             </div>
             <div class="nav-actions">
-                <button class="theme-toggle" id="theme-toggle">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
                     <span class="toggle-circle"></span>
                     <span class="toggle-label toggle-label-night">NIGHT</span>
                     <span class="toggle-label toggle-label-day">DAY</span>
                 </button>
-                <div class="hamburger" id="hamburger">
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -433,6 +453,7 @@
         </div>
     </nav>
 
+    <main id="main-content">
     <!-- Hero Section -->
     <section class="hero hero-v2" id="home">
         <div class="hero-bg">
@@ -480,25 +501,6 @@
                 </div>
             </div>
 
-            <aside class="hero-panel" aria-label="Featured AI posts">
-                <h3>Featured Right Now</h3>
-                <a class="hero-panel-item" href="blogs/claude-opus-4-7-capabilities.html">
-                    <span class="hero-panel-kicker">Model Update</span>
-                    <strong>Claude Opus 4.7 Capabilities</strong>
-                </a>
-                <a class="hero-panel-item" href="blogs/chatgpt-vs-gemini-vs-claude-comparison-2026.html">
-                    <span class="hero-panel-kicker">Comparison</span>
-                    <strong>ChatGPT vs Gemini vs Claude (2026)</strong>
-                </a>
-                <a class="hero-panel-item" href="blogs/astra-security-ai-engineer-intern-guide.html">
-                    <span class="hero-panel-kicker">AI Hiring</span>
-                    <strong>Astra Security AI Engineer Intern</strong>
-                </a>
-                <a class="hero-panel-item" href="blogs/google-antigravity-agent-ide-review.html">
-                    <span class="hero-panel-kicker">Tool Review</span>
-                    <strong>Google Antigravity Agent-First IDE</strong>
-                </a>
-            </aside>
         </div>
     </section>
 
@@ -511,61 +513,198 @@
                 <h2 class="section-title">Our <span class="gradient-text">Blogs</span></h2>
                 <p class="section-subtitle">Insights, tutorials, and stories to help you grow</p>
             </div>
-            <div class="blogs-grid">
-                <!-- Blog Post: Claude Opus 4.7 Capabilities -->
-                <a href="blogs/claude-opus-4-7-capabilities.html" class="blog-card clickable-card">
+            <div class="blogs-grid">                <!-- Raphael AI Review -->
+                <a href="blogs/raphael-ai-free-ai-image-generator-review.html" class="blog-card clickable-card">
                     <div class="blog-image">
-                        <img src="images/calude_opus_four.webp"
-                            alt="Claude Opus 4.7 capabilities breakdown" style="object-fit: cover;" width="600"
-                            height="400" loading="lazy" decoding="async">
+                        <img src="images/Raphael.webp"
+                            alt="Raphael AI Free AI Image Generator Dashboard" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
-                            <span><i class="far fa-calendar"></i> Apr 17, 2026</span>
-                            <span><i class="fas fa-fire" style="color: var(--danger);"></i> NEW!</span>
+                            <span><i class="far fa-calendar"></i> Jun 7, 2026</span>
+                            <span><i class="fas fa-image"></i> AI Tools</span>
                         </div>
-                        <h3>Claude Opus 4.7 Capabilities: Honest Deep Dive for Builders</h3>
-                        <p>Practical breakdown of Claude Opus 4.7 for coding, reasoning, long-context work, and real-world productivity.</p>
-                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                        <h3>Raphael AI – Free AI Image Generator</h3>
+                        <p>Raphael AI creates stunning, original images from text prompts at zero cost. No watermarks, no subscription — just fast, high-quality AI image generation for creators, bloggers, and marketers.</p>
+                        <span class="read-more">Read More <i class="fas fa-arrow-right"></i></span>
                     </div>
                 </a>
-
-                <!-- Blog Post: Astra Security Hiring Freshers AI Engineer Intern -->
-                <a href="blogs/astra-security-ai-engineer-intern-guide.html" class="blog-card clickable-card">
+                <!-- Reka Clip Review -->
+                <a href="blogs/reka-clip-viral-clips-from-long-videos.html" class="blog-card clickable-card">
                     <div class="blog-image">
-                        <img src="images/astra_security.webp"
-                            alt="Astra Security hiring freshers for AI Engineer Intern in Bengaluru" style="object-fit: cover;" width="600"
-                            height="400" loading="lazy" decoding="async">
+                        <img src="images/reka%20clip.webp"
+                            alt="Reka Clip AI viral clip generator" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
-                            <span><i class="far fa-calendar"></i> Apr 5, 2026</span>
-                            <span><i class="fas fa-fire" style="color: var(--danger);"></i> NEW!</span>
+                            <span><i class="far fa-calendar"></i> Jun 5, 2026</span>
+                            <span><i class="fas fa-video"></i> AI Tools</span>
                         </div>
-                        <h3>Astra Security Is Hiring Freshers for AI Engineer Intern (Hybrid Bengaluru)</h3>
-                        <p>Complete guide with role scope, RAG and agentic AI expectations, eligibility, and official LinkedIn apply link.</p>
+                        <h3>Reka Clip – Get Viral Clips From Long Videos in Minutes</h3>
+                        <p>Reka Clip uses AI to automatically find the best moments in your long videos and turn them into short, platform-ready clips for TikTok, YouTube Shorts, and Instagram Reels.</p>
                         <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
                     </div>
                 </a>
-
-                <!-- Blog Post: RapidCue AI Hiring Freshers AI Intern -->
-                <a href="blogs/rapidcue-agentic-ai-intern-guide.html" class="blog-card clickable-card">
+                <!-- PaperAnimator Review -->
+                <a href="blogs/paperanimator-photo-to-paper-animation-ai-review.html" class="blog-card clickable-card">
                     <div class="blog-image">
-                        <img src="images/Rapidcue.webp"
-                            alt="RapidCue AI hiring freshers for AI Intern Agentic AI remote role" style="object-fit: cover;" width="600"
-                            height="400" loading="lazy" decoding="async">
+                        <img src="images/paperanimator.webp"
+                            alt="PaperAnimator – Turn Any Photo Into Paper Animated Graphics" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
-                            <span><i class="far fa-calendar"></i> Mar 29, 2026</span>
-                            <span><i class="fas fa-fire" style="color: var(--danger);"></i> NEW!</span>
+                            <span><i class="far fa-calendar"></i> Jun 3, 2026</span>
+                            <span><i class="fas fa-film"></i> AI Tools</span>
                         </div>
-                        <h3>RapidCue AI Hiring Freshers for AI Intern (Agentic AI) - Remote Part-Time</h3>
-                        <p>Covers qualifications, LangChain and RAG expectations, portfolio roadmap, and the official apply link.</p>
+                        <h3>PaperAnimator – Turn Any Photo Into Paper Animated Graphics</h3>
+                        <p>PaperAnimator uses AI to transform ordinary photos into stunning paper-craft animated graphics in seconds — no animation skills or design experience required.</p>
                         <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
                     </div>
                 </a>
-
+                <!-- Zealos Review -->
+                <a href="blogs/zealos-ai-operating-system-founders-revenue-teams.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/Zealos.webp"
+                            alt="Zealos AI Operating System for Founders and Revenue Teams" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 30, 2026</span>
+                            <span><i class="fas fa-robot"></i> AI</span>
+                        </div>
+                        <h3>Zealos – AI Operating System for Founders &amp; Revenue Teams</h3>
+                        <p>Zealos is an AI-powered operating system that gives founders and revenue teams unified pipeline visibility, smart forecasting, and workflow automation in one platform.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- Fast Image AI Headshot Generator Review -->
+                <a href="blogs/fast-image-ai-free-headshot-generator-review.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/Fast Image AI.webp"
+                            alt="Fast Image AI Free AI Headshot Generator for Professional Profile Photos" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> Jun 1, 2026</span>
+                            <span><i class="fas fa-camera"></i> AI Tools</span>
+                        </div>
+                        <h3>Fast Image AI – Free AI Headshot Generator</h3>
+                        <p>Fast Image AI creates professional-quality headshots using AI at no cost. Perfect for LinkedIn, resumes, and personal branding — no photographer needed.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- Potions Done-For-You Newsletter Review -->
+                <a href="blogs/potions-done-for-you-newsletter-system-review.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/Potions.webp"
+                            alt="Potions Done-For-You Newsletter System for Entrepreneurs and Creators" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 28, 2026</span>
+                            <span><i class="fas fa-envelope"></i> Newsletter</span>
+                        </div>
+                        <h3>Potions – Done-For-You Newsletter Systems</h3>
+                        <p>Potions builds and manages your newsletter for you — content, strategy, and growth — so entrepreneurs and creators can own their audience without writing every issue themselves.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- NBot Review -->
+                <a href="blogs/nbot-build-trackers-for-what-matters.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/NBot.webp"
+                            alt="NBot – Build Custom Trackers for Goals, Habits, and Productivity" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 26, 2026</span>
+                            <span><i class="fas fa-chart-line"></i> Tools</span>
+                        </div>
+                        <h3>NBot – Build Trackers for What Matters to You</h3>
+                        <p>NBot gives you the power to create custom trackers for habits, goals, health, finances, and more — all in one flexible platform without writing a single line of code.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- Voibe AI Review -->
+                <a href="blogs/voibe-ai-get-1-hour-back-every-day-review.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/voibe.webp"
+                            alt="Voibe AI productivity assistant dashboard" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 24, 2026</span>
+                            <span><i class="fas fa-brain"></i> AI Tools</span>
+                        </div>
+                        <h3>Voibe AI Review: Get 1 Hour Back in Your Day, Every Day</h3>
+                        <p>Voibe AI is an intelligent productivity assistant that automates workflows, manages tasks, and eliminates repetitive overhead so you can focus on what actually moves the needle.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- Tettra AI Review -->
+                <a href="blogs/tettra-ai-stop-answering-repetitive-questions-slack.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/Tettra.webp"
+                            alt="Tettra AI knowledge management assistant for Slack teams" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 22, 2026</span>
+                            <span><i class="fas fa-brain"></i> AI Tools</span>
+                        </div>
+                        <h3>Tettra AI – Stop Answering Repetitive Questions in Slack</h3>
+                        <p>Tettra AI builds an internal knowledge base your team accesses directly from Slack. Eliminate repetitive questions, speed up onboarding, and save hours every week.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- Dzine AI Studio Review -->
+                <a href="blogs/dzine-ai-image-video-studio-review.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/Dzine.webp"
+                            alt="Dzine All-in-One AI Image and Video Studio" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 20, 2026</span>
+                            <span><i class="fas fa-paint-brush"></i> AI Tools</span>
+                        </div>
+                        <h3>Dzine – All-in-One AI Image &amp; Video Studio</h3>
+                        <p>Dzine brings AI image generation, video creation, editing, and design tools into a single subscription. One platform for every visual content need.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- OpenCode Review -->
+                <a href="blogs/opencode-open-source-ai-coding-agent-review.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/OpenCode.webp"
+                            alt="OpenCode Open Source AI Coding Agent Dashboard" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 18, 2026</span>
+                            <span><i class="fas fa-code"></i> AI Dev Tools</span>
+                        </div>
+                        <h3>OpenCode – The Open Source AI Coding Agent</h3>
+                        <p>OpenCode is a fully open-source AI coding agent with self-hosting, local model support, and complete code privacy. Here is everything developers need to know.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
+                <!-- SubScripkiller Review -->
+                <a href="blogs/subscripkiller-find-cancel-hidden-subscriptions.html" class="blog-card clickable-card">
+                    <div class="blog-image">
+                        <img src="images/Subscripkiller.webp"
+                            alt="SubScripkiller Find and Cancel Hidden Subscriptions" style="object-fit: cover;" width="600" height="400" loading="lazy" decoding="async">
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span><i class="far fa-calendar"></i> May 16, 2026</span>
+                            <span><i class="fas fa-credit-card"></i> Tools</span>
+                        </div>
+                        <h3>SubScripkiller – Find &amp; Cancel Hidden Subscriptions</h3>
+                        <p>Stop paying for services you forgot about. SubScripkiller scans your accounts and helps you cancel hidden recurring charges before they drain your budget.</p>
+                        <span class="read-more">Read Article <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>
             </div>
             <div class="view-all">
                 <a href="blogs.html" class="btn btn-outline">View All Blogs <i class="fas fa-arrow-right"></i></a>
@@ -613,17 +752,21 @@
                 <form class="contact-form" id="contact-form">
                     <div class="form-row">
                         <div class="form-group">
-                            <input type="text" placeholder="Your Name" required>
+                            <label for="home-name" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Your Name</label>
+                            <input type="text" id="home-name" name="name" placeholder="Your Name" required>
                         </div>
                         <div class="form-group">
-                            <input type="email" placeholder="Your Email" required>
+                            <label for="home-email" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Your Email</label>
+                            <input type="email" id="home-email" name="email" placeholder="Your Email" required>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" placeholder="Subject">
+                        <label for="home-subject" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Subject</label>
+                        <input type="text" id="home-subject" name="subject" placeholder="Subject">
                     </div>
                     <div class="form-group">
-                        <textarea placeholder="Your Message" rows="5" required></textarea>
+                        <label for="home-message" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Your Message</label>
+                        <textarea id="home-message" name="message" placeholder="Your Message" rows="5" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         Send Message <i class="fas fa-paper-plane"></i>
@@ -633,6 +776,7 @@
         </div>
     </section>
 
+    </main>
     <!-- Footer -->
     
 
@@ -684,7 +828,7 @@
     </footer>
 
     <!-- Back to Top Button -->
-    <button class="back-to-top" id="back-to-top">
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 

@@ -1,8 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+        <!-- Google Consent Mode Default (MUST be before gtag) -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'wait_for_update': 500
+        });
+    </script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F84NNX9ZX"></script>
     <script>
@@ -133,6 +145,8 @@
 </head>
 
 <body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
     <!-- Navigation -->
     <nav class="navbar scrolled" id="navbar">
         <div class="nav-container">
@@ -146,12 +160,12 @@
                 <a href="/contact.html" class="nav-link">Contact</a>
             </div>
             <div class="nav-actions">
-                <button class="theme-toggle" id="theme-toggle">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
                     <span class="toggle-circle"></span>
                     <span class="toggle-label toggle-label-night">NIGHT</span>
                     <span class="toggle-label toggle-label-day">DAY</span>
                 </button>
-                <div class="hamburger" id="hamburger">
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -161,6 +175,7 @@
     </nav>
 
     <!-- Cookie Policy Page -->
+    <main id="main-content">
     <section class="legal-page">
         <div class="legal-container">
             <a href="/" class="back-link">
@@ -241,7 +256,7 @@
                                 <td><span class="badge badge-advertising">Advertising</span></td>
                                 <td>NID, IDE (Google)</td>
                                 <td>Used by Google to profile user interests and display relevant Google Ads</td>
-                                <td>6 months – 2 years</td>
+                                <td>6 months � 2 years</td>
                             </tr>
                         </tbody>
                     </table>
@@ -256,9 +271,9 @@
                     In addition to our own cookies, we allow third-party service providers to set cookies on our site. These providers have their own privacy policies and cookie practices:
                 </p>
                 <ul>
-                    <li><strong>Google Analytics</strong> — Traffic analysis and visitor behavior insights. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Google Privacy Policy</a></li>
-                    <li><strong>Google AdSense</strong> — Ad serving and measurement. <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Google Advertising Policies</a></li>
-                    <li><strong>Google Fonts</strong> — Web fonts delivery. No tracking cookies are set by this service for font delivery.</li>
+                    <li><strong>Google Analytics</strong> � Traffic analysis and visitor behavior insights. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Google Privacy Policy</a></li>
+                    <li><strong>Google AdSense</strong> � Ad serving and measurement. <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Google Advertising Policies</a></li>
+                    <li><strong>Google Fonts</strong> � Web fonts delivery. No tracking cookies are set by this service for font delivery.</li>
                 </ul>
 
                 <h2>5. Your Cookie Choices</h2>
@@ -313,6 +328,7 @@
     </section>
 
     <!-- Footer -->
+    </main>
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
@@ -358,7 +374,7 @@
         </div>
     </footer>
 
-    <button class="back-to-top" id="back-to-top">
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 

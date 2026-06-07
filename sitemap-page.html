@@ -1,8 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+        <!-- Google Consent Mode Default (MUST be before gtag) -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'wait_for_update': 500
+        });
+    </script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F84NNX9ZX"></script>
     <script>
@@ -121,6 +133,8 @@
 </head>
 
 <body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
     <!-- Navigation -->
     <nav class="navbar scrolled" id="navbar">
         <div class="nav-container">
@@ -134,16 +148,17 @@
                 <a href="/contact.html" class="nav-link">Contact</a>
             </div>
             <div class="nav-actions">
-                <button class="theme-toggle" id="theme-toggle">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
                     <span class="toggle-circle"></span>
                     <span class="toggle-label toggle-label-night">NIGHT</span>
                     <span class="toggle-label toggle-label-day">DAY</span>
                 </button>
-                <div class="hamburger" id="hamburger">
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
+
             </div>
         </div>
     </nav>
@@ -158,7 +173,7 @@
             <div class="sitemap-header">
                 <span class="section-badge">All Pages</span>
                 <h1>Website <span class="gradient-text">Sitemap</span></h1>
-                <p>A complete directory of everything on RapidFast — articles, guides, reviews, and all supporting pages.</p>
+                <p>A complete directory of everything on RapidFast � articles, guides, reviews, and all supporting pages.</p>
             </div>
 
             <div class="sitemap-grid">
@@ -191,70 +206,29 @@
                     </ul>
                 </div>
 
-                <!-- AI Model Reviews -->
+                <!-- Retained Blog Articles -->
                 <div class="sitemap-section">
                     <h2 class="sitemap-section-title">
-                        <i class="fas fa-robot"></i> AI Model Reviews &amp; Guides
+                        <i class="fas fa-newspaper"></i> Blog Articles
                     </h2>
                     <ul class="sitemap-links">
-                        <li><a href="/blogs/claude-opus-4-7-capabilities.html">Claude Opus 4.7 Capabilities Deep Dive</a></li>
-                        <li><a href="/blogs/claude-opus-4-7-review.html">Claude Opus 4.7 Review</a></li>
-                        <li><a href="/blogs/chatgpt-vs-gemini-vs-claude-comparison-2026.html">ChatGPT vs Gemini vs Claude 2026</a></li>
-                        <li><a href="/blogs/anthropic-claude-max-open-source-offer.html">Anthropic Claude Max Open Source Offer</a></li>
-                        <li><a href="/blogs/xai-grok-safety-report-breakdown.html">xAI Grok Safety Report Breakdown</a></li>
-                        <li><a href="/blogs/chatgpt-grokipedia-integration-guide.html">ChatGPT Grokipedia Integration Guide</a></li>
-                    </ul>
-                </div>
-
-                <!-- AI Tool Reviews -->
-                <div class="sitemap-section">
-                    <h2 class="sitemap-section-title">
-                        <i class="fas fa-tools"></i> AI Tool Reviews
-                    </h2>
-                    <ul class="sitemap-links">
-                        <li><a href="/blogs/kiro-ai-coding-assistant-review.html">Kiro AI Coding Assistant Review</a></li>
-                        <li><a href="/blogs/google-antigravity-agent-ide-review.html">Google Antigravity Agent IDE Review</a></li>
-                        <li><a href="/blogs/claude-apps-mcp-workflows.html">Claude Apps &amp; MCP Workflows</a></li>
-                        <li><a href="/blogs/jenni-ai-writing-assistant-review.html">Jenni AI Writing Assistant Review</a></li>
-                        <li><a href="/blogs/rytr-ai-writing-assistant-review.html">Rytr AI Writing Assistant Review</a></li>
-                        <li><a href="/blogs/skywork-ai-content-generator-review.html">Skywork AI Content Generator Review</a></li>
-                        <li><a href="/blogs/uncovr-ai-research-tool-review.html">Uncovr AI Research Tool Review</a></li>
-                        <li><a href="/blogs/rork-ai-no-code-app-builder-review.html">Rork AI No-Code App Builder Review</a></li>
-                        <li><a href="/blogs/looka-ai-logo-brand-maker-review.html">Looka AI Logo &amp; Brand Maker Review</a></li>
-                        <li><a href="/blogs/promptbase-ai-prompts-buy-sell-guide.html">PromptBase AI Prompts Marketplace Guide</a></li>
-                    </ul>
-                </div>
-
-                <!-- Career & Internship Guides -->
-                <div class="sitemap-section">
-                    <h2 class="sitemap-section-title">
-                        <i class="fas fa-briefcase"></i> Career &amp; Internship Guides
-                    </h2>
-                    <ul class="sitemap-links">
-                        <li><a href="/blogs/astra-security-ai-engineer-intern-guide.html">Astra Security AI Engineer Intern Guide</a></li>
-                        <li><a href="/blogs/rapidcue-agentic-ai-intern-guide.html">RapidCue Agentic AI Intern Guide</a></li>
-                        <li><a href="/blogs/zensar-ai-engineer-fresher-guide.html">Zensar AI Engineer Fresher Guide</a></li>
-                        <li><a href="/blogs/atlas-ai-machine-learning-internship-guide.html">Atlas AI Machine Learning Internship</a></li>
-                        <li><a href="/blogs/cloudeagle-java-developer-intern-guide.html">CloudEagle Java Developer Intern Guide</a></li>
-                        <li><a href="/blogs/predictive-data-sciences-junior-ai-builder.html">Predictive Data Sciences Junior AI Builder</a></li>
-                    </ul>
-                </div>
-
-                <!-- Tech & How-To Guides -->
-                <div class="sitemap-section">
-                    <h2 class="sitemap-section-title">
-                        <i class="fas fa-code"></i> Tech &amp; How-To Guides
-                    </h2>
-                    <ul class="sitemap-links">
-                        <li><a href="/blogs/build-android-apps-chatgpt-play-store.html">Build Android Apps with ChatGPT</a></li>
-                        <li><a href="/blogs/github-copilot-student-free-guide-2026.html">GitHub Copilot Free Student Guide 2026</a></li>
+                        <li><a href="/blogs/raphael-ai-free-ai-image-generator-review.html">Raphael AI – Free AI Image Generator <span class="sitemap-date">Jun 7, 2026</span></a></li>
+                        <li><a href="/blogs/reka-clip-viral-clips-from-long-videos.html">Reka Clip – Get Viral Clips From Long Videos in Minutes <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/paperanimator-photo-to-paper-animation-ai-review.html">PaperAnimator – Turn Any Photo Into Paper Animated Graphics <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/fast-image-ai-free-headshot-generator-review.html">Fast Image AI – Free AI Headshot Generator <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/opencode-open-source-ai-coding-agent-review.html">OpenCode – The Open Source AI Coding Agent <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/potions-done-for-you-newsletter-system-review.html">Potions – Done-For-You Newsletter Systems <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/voibe-ai-get-1-hour-back-every-day-review.html">Voibe AI Review – Get 1 Hour Back in Your Day, Every Day <span class="sitemap-date">Jun 7, 2026</span></a></li>
+                        <li><a href="/blogs/tettra-ai-stop-answering-repetitive-questions-slack.html">Tettra AI – Stop Answering Repetitive Questions in Slack <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/dzine-ai-image-video-studio-review.html">Dzine – All-in-One AI Image &amp; Video Studio <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/nbot-build-trackers-for-what-matters.html">NBot – Build Trackers for What Matters to You <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/subscripkiller-find-cancel-hidden-subscriptions.html">SubScripkiller – Find &amp; Cancel Hidden Subscriptions <span class="sitemap-date">Jun 6, 2026</span></a></li>
+                        <li><a href="/blogs/zealos-ai-operating-system-founders-revenue-teams.html">Zealos – AI Operating System for Founders &amp; Revenue Teams <span class="sitemap-date">Jun 6, 2026</span></a></li>
                     </ul>
                     <a href="/sitemap.xml" class="xml-link" target="_blank" rel="noopener noreferrer">
                         <i class="fas fa-code"></i> View XML Sitemap
                     </a>
-                </div>
-
-            </div>
+                </div>            </div>
         </div>
     </section>
 
@@ -297,6 +271,7 @@
                         <li><a href="/dmca.html">DMCA Policy</a></li>
                     </ul>
                 </div>
+
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2026 RapidFast. All rights reserved. Made with love in India</p>
@@ -304,7 +279,7 @@
         </div>
     </footer>
 
-    <button class="back-to-top" id="back-to-top">
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 

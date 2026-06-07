@@ -6,7 +6,7 @@ AI-focused static website for RapidFast (rapidfast.page), with curated AI blogs,
 
 - Homepage: `index.html`
 - Blog listing page: `blogs.html`
-- Individual blog posts: `blogs/*.html`
+- Individual blog posts: `blogs/*.html` (currently the four earliest AI posts)
 - Global styles: `styles.css`
 - Blog styles: `blog-styles.css`
 - Global JS: `script.js`
@@ -15,8 +15,8 @@ AI-focused static website for RapidFast (rapidfast.page), with curated AI blogs,
 
 ## Current Scope
 
-- Site content is AI-blog focused.
-- Non-AI blog pages were removed from active listing/sitemap flow.
+- Site content is AI-blog focused, with only the four earliest published blog posts retained.
+- Newer blog pages were removed from the active listing/sitemap flow and from `blogs/`.
 - Homepage uses the redesigned split-hero layout (`home-v2` classes).
 
 ## Local Editing Workflow

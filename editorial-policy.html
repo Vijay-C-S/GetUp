@@ -1,8 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+        <!-- Google Consent Mode Default (MUST be before gtag) -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'wait_for_update': 500
+        });
+    </script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6F84NNX9ZX"></script>
     <script>
@@ -186,6 +198,8 @@
 </head>
 
 <body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
     <!-- Navigation -->
     <nav class="navbar scrolled" id="navbar">
         <div class="nav-container">
@@ -199,12 +213,12 @@
                 <a href="/contact.html" class="nav-link">Contact</a>
             </div>
             <div class="nav-actions">
-                <button class="theme-toggle" id="theme-toggle">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
                     <span class="toggle-circle"></span>
                     <span class="toggle-label toggle-label-night">NIGHT</span>
                     <span class="toggle-label toggle-label-day">DAY</span>
                 </button>
-                <div class="hamburger" id="hamburger">
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -214,6 +228,7 @@
     </nav>
 
     <!-- Editorial Policy Page -->
+    <main id="main-content">
     <section class="legal-page">
         <div class="legal-container">
             <a href="/" class="back-link">
@@ -228,12 +243,12 @@
             <div class="legal-content">
 
                 <div class="info-box">
-                    <p><strong>Our Commitment:</strong> Every article, review, and guide published on RapidFast is created to genuinely help our readers — not to game search engines, push affiliate sales, or generate clicks. We hold ourselves to the same standard we'd want from a trusted colleague.</p>
+                    <p><strong>Our Commitment:</strong> Every article, review, and guide published on RapidFast is created to genuinely help our readers � not to game search engines, push affiliate sales, or generate clicks. We hold ourselves to the same standard we'd want from a trusted colleague.</p>
                 </div>
 
                 <h2>1. Who We Are</h2>
                 <p>
-                    RapidFast is an independent technology and AI content platform based in Bangalore, India. We cover AI model updates, tool reviews, developer career guides, and internship opportunities — primarily for students, developers, and early-career professionals in India and beyond.
+                    RapidFast is an independent technology and AI content platform based in Bangalore, India. We cover AI model updates, tool reviews, developer career guides, and internship opportunities � primarily for students, developers, and early-career professionals in India and beyond.
                 </p>
                 <p>
                     Our editorial work is carried out by writers and researchers who actively use the tools and follow the industry they write about. We do not publish content from writers who have no real-world experience with the topic.
@@ -261,22 +276,22 @@
 
                 <h2>3. Our Content Creation Process</h2>
                 <ol class="process-steps">
-                    <li><strong>Topic Selection</strong> — We choose topics based on genuine reader interest, industry relevance, and our team's expertise. We do not create content purely for SEO volume if the topic has no real reader value.</li>
-                    <li><strong>Research</strong> — We consult primary sources: official product pages, release notes, developer documentation, benchmark reports, and public data. For hiring guides, we review the actual job postings.</li>
-                    <li><strong>Writing</strong> — Content is written by team members with relevant knowledge. We avoid filler, keyword-stuffing, and padded content that wastes the reader's time.</li>
-                    <li><strong>Internal Review</strong> — Before publishing, articles are reviewed for factual accuracy, clarity, and completeness.</li>
-                    <li><strong>Publishing</strong> — We include publish dates, and update dates when articles are revised, so readers know how current the content is.</li>
-                    <li><strong>Post-publish Monitoring</strong> — We monitor articles for reader feedback and update them when the underlying information changes.</li>
+                    <li><strong>Topic Selection</strong> � We choose topics based on genuine reader interest, industry relevance, and our team's expertise. We do not create content purely for SEO volume if the topic has no real reader value.</li>
+                    <li><strong>Research</strong> � We consult primary sources: official product pages, release notes, developer documentation, benchmark reports, and public data. For hiring guides, we review the actual job postings.</li>
+                    <li><strong>Writing</strong> � Content is written by team members with relevant knowledge. We avoid filler, keyword-stuffing, and padded content that wastes the reader's time.</li>
+                    <li><strong>Internal Review</strong> � Before publishing, articles are reviewed for factual accuracy, clarity, and completeness.</li>
+                    <li><strong>Publishing</strong> � We include publish dates, and update dates when articles are revised, so readers know how current the content is.</li>
+                    <li><strong>Post-publish Monitoring</strong> � We monitor articles for reader feedback and update them when the underlying information changes.</li>
                 </ol>
 
                 <h2>4. Reviews and Recommendations</h2>
                 <p>
-                    When we review an AI tool, writing assistant, or developer product, we aim to give readers a complete, honest picture — including what works well and what doesn't. Our reviews are based on actual use, not marketing materials.
+                    When we review an AI tool, writing assistant, or developer product, we aim to give readers a complete, honest picture � including what works well and what doesn't. Our reviews are based on actual use, not marketing materials.
                 </p>
                 <ul>
                     <li>We do not accept payment in exchange for positive reviews</li>
                     <li>Sponsored content, if any, is clearly labeled as such at the top of the article</li>
-                    <li>Affiliate relationships do not change how we evaluate or describe a product — we only recommend things we genuinely consider useful</li>
+                    <li>Affiliate relationships do not change how we evaluate or describe a product � we only recommend things we genuinely consider useful</li>
                 </ul>
 
                 <h2>5. Corrections and Retractions</h2>
@@ -331,6 +346,7 @@
     </section>
 
     <!-- Footer -->
+    </main>
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
@@ -376,7 +392,7 @@
         </div>
     </footer>
 
-    <button class="back-to-top" id="back-to-top">
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 
