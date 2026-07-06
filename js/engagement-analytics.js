@@ -33,9 +33,7 @@
     }
 
     function sendToGtag(eventName, params) {
-        if (typeof window.gtag === 'function') {
-            window.gtag('event', eventName, params || {});
-        }
+        // Google Analytics removed: no-op
     }
 
     function getEngagementStats(limit) {

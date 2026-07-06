@@ -38,25 +38,11 @@
 
     function enableAnalytics() {
         // Google Analytics is already loaded async; ensure it's not blocked
-        if (typeof gtag === 'function') {
-            gtag('consent', 'update', {
-                'analytics_storage': 'granted',
-                'ad_storage': 'granted',
-                'ad_user_data': 'granted',
-                'ad_personalization': 'granted'
-            });
-        }
+        // Google Analytics removed: no-op
     }
 
     function disableAnalytics() {
-        if (typeof gtag === 'function') {
-            gtag('consent', 'update', {
-                'analytics_storage': 'denied',
-                'ad_storage': 'denied',
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied'
-            });
-        }
+        // Google Analytics removed: no-op
     }
 
     function init() {
