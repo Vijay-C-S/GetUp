@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Using AI for coding interview prep can make you sharper or quietly useless. Here's the workflow, the prompts, and the mistakes that cost me a real interview.">
+    <title>Using AI for Coding Interview Prep (Without Cheating) | RapidFast</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://rapidfast.page/blogs/using-ai-for-coding-interview-prep.html">
+    <link rel="alternate" hreflang="en-in" href="https://rapidfast.page/blogs/using-ai-for-coding-interview-prep.html">
+    <link rel="alternate" hreflang="x-default" href="https://rapidfast.page/blogs/using-ai-for-coding-interview-prep.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Using AI for Coding Interview Prep Without Cheating Yourself Out of the Skill">
+    <meta property="og:description" content="AI can hand you every answer in five seconds. That's exactly the problem. A practical, honest workflow for preparing with AI and still being able to think without it.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rapidfast.page/blogs/using-ai-for-coding-interview-prep.html">
+    <meta property="og:site_name" content="RapidFast">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://rapidfast.page/images/Ai_interview.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Using AI for Coding Interview Prep Without Cheating Yourself">
+    <meta name="twitter:description" content="The workflow, the prompts, and the mistake that made me freeze in a mock interview after solving 200 problems with AI.">
+    <meta name="twitter:image" content="https://rapidfast.page/images/Ai_interview.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Using AI for Coding Interview Prep Without Cheating Yourself Out of the Skill",
+        "description": "A practical guide to using AI for coding interview preparation: the workflow that builds real problem-solving ability, the prompts that improve thinking, the mistakes that quietly destroy it, and a 30-day plan.",
+        "datePublished": "2026-07-16",
+        "dateModified": "2026-07-16",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://rapidfast.page/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "RapidFast",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://rapidfast.page/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://rapidfast.page/blogs/using-ai-for-coding-interview-prep.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://rapidfast.page/images/Ai_interview.webp",
+            "caption": "A developer practising a coding interview with an AI assistant on a laptop.",
+            "name": "Using AI for Coding Interview Prep"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Is using AI for coding interview prep cheating?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Not during preparation. Preparation is learning, and using a tutor to learn has never been cheating. The line is about who is doing the thinking. If AI is answering questions you have already struggled with, it is a tutor. If it is answering questions you have not attempted, it is a replacement, and you are practising the skill of prompting rather than the skill of solving. During a live interview or an online assessment where the rules forbid it, using AI is straightforwardly cheating and increasingly detectable, so keep those two situations completely separate in your head."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can AI replace LeetCode or other practice platforms?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, because they do different jobs. LeetCode and similar platforms give you a problem, a hidden test suite, and a verdict that does not care about your feelings. That verdict is the honest signal you need. AI gives you explanation, feedback, and conversation, which the platform cannot. The productive setup is both: solve on the platform so your code is judged objectively, then take the problem to AI afterwards to understand what you missed. Using AI alone means never having your work checked by something that cannot be talked into agreeing with you."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should complete beginners use ChatGPT or Claude for DSA?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, but for explanation rather than solutions. If you do not yet know what a hash map is or why a nested loop is slow, an AI assistant is a patient and genuinely excellent teacher, and asking it to explain the same concept four different ways costs nothing. The danger for beginners is specific: you have no internal standard yet, so you cannot tell a good solution from a bad one, and copying working code feels identical to learning. Beginners should use AI heavily for concepts and almost never for answers to problems they have not seriously attempted."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should I memorise AI-generated solutions?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Memorising individual solutions is close to useless because interviewers rarely ask the exact question you memorised, and a small variation collapses a memorised answer completely. What is worth internalising is the pattern underneath: recognising that a problem involves a sliding window, or that sorting first makes the two-pointer approach possible. Patterns transfer to problems you have never seen. Memorised code does not, and it produces the worst interview outcome of all, which is reciting a correct answer and being unable to explain a single line of it under a follow-up question."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can interviewers tell if you learned with AI?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "They cannot tell that you used AI, and they do not care. What they can detect, easily and within a couple of minutes, is whether you understand what you wrote. The tell is not the code, it is the follow-up. Someone who genuinely learned can explain why they chose this data structure, what breaks with an empty input, and how the runtime would change if the constraint doubled. Someone who absorbed answers without the struggle gets fluent code and vague explanations, and that gap is glaring from the other side of the table."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How often should I practise without AI?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A reasonable habit is that roughly one session in three should be completely AI-free, and it should feel uncomfortable. Open a problem, set a timer, and finish or fail entirely on your own with no tab open and no hints. This is not a test of virtue, it is a measurement. Preparation with constant assistance tells you what you can do with help, which is not the number the interview measures. The AI-free sessions are the only place you find out what you actually own, and that number is often humbling the first few times."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Which AI tool is best for coding interview preparation?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The differences between the major assistants matter far less than how you use them. Claude and ChatGPT are both strong at explaining reasoning and running mock interviews, Gemini is convenient if you already live in Google's tools, and Perplexity and Phind are better when you want sourced answers rather than conversation. GitHub Copilot is the one to be careful with, because inline autocomplete removes the pause where thinking happens. Pick whichever assistant you will actually talk to, then spend your attention on the workflow instead of the tool comparison."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should I use AI during coding contests?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Read the rules, because many contests explicitly forbid it and disqualification follows. Beyond the rules there is a practical argument: a contest is one of the few places where you get timed pressure that resembles a real interview, and using AI there converts your best available rehearsal into a typing exercise. Contests are worth entering precisely because they hurt. Use AI after the contest, when the editorial is out and you want to understand the problem you could not crack, which is where most of the learning was hiding anyway."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I avoid becoming dependent on AI?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Put a rule between you and the tool, because willpower alone loses when you are tired at eleven at night. The rule that works is a timer: no AI for the first twenty-five minutes of any problem, no exceptions, even when you are certain you are stuck. Most of the time you are not actually stuck, you are just uncomfortable, and the discomfort is the part that builds the skill. Add one AI-free session every third day, and rewrite every AI-assisted solution from scratch the next morning. Dependency forms when the tool is easier to reach than the effort."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can AI help with behavioural interviews?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "This is arguably where AI is most useful and most underused. Behavioural answers fail because they are vague, too long, or missing a result, and an assistant will spot all three instantly if you ask it to be harsh. Give it your story, ask it to identify what a hiring manager would not believe, and ask for the three follow-up questions your answer invites. What it cannot do is generate your experiences for you, and an invented story falls apart under two follow-ups. Use it to sharpen true stories, never to write fictional ones."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How long should I think before asking AI for a hint?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Twenty to thirty minutes of genuine effort is the number most experienced people converge on, and genuine means writing things down rather than staring. If you have produced nothing at all after thirty minutes, a hint is more useful than another hour of frustration, because grinding without direction mostly teaches you that you hate this. Ask for the smallest possible hint rather than the approach, then close the tab and go back to thinking. The goal is to be unstuck, not to be told."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is it bad to look at the solution after trying?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, and the guilt around this wastes a lot of people's time. After honest effort, reading the solution is efficient learning, and every strong problem-solver has read thousands of them. What matters is what happens next. Reading the solution and moving on teaches you almost nothing, because recognition is not recall. Reading it, closing everything, and rewriting it from an empty file the next day is what converts it into something you own. The solution is not the finish line, it is the halfway point."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can AI give wrong answers to coding problems?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Regularly, and the confident tone never changes when it does. The common failures are subtle rather than obvious: an off-by-one in a binary search boundary, a complexity claim that ignores the cost of a slicing operation, an approach that works on the examples and fails on an empty input or a single element. This is why running the code against real tests matters more than reading it and nodding. An assistant that is wrong in a fluent, well-formatted, confidently-explained way is more dangerous than one that is obviously confused."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How many problems should I solve before an interview?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The count is the wrong metric and chasing it is why so much preparation fails. A hundred problems solved properly, meaning attempted alone, understood deeply, rewritten from scratch, and revisited later, beats four hundred problems skimmed with help. If you want a rough target, aim for solid coverage of the standard patterns rather than a number: arrays and strings, hash maps, two pointers, sliding window, binary search, stacks, trees, graphs, and basic dynamic programming. Depth in those beats volume everywhere else, and the difference shows the moment a question varies from what you memorised."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does using AI make you a worse programmer?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The tool does not, the habit can. AI used as a reviewer, an explainer, and a sparring partner makes most people meaningfully better, because they get feedback they would otherwise never receive. AI used as an answer machine produces a specific kind of engineer who can ship when the tool is available and stalls when it is not, and interviews are designed to find exactly that gap. The tool is neutral. What decides the outcome is whether you reach for it before you have thought or after."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://rapidfast.page/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Blogs",
+                "item": "https://rapidfast.page/blogs.html"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Using AI for Coding Interview Prep",
+                "item": "https://rapidfast.page/blogs/using-ai-for-coding-interview-prep.html"
+            }
+        ]
+    }
+    </script>
+    <link rel="stylesheet" href="../css/cookie-consent.css">
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4808455645499224" crossorigin="anonymous"></script>
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Rapid<span class="highlight">Fast</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content" id="main-content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Using AI for Coding Interview Prep Without Cheating Yourself Out of the Skill</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 16, 2026</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                    <span class="article-meta-item">22 min read</span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/Ai_interview.webp" alt="A developer preparing for a coding interview with an AI assistant on a laptop screen" title="Using AI for Coding Interview Prep" class="featured-image" width="800" height="450">
+                <p class="image-caption">AI will happily answer every question you have. The skill is knowing which questions to answer yourself first.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content">
+
+                <p class="lead">It's 11:40 at night. You open LeetCode, pick a medium, read it twice, and feel that familiar fog roll in. Ten minutes of staring later you do the thing everyone does now: you paste the problem into ChatGPT. Five seconds pass. Out comes a clean, optimal, well-commented solution with a complexity analysis you didn't ask for. You read it, nod, think <em>ah, of course</em>, and mark the problem solved. You feel productive. You close the laptop. And here's the uncomfortable question this article is built around: did AI just help you, or did it quietly take the single most valuable part of the process and throw it away?</p>
+
+                <p>I'm not here to tell you to stop using AI. That advice is useless, nobody follows it, and honestly it's wrong. I'm here because I did this badly for months, got embarrassed in a mock interview by someone I actually respected, and had to rebuild how I practise from the ground up.</p>
+
+                <p><strong>Featured answer — how should you use AI for coding interview preparation?</strong> Attempt every problem alone for twenty to thirty minutes first, write a brute-force solution, and try to optimise it yourself. Only then bring in AI — for hints, code review, edge cases, and mock interviews, never for first answers. Rewrite every solution from scratch without help. AI should test your thinking, not replace it.</p>
+
+                <h2>What's In This Guide</h2>
+
+                <ul>
+                    <li><a href="#why-perfect">Why AI feels like the perfect coding coach</a></li>
+                    <li><a href="#trap">The trap: mistaking answers for understanding</a></li>
+                    <li><a href="#my-mistake">My biggest mistake preparing with AI</a></li>
+                    <li><a href="#workflow">The eight-step workflow that actually works</a></li>
+                    <li><a href="#prompts-thinking">Prompts that improve your thinking</a></li>
+                    <li><a href="#explaining">Where AI genuinely shines</a></li>
+                    <li><a href="#mock">Running mock interviews with AI</a></li>
+                    <li><a href="#cannot-teach">What AI still cannot teach you</a></li>
+                    <li><a href="#mistakes">Common mistakes students make</a></li>
+                    <li><a href="#plan">A realistic 30-day plan</a></li>
+                    <li><a href="#tools">The tools, honestly compared</a></li>
+                    <li><a href="#prompt-library">Prompts I wish I'd used earlier</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+
+                <h2 id="why-perfect">Why AI Feels Like the Perfect Coding Interview Coach</h2>
+
+                <p>Let's be fair to the tool before we criticise how we use it. If you'd described a modern AI assistant to me when I was a second-year student drowning in recursion, I'd have thought you were describing a fantasy.</p>
+
+                <p>It explains anything, instantly. I remember losing an entire weekend to dynamic programming because the textbook explanation assumed I already understood the thing it was explaining. Today you can say "explain memoisation like I'm twelve, then like I'm a Java developer, then with a real example," and get three genuinely useful answers in ninety seconds. That's not a small thing. That's a tutor who never sighs.</p>
+
+                <p>It's awake at 2 a.m. Your seniors aren't. Your professor answers email in four days. The AI answers now, which matters more than it sounds, because the moment you're stuck is the moment the question is alive in your head.</p>
+
+                <p>It doesn't judge you. This one's underrated. I've watched capable students sit silently in a doubt session rather than ask a question they thought sounded stupid. Nobody's ego survives asking "what's the difference between a list and an array" out loud in front of thirty peers in the sixth semester. You'll ask a chatbot that at midnight without flinching, and you'll learn the answer, and that's a real win.</p>
+
+                <p>It adapts to you. Ask it to explain graphs using cricket teams, or using your college's bus routes, and it will, and something clicks that didn't click when the example was about airports.</p>
+
+                <p>And it debugs. You paste a stack trace, and instead of forty minutes of print statements, you get a hypothesis in four seconds. Many developers report this being the first thing that made them take AI seriously.</p>
+
+                <p>All of this is real. None of it is the problem. The problem is what happens when a tool that good becomes the first thing you reach for instead of the last.</p>
+
+                <h2 id="trap">The Dangerous Trap: Mistaking Answers for Understanding</h2>
+
+                <p>Here's the thing nobody warns you about, because it doesn't feel like a mistake while you're making it. It feels like progress.</p>
+
+                <p>Reading a good solution is <em>pleasant</em>. Your brain lights up in exactly the way it does when you understand something. "Oh, two pointers, obviously." That flash of recognition feels identical to learning. It isn't. It's the difference between watching someone swim and swimming.</p>
+
+                <p>Psychologists have a name for this gap — recognition versus recall. You can recognise a face in a crowd effortlessly and still be unable to describe that face to a sketch artist. Reading a solution builds recognition. The interview asks for recall, from an empty file, with someone watching, while you talk.</p>
+
+                <p>One common trap is what I'd call the fluency illusion. You've read forty solutions this week. Each one made sense. So you conclude you understand forty problems. What you actually have is forty experiences of understanding, which have roughly the same shelf life as understanding a magic trick after seeing it explained — real at the time, gone by Thursday.</p>
+
+                <p>Then there's the shortcut problem. Brains are efficient, which is a polite way of saying lazy. If there's a path that produces the reward — a solved problem, a green tick, the feeling of progress — for one-tenth of the effort, you will take it, every time, no matter what you promised yourself. Not because you're weak. Because that's what brains do. Willpower is not a strategy here; structure is.</p>
+
+                <p>And the dependency creeps. It starts with "I'll just check if my approach is right." Then it's "I'll just get one hint." Then it's twenty minutes into a problem and your hand moves to the other tab before you've made a conscious decision. I know that specific hand movement very well.</p>
+
+                <h2 id="my-mistake">My Biggest Mistake While Preparing with AI</h2>
+
+                <p>I want to tell you about a Tuesday I'd rather forget.</p>
+
+                <p>I'd been preparing for about three months. My tracker said something like two hundred problems. Two hundred! Arrays, strings, trees, a respectable amount of DP. Every one of them I'd attempted, got stuck on, asked AI about, understood, and ticked off. My tracker was a wall of green. I felt genuinely ready, and I told people so, which makes this worse.</p>
+
+                <p>A friend who'd just joined a good product company offered to run a mock interview. Free, forty-five minutes, real format. I said yes, mostly because I wanted to show off a little.</p>
+
+                <p>He shared a problem. I don't even remember which one — something with a string and a window, the kind of thing I'd "done" at least six times.</p>
+
+                <p>And I just... stopped.</p>
+
+                <p>Not "struggled." Stopped. The cursor blinked in an empty editor and my brain returned nothing. No approach, no starting point, not even a bad idea to reject. Ninety seconds of silence, which is roughly a geological era when someone is watching you. I eventually mumbled something about a hash map, wrote four lines, deleted three, and then he asked, gently, "what are you thinking?" — and the honest answer was <em>nothing, I'm thinking nothing, I'm waiting for the answer to arrive the way it usually does.</em></p>
+
+                <p>I got about a third of the way through. He was kind about it. That was somehow worse.</p>
+
+                <p>Afterwards I sat in my room and did the maths. Two hundred problems, and I couldn't start one. And then it landed: I had never actually solved two hundred problems. I had <em>read</em> two hundred solutions. Every single time, at the exact moment where the real work begins — that horrible, foggy, unstructured stretch where you have no idea what to do and you have to generate an idea from nothing — I had outsourced it. Two hundred times I'd walked up to the gym, watched someone else lift, and gone home feeling strong.</p>
+
+                <p>The struggle wasn't an obstacle in the way of the learning. The struggle <em>was</em> the learning. Everything after it — the clean solution, the complexity analysis, the satisfying click — that's the receipt. I'd been collecting receipts and calling it shopping.</p>
+
+                <p>That's the whole reason this article exists.</p>
+
+                <h2 id="workflow">The Right Way to Use AI During Coding Interview Prep</h2>
+
+                <p>So I rebuilt my process. It's slower. It's less fun. It works, and I've since watched it work for other people, so I don't think I'm just describing my own psychology.</p>
+
+                <p>The core rule is one sentence: <strong>AI enters after effort, never before.</strong> Everything below is machinery for enforcing that when you're tired.</p>
+
+                <blockquote><strong>The loop, per problem:</strong><br>1. Read it properly, twice<br>↓<br>2. Think for 20–30 minutes, alone<br>↓<br>3. Write the brute force<br>↓<br>4. Try to optimise it yourself<br>↓<br>5. Now ask AI — hints first, not answers<br>↓<br>6. Rewrite the solution from scratch, unassisted<br>↓<br>7. Explain it out loud<br>↓<br>8. Solve it again tomorrow</blockquote>
+
+                <p><strong>Step 1 — Read it properly.</strong> Twice, slowly. Note the constraints, because constraints are hints in a lab coat — n ≤ 10⁵ is the problem quietly telling you O(n²) won't survive. Note the edge cases you can already see. Ask yourself what the interviewer is actually testing. Most people spend forty seconds here and then wonder why they're confused for the next twenty minutes.</p>
+
+                <p><strong>Step 2 — Think for twenty to thirty minutes.</strong> This is the step everything else exists to protect. Set a timer, put your phone somewhere annoying, and do not open another tab. And "thinking" means writing — draw the input, trace it by hand, try a small example on paper. Staring at a screen isn't thinking, it's waiting. This stretch is uncomfortable and it's supposed to be. That discomfort is your brain building the exact machinery the interview will ask for.</p>
+
+                <p><strong>Step 3 — Write the brute force.</strong> Even if it's O(n³) and hideous. Especially then. Two reasons. First, it proves you understood the problem, which is not guaranteed. Second — and this is the bit people skip and regret — the optimal solution usually <em>emerges</em> from staring at the brute force and asking "what work am I repeating here?" That question is where most optimisation actually comes from. Skip the brute force and you're not being efficient, you're removing the ladder.</p>
+
+                <p><strong>Step 4 — Optimise it yourself.</strong> Give it a real go. What's the repeated work? Can I trade memory for time? Would sorting first help? Is there something I can precompute? Even failing here is productive, because you'll have generated three ideas and rejected them for reasons — and reasons are what you'll be asked to explain in the interview.</p>
+
+                <p><strong>Step 5 — Now bring in AI, and ask for the smallest thing that unsticks you.</strong> Not "solve this." Ask for one hint. Ask what's wrong with your approach. Ask what you're not noticing. Then close the tab and go back to it. The difference between "give me a hint" and "give me the solution" is roughly the difference between preparing and pretending.</p>
+
+                <p><strong>Step 6 — Rewrite from scratch.</strong> Non-negotiable, and it's the step that separates this from what you're doing now. Close everything. Empty file. Write the whole thing from memory. It will be harder than you expect, and that gap — between "I understood it" and "I can produce it" — is precisely the gap that made me freeze. Finding it at your desk is free. Finding it in an interview is not.</p>
+
+                <p><strong>Step 7 — Explain it out loud.</strong> To a wall, your phone's voice recorder, a patient roommate, whoever. Real interviews are performed, not typed, and the number of people who can write correct code and cannot narrate it is enormous. You'll hear your own gaps the moment you try to say them. It feels ridiculous. Do it anyway.</p>
+
+                <p><strong>Step 8 — Do it again tomorrow.</strong> One day later, same problem, cold. Then a week later. Spaced repetition isn't a study hack, it's how memory works, and one problem revisited three times will stay with you longer than six problems seen once. This is the step everyone skips because it feels like going backwards. It's the highest-return twenty minutes in your week.</p>
+
+                <p>Yes, this means fewer problems. That's the trade, and it's a good one: a hundred problems owned beats four hundred problems skimmed, and the four hundred number only ever impressed you anyway.</p>
+
+                <h2 id="prompts-thinking">Prompts That Actually Improve Your Thinking</h2>
+
+                <p>Most people have one prompt: paste problem, hit enter. That prompt is a request for an answer, so you get an answer, and answers are the thing you don't need. If you want more on why phrasing changes everything, I've written a full breakdown of <a href="/blogs/how-to-write-a-prompt-that-actually-works.html">how to write a prompt that actually works</a> — the same principles apply here.</p>
+
+                <p>Here's what to say instead, and why each one does something different.</p>
+
+                <p><strong>"Give me only a hint. One sentence. Don't reveal the approach."</strong> This keeps you in the driver's seat. The hint nudges; you still have to steer. Most of the time one sentence is genuinely all you needed, which is a slightly humbling discovery.</p>
+
+                <p><strong>"Here's my approach. Don't fix it — tell me what's wrong with it."</strong> Now you're getting feedback on <em>your</em> thinking rather than being handed someone else's. This is the single highest-value prompt in this article. It's also what a real interviewer does.</p>
+
+                <p><strong>"Ask me guiding questions until I get there myself. Don't give the answer even if I ask."</strong> That last clause matters, because you will ask. This turns the assistant into a Socratic tutor and it's remarkably effective — and remarkably annoying, which is the sign it's working.</p>
+
+                <p><strong>"Review this code like an interviewer at a company that cares about correctness. Don't compliment it."</strong> Without the last sentence you'll get "Great job! Here are some minor suggestions!" and learn nothing. Ban the praise and the feedback gets sharp.</p>
+
+                <p><strong>"There's exactly one logical bug in this. Don't tell me where — tell me what input would expose it."</strong> Beautiful prompt. You still do the debugging, which is the skill, but you're not stuck for an hour.</p>
+
+                <p><strong>"Pretend this is a Google interview. Ask me the follow-ups you'd ask."</strong> Follow-ups are where interviews are won and lost. "What if the input doesn't fit in memory?" "What if it's streaming?" "Can you do it in one pass?" Practising the code without the follow-ups is preparing for half the interview.</p>
+
+                <p><strong>"Challenge my assumptions. What am I taking for granted?"</strong> Half of all wrong solutions come from an assumption you never noticed you made — that the array is sorted, that values are positive, that there's always a valid answer.</p>
+
+                <p>Notice the pattern. Every one of these makes the AI do less and you do more. That's the whole trick.</p>
+
+                <h2 id="explaining">AI Is Amazing at Explaining, Not at Replacing Practice</h2>
+
+                <p>Once you've done the work, AI becomes genuinely excellent — better than most human tutors, honestly — and it's worth knowing exactly where.</p>
+
+                <p><strong>Debugging.</strong> Not "fix this," but "why is this wrong?" Ask it to explain the failure mode and you learn something transferable. Ask it to patch the code and you learn nothing at all.</p>
+
+                <p><strong>Complexity analysis.</strong> This is where AI earns its keep. "Walk me through why this is O(n log n) and not O(n)" is a question textbooks answer badly and assistants answer well. Just verify the claim — assistants get complexity subtly wrong more often than you'd think, especially when slicing or string concatenation hides real cost inside an innocent-looking line.</p>
+
+                <p><strong>Edge cases.</strong> "What inputs break this?" is a prompt worth running on every solution you write. Empty input, single element, all duplicates, integer overflow, the maximum constraint. Do this fifty times and you'll start seeing them yourself, which is the actual goal.</p>
+
+                <p><strong>Dry runs.</strong> "Trace my code with input [3,1,4,1,5] and show me the variable state at each step." Fantastic for recursion, where the stack in your head is definitely wrong.</p>
+
+                <p><strong>Alternative approaches.</strong> "I solved it with a hash map. What are two other ways, and when would each be better?" This is how you stop being someone who knows one solution and start being someone who understands a trade-off. Interviewers can tell the difference immediately.</p>
+
+                <p><strong>Refactoring and clean code.</strong> "This works. Now show me how a senior engineer would write it." Naming, structure, unnecessary state. Small stuff, but it's the stuff that makes an interviewer relax.</p>
+
+                <h2 id="mock">Mock Interviews with AI</h2>
+
+                <p>This is the most underused feature of every AI assistant, and it's free, and you can do it at midnight in your pyjamas.</p>
+
+                <p>The trick is setting it up properly. A vague "interview me" gets you a vague quiz. Try something like this:</p>
+
+                <blockquote>You're a senior engineer conducting a 45-minute technical interview for a mid-level backend role. Be realistic: slightly warm, but you're evaluating me and you don't hand out hints for free.<br><br>Rules: ask ONE question at a time. Wait for my answer. Never write code for me. If I'm stuck, do what a real interviewer does — ask a question that nudges, don't rescue me. If my answer is vague, push on it. Ask follow-ups about complexity and edge cases.<br><br>At the end, give me honest feedback: would you hire me, what specifically was weak, and what would a strong candidate have done differently. Don't soften it.<br><br>Start with the first question. Nothing else.</blockquote>
+
+                <p>That last line — "nothing else" — stops it from writing you a helpful summary of the interview it's about to conduct. And "don't soften it" matters, because the default personality of these tools is relentlessly encouraging, which is lovely and useless here.</p>
+
+                <p>You can vary the flavour. Ask it to interview like a big-tech company that cares about optimal complexity and clean communication, or like a fast-moving startup that cares whether you can build something that works and ship it by Friday, or like a system design round where it plays a staff engineer poking holes in your architecture. The behavioural version is genuinely valuable too — give it your real stories and ask it to find the parts a hiring manager wouldn't believe.</p>
+
+                <p>A snippet of how it should feel when it's set up right:</p>
+
+                <blockquote><strong>AI:</strong> Given an array of integers and a target, return the indices of two numbers that add to the target. What's your first thought?<br><br><strong>You:</strong> Nested loop, check every pair. O(n²).<br><br><strong>AI:</strong> That works. What's the repeated work in it?<br><br><strong>You:</strong> I keep re-scanning for values I've already seen.<br><br><strong>AI:</strong> Right. So what would you need to stop re-scanning?<br><br><strong>You:</strong> ...a hash map. Store what I've seen, look up the complement.<br><br><strong>AI:</strong> Write it. Then tell me what happens if the same number appears twice.</blockquote>
+
+                <p>See what it did? Never gave the answer. Asked the question that produced the answer. That's what a good interviewer does, and it's what you should be configuring your assistant to do.</p>
+
+                <h2 id="cannot-teach">What AI Still Cannot Teach You</h2>
+
+                <p>Let's be honest about the ceiling, because this is where my mock interview disaster actually lived.</p>
+
+                <p><strong>Pressure.</strong> Nothing simulates a real person watching you fail in real time. Your heart rate doesn't spike for a chatbot. The gap between "I can solve this calmly at my desk" and "I can solve this while my hands shake" is enormous and it's only closed by real practice with real humans.</p>
+
+                <p><strong>Communication under load.</strong> Talking while thinking is a separate, learnable, genuinely hard skill. Most people's inner monologue is not sentences. Turning it into sentences while also solving a problem is the thing interviews actually test, and typing to an AI doesn't rehearse it.</p>
+
+                <p><strong>The silence.</strong> Real interviewers let you sit in it. It's excruciating and it's diagnostic. AI fills silence instantly, because it's built to be helpful, and that's exactly the wrong training.</p>
+
+                <p><strong>Confidence.</strong> Only comes from evidence — from having actually done hard things unassisted. AI-assisted wins don't deposit anything into that account, which is why I felt ready and wasn't.</p>
+
+                <p><strong>Real debugging.</strong> Production bugs don't come with a clean stack trace and a reproduction. They come as "it's slow on Thursdays" and you dig for two days. That's a different muscle.</p>
+
+                <p><strong>Asking clarifying questions.</strong> Real interviewers give deliberately ambiguous problems and watch whether you ask. Can the array be empty? Are values unique? Is it sorted? Candidates who dive straight in lose points before they've written a line, and no amount of solo practice teaches that reflex.</p>
+
+                <p>So: do at least a few mocks with actual humans. Peers, seniors, free platforms, anyone. It's uncomfortable, which is precisely the point, and one honest mock will teach you more about your gaps than a month of green ticks.</p>
+
+                <h2 id="mistakes">Common AI Mistakes Students Make</h2>
+
+                <p>Ranked roughly by how much damage they do.</p>
+
+                <p><strong>Copying every solution.</strong> The big one. You're practising reading, not solving. See: my Tuesday.</p>
+
+                <p><strong>Never writing from scratch.</strong> You can follow the logic but can't generate it. Following is not generating, and the interview only asks for one of them.</p>
+
+                <p><strong>Memorising AI answers.</strong> Interviewers change one detail and the whole memorised structure collapses. Worse, you can't explain what you wrote, which is a specific and very visible kind of failure.</p>
+
+                <p><strong>Skipping the brute force.</strong> You lose the reasoning path from naive to optimal. In the interview, you'll be asked to walk that path out loud, and you'll have never walked it.</p>
+
+                <p><strong>Skipping dry runs.</strong> You trust the AI's trace instead of building your own mental model. Then something's off by one and you have no idea where to look.</p>
+
+                <p><strong>Never reviewing mistakes.</strong> Solving a hundred problems once teaches less than solving thirty three times. Nobody wants to hear this. It's still true.</p>
+
+                <p><strong>Vague prompts.</strong> "Explain this" gets you a lecture. "Explain why the pointer moves left instead of right at line 12" gets you the thing you were actually confused about.</p>
+
+                <p><strong>Trusting output that's wrong.</strong> It happens more than people admit, and the confident tone never wavers. Run the code. Test it. An assistant that's wrong fluently is more dangerous than one that's obviously confused.</p>
+
+                <p><strong>Using AI every single day.</strong> Without AI-free sessions you have no measurement of what you actually own. You're flying on instruments that only report the weather you'd like.</p>
+
+                <p><strong>Learning passively.</strong> Reading, watching, nodding. All of it feels like studying. None of it is retrieval, and retrieval is the only thing that sticks.</p>
+
+                <h2 id="plan">A 30-Day AI Coding Interview Plan</h2>
+
+                <p>Assuming roughly three hours a day. Scale it to your life — this is a shape, not a contract, and a plan you actually follow beats a perfect plan you abandon on day four.</p>
+
+                <p><strong>Week 1 — Understanding problems.</strong> Two to three problems a day, easy to easy-medium. The goal isn't volume, it's rebuilding your tolerance for being stuck. Full thirty minutes alone on every problem, brute force always, AI only for hints and explanations after. If this week feels slow and slightly miserable, it's working.</p>
+
+                <p><strong>Week 2 — Patterns.</strong> Now you're grouping. Two pointers, sliding window, hash maps, binary search, stacks, trees. Three or four problems a day, all from the same pattern, and at the end of each day write down in your own words what makes a problem belong to that pattern. That sentence is worth more than the problems. Ask AI to generate variations on what you just solved, then solve those without help.</p>
+
+                <p><strong>Week 3 — Speed.</strong> Timers on. Forty-five minutes per medium, hard stop. If you don't finish, that's data, not failure. Four to five problems a day, mixed patterns so you have to identify the approach yourself — which is what the interview actually tests, and which is impossible when you're doing a themed set. Add graphs and basic DP. Start narrating out loud while you code, even alone.</p>
+
+                <p><strong>Week 4 — Mock interviews.</strong> One full mock every day, minimum. Alternate AI mocks with human ones. Two fresh problems on top, cold. And spend real time on the feedback — what specifically broke, was it knowledge, nerves, or communication. Most people discover in week four that their problem was never the algorithms.</p>
+
+                <p><strong>A daily shape that works:</strong></p>
+
+                <blockquote><strong>Morning (60–90 min)</strong> — fresh problems, brain at its best, no AI for the first 25 minutes of each<br><strong>Afternoon (45 min)</strong> — review: rewrite yesterday's solutions from scratch, unassisted<br><strong>Evening (30–45 min)</strong> — AI discussion: alternative approaches, edge cases, complexity, one mock<br><strong>Night (15–20 min)</strong> — revision: skim your own notes, no new material, just retrieval</blockquote>
+
+                <p>That afternoon block is the one everybody drops first and the one that carries the plan. If you cut anything, cut the evening.</p>
+
+                <h2 id="tools">Best AI Tools for Coding Interview Preparation</h2>
+
+                <p>Short version: this matters far less than you think, and the time you spend comparing tools would be better spent solving one more problem properly. But since people always ask:</p>
+
+                <p><strong>Claude</strong> tends to follow long structured instructions closely, which makes it good for mock interviews where you've written strict rules like "never give me the answer." It'll actually hold the line. Strong at explaining reasoning step by step.</p>
+
+                <p><strong>ChatGPT</strong> is the most widely used and very solid across the board. Its default register is enthusiastic and helpful, which is exactly wrong for interview practice, so you'll need to explicitly tell it to be critical and to stop complimenting your code.</p>
+
+                <p><strong>GitHub Copilot</strong> — be careful. It's genuinely excellent for real work and actively harmful for interview prep, because inline autocomplete removes the exact pause where thinking happens. You'll finish the problem and have no idea whether you solved it. Turn it off in your practice editor. I mean it.</p>
+
+                <p><strong>Google Gemini</strong> is convenient if you're already in Google's ecosystem and perfectly capable at explanation.</p>
+
+                <p><strong>Perplexity</strong> and <strong>Phind</strong> are better when you want sourced answers rather than conversation — "what's the standard approach to this problem type and where's it documented" rather than "teach me."</p>
+
+                <p><strong>LeetCode's own AI features</strong> are conveniently placed, which is precisely the risk: the hint button is six inches from the editor and your hand will find it.</p>
+
+                <p>And the platforms underneath still matter: <a href="https://leetcode.com/" target="_blank" rel="noopener noreferrer nofollow">LeetCode</a> for the objective verdict, <a href="https://neetcode.io/" target="_blank" rel="noopener noreferrer nofollow">NeetCode</a> for pattern-based structure, <a href="https://www.geeksforgeeks.org/" target="_blank" rel="noopener noreferrer nofollow">GeeksforGeeks</a> for breadth, and if your fundamentals are genuinely shaky, <a href="https://cs50.harvard.edu/" target="_blank" rel="noopener noreferrer nofollow">Harvard's CS50</a> and <a href="https://ocw.mit.edu/" target="_blank" rel="noopener noreferrer nofollow">MIT OpenCourseWare</a> are free and better than most paid courses. Google and Microsoft both publish what their interviews look for; it's worth twenty minutes on their careers pages before you build a plan around a stranger's YouTube video.</p>
+
+                <p>Pick one assistant. Use it intentionally. Stop reading comparison articles, including this section.</p>
+
+                <h2 id="prompt-library">AI Prompts I Wish I'd Used Earlier</h2>
+
+                <p>Copy these. They're all built on the same principle: make the AI do less.</p>
+
+                <ul>
+                    <li>Explain the intuition behind this solution without showing me any code.</li>
+                    <li>Review my algorithm like a senior engineer who has to maintain it. Don't compliment it.</li>
+                    <li>Give me only the next hint. One sentence. Stop there.</li>
+                    <li>What edge cases am I missing? Don't fix them — just list what breaks.</li>
+                    <li>Ask me three follow-up questions a real interviewer would ask about this solution.</li>
+                    <li>Compare my solution to the optimal one and explain the gap in reasoning, not the code.</li>
+                    <li>My solution is O(n²). Ask me questions that lead me to the O(n) version. Don't tell me.</li>
+                    <li>I'm going to explain this approach. Evaluate it as an interviewer: what's unclear, what would you push back on?</li>
+                    <li>Suggest better variable names. Change nothing else.</li>
+                    <li>Generate three problems that use the same pattern as this one. Problems only, no solutions.</li>
+                    <li>Trace my code with this input and show the variable state at each step.</li>
+                    <li>What assumption am I making that the problem never stated?</li>
+                    <li>There's one bug. Tell me which input exposes it, not where it is.</li>
+                    <li>Explain why this is O(n log n). I think it's O(n) — show me where I'm wrong.</li>
+                    <li>What would a staff engineer criticise about this code in review?</li>
+                    <li>Rank these three approaches by what an interviewer would prefer, and explain why.</li>
+                    <li>Quiz me on this pattern. One question at a time. Wait for my answer.</li>
+                    <li>I solved this six days ago and can't remember the approach. Ask me questions until I recall it. Don't remind me.</li>
+                </ul>
+
+                <p>That last one is oddly powerful. Forced retrieval, with a safety net. It's the closest thing to a study hack in this whole article.</p>
+
+                <p>If you're rebuilding your applications too, the same "do the thinking yourself" logic applies to <a href="/blogs/ai-resume-rejected-what-actually-fixed-it.html">why AI-written resumes get rejected</a>, and if you want an offline setup so the tool isn't always a click away, <a href="/blogs/run-llm-on-laptop-8gb-ram-no-gpu-ollama.html">running a local model</a> is a surprisingly effective way to add friction on purpose.</p>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Is using AI for coding interview prep cheating?</h3>
+                <p>Not during preparation — that's learning, and using a tutor to learn has never been cheating. The line is about who does the thinking. AI answering questions you've already struggled with is a tutor. AI answering questions you haven't attempted is a replacement, and you're practising prompting rather than solving. In a live interview or an assessment where the rules forbid it, it's straightforwardly cheating and increasingly detectable. Keep the two situations completely separate in your head.</p>
+
+                <h3>Can AI replace LeetCode?</h3>
+                <p>No, they do different jobs. Platforms give you a hidden test suite and a verdict that doesn't care about your feelings — that's the honest signal. AI gives you explanation and conversation, which the platform can't. Use both: solve on the platform so your code is judged objectively, then take it to AI to understand what you missed. AI alone means never being checked by something you can't talk into agreeing with you.</p>
+
+                <h3>Should beginners use ChatGPT for DSA?</h3>
+                <p>Yes, for explanation, not solutions. If you don't yet know what a hash map is, an assistant is a patient and genuinely excellent teacher, and asking for the same concept four different ways costs nothing. The specific danger for beginners is that you have no internal standard yet — you can't tell a good solution from a bad one, and copying working code feels identical to learning. Heavy use for concepts, almost none for problems you haven't seriously attempted.</p>
+
+                <h3>Should I memorise AI solutions?</h3>
+                <p>Close to useless. Interviewers rarely ask the exact question you memorised, and one small variation collapses a memorised answer. What's worth internalising is the pattern underneath — recognising a sliding window, seeing that sorting first enables two pointers. Patterns transfer to problems you've never seen. Memorised code doesn't, and it produces the worst outcome available: reciting a correct answer and being unable to explain a line of it.</p>
+
+                <h3>Can interviewers detect AI learning?</h3>
+                <p>They can't tell you used AI, and they don't care. What they detect within about two minutes is whether you understand what you wrote. The tell isn't the code, it's the follow-up. Someone who genuinely learned explains why they chose this structure, what breaks on empty input, how runtime shifts if the constraint doubles. Someone who absorbed answers has fluent code and vague explanations, and that gap is glaring from the other side of the table.</p>
+
+                <h3>How often should I practise without AI?</h3>
+                <p>Roughly one session in three, and it should feel uncomfortable. Problem, timer, finish or fail entirely alone, no tab open. It's not a test of virtue, it's a measurement. Preparing with constant help tells you what you can do with help, which isn't the number the interview measures. The AI-free sessions are the only place you find out what you actually own — and that number is humbling the first few times.</p>
+
+                <h3>Which AI tool is best?</h3>
+                <p>The differences matter far less than how you use them. Claude and ChatGPT are both strong at explanation and mocks, Gemini is convenient inside Google's tools, Perplexity and Phind are better for sourced answers. Copilot is the one to be careful with, because inline autocomplete removes the pause where thinking happens. Pick whichever you'll actually talk to, then spend your attention on the workflow instead of the comparison.</p>
+
+                <h3>Should I use AI during contests?</h3>
+                <p>Read the rules — many forbid it and disqualification follows. Beyond that: a contest is one of the few places you get timed pressure resembling a real interview, and using AI converts your best available rehearsal into a typing exercise. Contests are worth entering precisely because they hurt. Use AI afterwards, when the editorial's out and you want to understand what beat you. That's where the learning was hiding anyway.</p>
+
+                <h3>How do I avoid dependency?</h3>
+                <p>Put a rule between you and the tool, because willpower loses at eleven at night. The rule that works is a timer: no AI for the first twenty-five minutes, no exceptions, even when you're certain you're stuck. Usually you're not stuck, you're uncomfortable, and the discomfort is the part that builds the skill. Add an AI-free session every third day and rewrite every assisted solution the next morning. Dependency forms when the tool is easier to reach than the effort.</p>
+
+                <h3>Can AI help with behavioural interviews?</h3>
+                <p>This is where it's most useful and most underused. Behavioural answers fail because they're vague, too long, or missing a result — an assistant spots all three instantly if you tell it to be harsh. Give it your story, ask what a hiring manager wouldn't believe, ask for the three follow-ups your answer invites. What it can't do is generate your experiences, and an invented story dies under two follow-ups. Sharpen true stories, never write fiction.</p>
+
+                <h3>How long should I think before asking for a hint?</h3>
+                <p>Twenty to thirty minutes of genuine effort, where genuine means writing things down rather than staring. If you've produced nothing at all after thirty, a hint beats another hour of frustration — grinding without direction mostly teaches you that you hate this. Ask for the smallest possible hint, then close the tab and go back to thinking. The goal is to be unstuck, not to be told.</p>
+
+                <h3>Is it bad to look at the solution after trying?</h3>
+                <p>No, and the guilt around this wastes a lot of time. After honest effort, reading the solution is efficient learning, and every strong problem-solver has read thousands. What matters is what happens next. Read it and move on and you've learned almost nothing, because recognition isn't recall. Read it, close everything, rewrite it from an empty file tomorrow, and you own it. The solution isn't the finish line, it's halfway.</p>
+
+                <h3>Can AI give wrong answers to coding problems?</h3>
+                <p>Regularly, and the confident tone never changes when it does. The failures are subtle: an off-by-one in a binary search boundary, a complexity claim ignoring the cost of a slice, an approach that passes the examples and dies on empty input. This is why running code against real tests beats reading and nodding. Wrong-but-fluent is more dangerous than obviously confused.</p>
+
+                <h3>How many problems should I solve before an interview?</h3>
+                <p>The count is the wrong metric and chasing it is why so much prep fails. A hundred problems done properly — attempted alone, understood, rewritten, revisited — beats four hundred skimmed with help. If you want a target, aim for coverage of the standard patterns rather than a number: arrays, strings, hash maps, two pointers, sliding window, binary search, stacks, trees, graphs, basic DP. Depth there beats volume everywhere, and the difference shows the moment a question varies.</p>
+
+                <h3>Does using AI make you a worse programmer?</h3>
+                <p>The tool doesn't, the habit can. As a reviewer, explainer, and sparring partner it makes most people meaningfully better, because they get feedback they'd otherwise never receive. As an answer machine it produces an engineer who ships when the tool's available and stalls when it isn't — and interviews are designed to find exactly that gap. The tool is neutral. What decides it is whether you reach for it before you've thought or after.</p>
+
+                <h2>Key Takeaways</h2>
+
+                <ul>
+                    <li><strong>The struggle isn't in the way of the learning. It is the learning.</strong> Everything after it is a receipt.</li>
+                    <li><strong>AI enters after effort, never before.</strong> One rule. Everything else is machinery for enforcing it.</li>
+                    <li><strong>Recognition isn't recall.</strong> Reading a solution feels exactly like understanding it. It isn't, and the gap shows up at the worst possible moment.</li>
+                    <li><strong>Rewrite from scratch or it didn't happen.</strong> The single step that separates real prep from collecting green ticks.</li>
+                    <li><strong>Ask for hints, not answers.</strong> "What's wrong with my approach?" is worth more than a hundred perfect solutions.</li>
+                    <li><strong>Structure beats willpower.</strong> A twenty-five minute timer works. Promising yourself you'll be disciplined does not.</li>
+                    <li><strong>Do mocks with humans.</strong> AI can't make your hands shake, and the interview will.</li>
+                    <li><strong>Fluent isn't correct.</strong> AI is confidently wrong often enough that you must run the code.</li>
+                    <li><strong>A hundred problems owned beats four hundred skimmed.</strong> The big number only ever impressed you.</li>
+                    <li><strong>Turn off autocomplete while practising.</strong> It removes the exact pause where thinking lives.</li>
+                </ul>
+
+                <h2>Final Thoughts</h2>
+
+                <p>I still use AI every day. More than before, honestly. The difference is that it's stopped being the thing that solves my problems and become the thing that argues with me about how I solved them.</p>
+
+                <p>Here's the reframe that fixed it for me. Stop thinking of AI as a search engine that returns answers. Start thinking of it as a very patient senior engineer sitting next to you — one who will absolutely tell you the answer if you ask, and who quietly thinks less of you when you do. You wouldn't turn to a real senior after ninety seconds and say "what's the answer?" You'd be embarrassed. You'd try first, then go to them with "here's what I've got, here's where I'm stuck." Do that with the tool.</p>
+
+                <p>Because the interview isn't really testing whether you know the two-pointer technique. It's testing what you do in the first five minutes with an unfamiliar problem and no help — whether you can generate an idea from nothing, evaluate it, throw it away, and generate a better one, out loud, while a stranger watches. That capability is built in exactly one place: the uncomfortable twenty minutes you keep skipping.</p>
+
+                <p>Using AI for coding interview prep isn't the mistake. Using it to avoid the twenty minutes is.</p>
+
+                <p>And the goal was never to become someone who can produce answers with AI. Plenty of people can do that, and the market has noticed. The goal is to become someone who can still think when the tab is closed — which, conveniently, is also the person everyone wants to hire.</p>
+
+                <blockquote>The best interview preparation doesn't happen when AI writes your code. It happens when AI helps you understand why your code works.</blockquote>
+
+                <p>Related reading: <a href="/blogs/how-to-write-a-prompt-that-actually-works.html">How to Write a Prompt That Actually Works</a>, <a href="/blogs/ai-resume-rejected-what-actually-fixed-it.html">My AI Resume Got Rejected — What Actually Fixed It</a>, and <a href="/blogs/opencode-open-source-ai-coding-agent-review.html">OpenCode: An Open-Source AI Coding Agent</a>.</p>
+
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Coding Interview Prep</a>
+                <a href="javascript:void(0)" class="tag">AI Interview Practice</a>
+                <a href="javascript:void(0)" class="tag">DSA Practice</a>
+                <a href="javascript:void(0)" class="tag">LeetCode</a>
+                <a href="javascript:void(0)" class="tag">Technical Interview</a>
+                <a href="javascript:void(0)" class="tag">ChatGPT for Coding</a>
+                <a href="javascript:void(0)" class="tag">Claude for Coding</a>
+                <a href="javascript:void(0)" class="tag">Software Engineer Career</a>
+                <a href="javascript:void(0)" class="tag">Mock Interviews</a>
+                <a href="javascript:void(0)" class="tag">Developer Learning</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 RapidFast</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
