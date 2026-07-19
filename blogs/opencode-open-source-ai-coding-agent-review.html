@@ -5,17 +5,17 @@
         <!-- Google Analytics (gtag) removed -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="index, follow">
-    <meta name="description" content="OpenCode is the open-source AI coding agent giving developers full control, self-hosting, and custom model support. Is it worth using in 2026? Full review inside.">
+    <meta name="description" content="OpenCode is MIT-licensed and free, but you still pay for tokens. An honest look at real costs, the 78% speed gap versus Claude Code, and the two-projects name confusion.">
     <meta name="keywords" content="OpenCode review, open source AI coding agent, OpenCode features, self-hosted AI coding assistant, OpenCode vs Copilot, AI developer tools 2026, open source coding assistant">
-    <title>OpenCode Review: Open Source AI Coding Agent 2026 | RapidFast</title>
+    <title>OpenCode Review 2026: What the Free Open-Source Coding Agent Really Costs</title>
     <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
     <link rel="canonical" href="https://rapidfast.page/blogs/opencode-open-source-ai-coding-agent-review.html">
     <link rel="alternate" hreflang="en-in" href="https://rapidfast.page/blogs/opencode-open-source-ai-coding-agent-review.html">
     <link rel="alternate" hreflang="x-default" href="https://rapidfast.page/blogs/opencode-open-source-ai-coding-agent-review.html">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="OpenCode – The Open Source AI Coding Agent Developers Are Watching">
-    <meta property="og:description" content="OpenCode is the open-source alternative to closed AI coding assistants. Full control, custom models, self-hosting, and a community-driven roadmap. Here is what developers need to know.">
+    <meta property="og:title" content="OpenCode Review 2026: Free Software, Paid Tokens">
+    <meta property="og:description" content="OpenCode is MIT-licensed and free, but you still pay for tokens. An honest look at real costs, the 78% speed gap versus Claude Code, and the two-projects name confusion.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rapidfast.page/blogs/opencode-open-source-ai-coding-agent-review.html">
     <meta property="og:site_name" content="RapidFast">
@@ -24,8 +24,8 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="OpenCode Review: Open Source AI Coding Agent for Developers in 2026">
-    <meta name="twitter:description" content="OpenCode brings open-source transparency, self-hosting, and custom AI model support to AI-assisted development. Here is what every developer should know before adopting it.">
+    <meta name="twitter:title" content="OpenCode: Free, Open Source, and Slower Than Claude Code">
+    <meta name="twitter:description" content="OpenCode is MIT-licensed and free, but you still pay for tokens. An honest look at real costs, the 78% speed gap versus Claude Code, and the two-projects name confusion.">
     <meta name="twitter:image" content="https://rapidfast.page/images/OpenCode.webp">
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../blog-styles.css">
@@ -38,8 +38,8 @@
     {
         "@context": "https://schema.org",
         "@type": "Article",
-        "headline": "OpenCode Review: The Open Source AI Coding Agent Developers Are Watching in 2026",
-        "description": "OpenCode is an open-source AI coding agent offering self-hosting, custom model support, and full developer control. This review covers features, comparisons, use cases, and whether it is worth adopting in 2026.",
+        "headline": "OpenCode Review 2026: What the Free Open-Source Coding Agent Really Costs",
+        "description": "OpenCode is MIT-licensed and free, but you still pay for tokens. An honest look at real costs, the 78% speed gap versus Claude Code, and the two-projects name confusion.",
         "datePublished": "2026-02-25",
         "dateModified": "2026-02-25",
         "author": {
@@ -76,90 +76,58 @@
         "mainEntity": [
             {
                 "@type": "Question",
-                "name": "Is OpenCode free?",
+                "name": "Is OpenCode really free?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "OpenCode is open-source software, meaning the codebase itself is freely available. You can download, run, and modify it without paying a licensing fee. However, running OpenCode in practice typically involves costs depending on your setup — if you use it with a commercial AI model API like Claude or GPT-4, you pay those API providers based on your usage. If you connect OpenCode to a local model you run on your own hardware, the cost is primarily your infrastructure and electricity. There is no OpenCode subscription fee itself."
+                    "text": "The software is genuinely free and MIT-licensed with no paid tier. But OpenCode has no model of its own, so you pay whichever provider you connect it to, either per token via an API key or by authenticating an existing Claude, ChatGPT, or GitHub Copilot subscription. Local models via Ollama cost nothing beyond your own hardware."
                 }
             },
             {
                 "@type": "Question",
-                "name": "Is OpenCode truly open source?",
+                "name": "Why are there two projects called OpenCode?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes. OpenCode is developed as an open-source project with its source code publicly available for review, modification, and contribution. This is a core part of its identity and one of the primary reasons it attracts developers who are concerned about transparency, vendor lock-in, and the privacy implications of closed commercial coding assistants. Anyone can inspect exactly what the software does, contribute improvements, or fork the project to build a custom variation."
+                    "text": "The original project split in mid-2025 after Charm brought it under its organisation and other major contributors objected. It resolved with Charm renaming their version Crush, while the remaining team kept the OpenCode name and rewrote the project in TypeScript. The current repository is anomalyco/opencode, and older links to sst/opencode redirect there."
                 }
             },
             {
                 "@type": "Question",
-                "name": "Can OpenCode replace GitHub Copilot?",
+                "name": "Is OpenCode slower than Claude Code?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "OpenCode can perform many of the same core functions as GitHub Copilot — code generation, completion, explanation, and refactoring — but the two tools have different design philosophies. Copilot is deeply integrated into the GitHub and VS Code ecosystem with a polished, low-friction experience. OpenCode offers more flexibility, transparency, and control, particularly for teams that want self-hosting, custom model selection, or full code privacy. Whether it replaces Copilot depends on your priorities: convenience and deep IDE integration favor Copilot, while flexibility, privacy, and open-source transparency favor OpenCode."
+                    "text": "Yes, measurably. Independent benchmarking found it around 78% slower on the same underlying model, at 16 minutes 20 seconds versus 9 minutes 9 seconds on a four-task suite. The gap comes from OpenCode running full test suites and reinstalling dependencies where Claude Code takes shortcuts. The same testing found OpenCode generated about 21 more tests and raised test coverage by roughly 29%."
                 }
             },
             {
                 "@type": "Question",
-                "name": "Does OpenCode support local models?",
+                "name": "Can OpenCode run local models?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes. One of OpenCode's most significant advantages is its support for local AI models — models running entirely on your own hardware rather than through a third-party API. This means developers who want to keep their code completely off external servers can use OpenCode with locally hosted models through tools like Ollama. Local model support is particularly important for enterprises with strict data governance requirements, security-conscious developers, and teams working on proprietary or sensitive codebases."
+                    "text": "Yes. OpenCode supports local models through Ollama and LM Studio, so nothing has to leave your machine. Output quality drops noticeably compared with frontier models, but for privacy-sensitive work or offline use it is a genuine option rather than a checkbox feature."
                 }
             },
             {
                 "@type": "Question",
-                "name": "Is OpenCode suitable for enterprises?",
+                "name": "What is OpenCode Zen?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "OpenCode can be a strong choice for enterprises, particularly those with data privacy requirements that make closed commercial AI coding tools difficult to justify. Its self-hosting capability and local model support mean enterprise teams can run AI-assisted development entirely within their own infrastructure — no code leaves the building. The trade-off is that enterprise deployment requires more configuration and internal technical expertise compared to commercial SaaS alternatives. Teams with strong DevOps capabilities and a need for full code sovereignty will find OpenCode well-suited to their requirements."
+                    "text": "Zen is the OpenCode team's own model gateway, a curated set of more than 50 models tested to work well with coding agents and billed per token at published rates. Claude Opus 4.8 runs $5 input and $25 output per million tokens, while cheaper options like DeepSeek V4 Flash run $0.14 and $0.28. Five models are free during trial periods, but data from those may be used for improvement."
                 }
             },
             {
                 "@type": "Question",
-                "name": "How secure is OpenCode?",
+                "name": "Does OpenCode store my code?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "OpenCode's security posture is fundamentally different from closed commercial tools. Because the source code is publicly auditable, security researchers can review exactly how it handles your code and data. When self-hosted with local models, your code never leaves your own infrastructure — a significant security advantage for sensitive projects. When using external API-based models, your code is subject to those providers' data handling policies, so users should review the relevant terms for whichever AI provider they connect. Overall, the self-hosted configuration with local models offers one of the highest levels of code privacy available in AI-assisted development."
+                    "text": "OpenCode itself runs locally and does not store your code. However, its privacy posture is only as strong as the model provider you connect it to, each of which has its own retention policy. The free models on OpenCode Zen explicitly may use your data for improvement during their trial phase, so they should be avoided for client or NDA work."
                 }
             },
             {
                 "@type": "Question",
-                "name": "What AI models does OpenCode support?",
+                "name": "Is OpenCode suitable for beginners?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "OpenCode is designed to work with multiple AI model providers rather than locking you into a single one. Common integrations include Anthropic's Claude models, OpenAI's GPT models, and locally hosted open-weight models through providers like Ollama. This multi-model flexibility is one of OpenCode's core architectural advantages — you can choose the model that best fits your performance, cost, and privacy requirements, and switch between models without changing your core workflow."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "How does OpenCode compare to Cursor?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Cursor is a polished, commercial AI-first code editor with a strong user experience and tight IDE integration. OpenCode is an open-source AI coding agent that prioritizes flexibility, transparency, and developer control over a curated commercial experience. Cursor tends to be easier to adopt immediately for developers who want a ready-to-use product. OpenCode appeals more to developers who want to understand exactly what their tools are doing, customize their AI workflow deeply, or run their coding assistant in a self-hosted environment."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "Does OpenCode work in the terminal?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Yes. OpenCode is built with terminal-first interaction as a core design principle, making it a natural fit for developers who live in the command line. It is designed to integrate into existing terminal-based workflows without requiring you to leave your preferred environment. This makes it particularly appealing to developers who favor lightweight tooling, shell-centric workflows, and editor-agnostic setups over heavy IDE dependencies."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "Is OpenCode suitable for students and beginner developers?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "OpenCode can be a valuable learning tool for students and beginner developers, particularly for those who want to understand both AI-assisted development and open-source tooling at the same time. However, the setup process requires more technical configuration than commercial alternatives like Copilot or Cursor, which have more guided onboarding. Students comfortable working in a terminal and installing developer tools will find the setup manageable. The learning opportunity extends beyond just using the tool — contributing to an active open-source project is a meaningful way to build real development experience."
-                }
-            },
-            {
-                "@type": "Question",
-                "name": "Can OpenCode handle large codebases?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "OpenCode is designed with repository-level understanding as a core capability, which means it attempts to build context about your entire codebase rather than operating in isolation on a single file. For very large codebases, performance and context window limitations of the underlying AI model may affect response quality — this is a constraint of the AI models themselves rather than OpenCode specifically. Teams with very large codebases should evaluate their chosen model's context window size alongside OpenCode's repository indexing approach."
+                    "text": "Not especially. It assumes comfort with the terminal, and configuration, particularly for local models, requires more technical knowledge than installing Cursor or Copilot. More importantly, any coding agent needs a user who can review what it produces. Developers who cannot yet evaluate the diff should start with a tool that has more guardrails."
                 }
             }
         ]
@@ -342,12 +310,21 @@
 
             <!-- Article Header -->
             <header class="article-header">
-                <h1 class="article-title">OpenCode Review: The Open Source AI Coding Agent Developers Are Watching</h1>
+                <h1 class="article-title">OpenCode Review 2026: What the Free Open-Source Coding Agent Actually Costs</h1>
                 <div class="article-meta">
                     <span class="article-meta-item">Feb 25, 2026</span>
                     <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
                 </div>
             </header>
+
+            <!-- Research Methodology Disclosure -->
+            <aside class="research-note" aria-label="How this overview was researched">
+                <h2 class="research-note-title">How I researched this</h2>
+                <p><strong>This is a desk overview, not a hands-on test.</strong> I have not run OpenCode on a paid account, and nothing below should be read as a report of my own results with it.</p>
+                <p>What it is instead: a careful read of OpenCode's own documentation, pricing page, and public discussion, written up so you can judge whether the tool is worth your time before you spend any. Where OpenCode makes a claim about what it does, I describe it as the company's claim &mdash; not as something I verified. Where I don't know something, I say so instead of filling the gap.</p>
+                <p>Two things I'd ask you to do yourself: confirm current pricing on the official site, since it moves faster than any article can track, and use a free tier or trial before committing money. If you do try it, <a href="/contact.html">tell me how it went</a> &mdash; I update these pages when readers report back.</p>
+            </aside>
+
 
             <!-- Featured Image -->
             <div class="featured-image-container">
@@ -358,446 +335,183 @@
             <!-- Article Content -->
             <div class="article-content">
 
-                <p class="lead">Something interesting is happening in the AI developer tools space. For the past two years, the conversation's been almost entirely dominated by commercial products — GitHub Copilot, Cursor, Windsurf, and a steady stream of well-funded startups racing to put AI assistance inside every IDE. These tools moved fast, raised enormous rounds, and attracted millions of developers. But a quieter, slower-moving shift has been building alongside that commercial wave: developers pushing back.</p>
+                <p class="lead">OpenCode is free, MIT-licensed, and genuinely open source &mdash; and none of that tells you what it costs to run. The software is free; the intelligence is not. OpenCode is a terminal client that drives somebody else's model, so your monthly bill is whatever tokens you burn at Anthropic, OpenAI, or whoever else you point it at. That distinction is the whole financial story of this tool, and the homepage doesn't lead with it.</p>
 
-                <p>And honestly, the pushback isn't about AI-assisted coding being unhelpful — it obviously is helpful. The concerns are more fundamental. Where does my code go when I send a prompt? Who owns the AI model I'm depending on? What happens to my workflow when this startup pivots, gets acquired, or just changes its pricing? Can I actually inspect what this tool is doing, or do I have to take it on faith? For a growing number of developers — particularly those working on sensitive codebases, running security-conscious teams, or simply unwilling to accept indefinite vendor lock-in — these questions don't have satisfying answers from commercial providers.</p>
-
-                <p>OpenCode enters this space with a pretty straightforward pitch: an AI coding agent that's fully open source, supports self-hosting, works with multiple AI model providers including locally hosted ones, and keeps your code under your own control. In 2026, that combination is attracting real developer attention. This review looks at whether it lives up to that premise — and who's most likely to benefit from actually adopting it.</p>
-
-                <!-- Quick Summary Box -->
-                <div class="summary-box">
-                    <h3>&#9889; Quick Summary: OpenCode at a Glance</h3>
+                <div class="info-box">
+                    <h4>OpenCode at a glance</h4>
                     <ul>
-                        <li><strong>What it is:</strong> An open-source AI coding agent with terminal integration, multi-model support, and self-hosting capability.</li>
-                        <li><strong>Best for:</strong> Privacy-conscious developers, open-source contributors, security teams, indie hackers, and engineering teams wanting full control.</li>
-                        <li><strong>Key advantage:</strong> Fully transparent codebase, local model support, no vendor lock-in, and complete code ownership.</li>
-                        <li><strong>Honest limitation:</strong> Setup requires more technical effort than commercial alternatives; community maturity is still growing.</li>
-                        <li><strong>Bottom line:</strong> A serious and capable alternative to closed AI coding assistants for developers who prioritize transparency and control over out-of-the-box convenience.</li>
+                        <li><strong>What it is:</strong> A terminal-based (TUI) AI coding agent that runs locally and connects to the model provider of your choice</li>
+                        <li><strong>Who makes it:</strong> Anomaly Innovations &mdash; the team behind SST, the serverless framework</li>
+                        <li><strong>License:</strong> MIT, written in TypeScript on the Bun runtime</li>
+                        <li><strong>Price:</strong> $0 for the software. You pay your model provider per token, or reuse an existing Claude, ChatGPT, or GitHub Copilot subscription</li>
+                        <li><strong>Repo activity:</strong> ~187,000 stars, ~23,500 forks, and roughly 4,700 open issues as of July 2026</li>
+                        <li><strong>First commit:</strong> April 2025 &mdash; about fifteen months old</li>
+                        <li><strong>Biggest constraint:</strong> Measurably slower than Claude Code, and setup assumes real terminal comfort</li>
                     </ul>
                 </div>
 
-                <h2>What Is OpenCode?</h2>
-                <p>OpenCode is an open-source AI coding agent — a software tool that uses AI models to help developers write, understand, refactor, and debug code, with the source code of the agent itself publicly available for anyone to inspect, modify, and run. Unlike commercial AI coding assistants that operate as black boxes sending your queries to proprietary servers, OpenCode is transparent by design.</p>
+                <h2>What it actually does</h2>
 
-                <p>The project is built around the idea that developers should have genuine ownership of the tools they depend on. That means being able to audit how the tool handles your code, being free to connect it to whichever AI model fits your requirements, and being able to run the whole system on infrastructure you control — not infrastructure you're renting from a company whose priorities may not align with yours.</p>
+                <p>OpenCode lives in your terminal. You point it at a project, describe what you want, and it reads files, edits them, runs commands, and reports back. If you've used Claude Code or Codex, the shape is familiar: an agent with filesystem and shell access, working inside a session you can interrupt.</p>
 
-                <p>At its core, OpenCode works as a terminal-native AI coding agent. It understands your repository context, responds to natural language prompts about your code, generates new code, explains existing functions, spots bugs, and helps with refactoring — across multiple files at once. Where it differs from most commercial tools isn't really in what it does but in how it does it: transparently, flexibly, and without requiring you to hand your codebase to a third party.</p>
+                <p>The design difference is that OpenCode is deliberately not tied to any model. Anthropic makes Claude Code to run Claude. OpenAI makes Codex to run GPT. OpenCode is made by neither, and connects to 75+ providers through the Models.dev directory &mdash; including local models via Ollama or LM Studio, if you'd rather nothing leave your machine at all.</p>
 
-                <p>The main use cases cover individual developers who want a capable AI programming assistant without privacy compromises, engineering teams that need a self-hosted solution for compliance reasons, open-source contributors building on an agent they can actually improve, and students who want to understand AI-assisted development from the inside out.</p>
+                <p>Two features are worth calling out because they're not universal in this category:</p>
 
-                <h2>Why OpenCode Matters in 2026</h2>
-                <p>The timing of OpenCode's rise in developer interest isn't coincidental. Several converging trends have made the case for an open-source AI coding agent significantly more compelling in 2026 than it would've been even eighteen months ago.</p>
+                <p><strong>LSP integration.</strong> OpenCode hooks into Language Server Protocol servers &mdash; Pyright for Python, rust-analyzer for Rust, gopls for Go, and around twenty more. In practice this means the agent sees real type information and live compiler diagnostics rather than inferring them from the text of your files. When it writes something that doesn't typecheck, the error comes back to the model mid-task and it corrects before telling you it's done. This is the most technically interesting thing in the product.</p>
 
-                <p>AI-assisted development has crossed the threshold from experimental to essential. Most professional software teams now have some form of AI coding assistance baked into their workflow. That normalization has shifted the evaluation criteria — developers aren't just asking "does this work?" anymore. They're asking "can I trust this?" and "what are the long-term implications of depending on it?"</p>
+                <p><strong>Plan mode and build mode.</strong> Plan mode reasons about a change without touching files. Build mode executes. The separation matters more than it sounds like it should, because the expensive failure with coding agents isn't a bad suggestion &mdash; it's a confident twenty-file refactor you didn't ask for.</p>
 
-                <p>Data governance has become a genuine enterprise concern in ways it wasn't during the early Copilot days. Legal departments, compliance teams, and CISOs at serious companies are asking hard questions about what happens to source code sent to AI model APIs. For many organizations, the answer from commercial providers isn't satisfying — or at least not satisfying enough to justify the risk without extensive contractual negotiation and data processing agreements. A self-hosted solution that never sends code off-premises sidesteps this problem entirely.</p>
+                <h2>What it actually costs</h2>
 
-                <div class="highlight-box">
-                    <strong>The vendor lock-in question:</strong> When a commercial AI coding tool is deeply embedded in your workflow, its pricing model, feature decisions, and even its continued existence become your business risk. Developers who built heavily around discontinued or pivoted products in previous tool cycles have learned this the hard way. Open source doesn't eliminate all risks, but it does mean the tool can't be taken away — you can fork it, maintain your own version, and keep running it regardless of what happens to the original project.
-                </div>
+                <p>Nothing, and then something. The client is MIT-licensed with no paid tier, no seats, and no telemetry-for-features bargain. But every request goes to a model, and models bill per token.</p>
 
-                <p>Community-driven development also tends to produce tools that reflect what developers actually need rather than what generates the best investor deck. OpenCode's roadmap is shaped by the developers using and contributing to it, which creates a different kind of accountability than a commercial product shaped by growth metrics.</p>
+                <p>You have three ways to pay for that:</p>
 
-                <h2>Key Features of OpenCode</h2>
-                <p>Look, understanding OpenCode's feature set requires approaching it from a developer's perspective rather than a product marketing one. The capabilities are real, but they do require some technical engagement to access fully.</p>
-
-                <h3>AI-Powered Code Generation</h3>
-                <p>OpenCode's core capability is prompt-driven code generation — describe what you need in natural language and get working code back. This isn't autocomplete in the traditional sense. You're working with a full AI model that understands intent, context, and programming patterns rather than just completing the next token in a sequence.</p>
-
-                <p>In practice, you can describe a function you need ("write a function that validates an email address and returns a boolean"), explain what a piece of code should do and have it scaffolded from scratch, or ask for a working implementation of a specific algorithm and actually get something that runs rather than pseudocode. The quality of generation depends heavily on the AI model you connect — using something like Claude 3.5 Sonnet or GPT-4o produces noticeably stronger results than smaller or older models.</p>
-
-                <p>For developers, the real value shows up in the routine work that eats up a disproportionate amount of time: boilerplate code, repetitive utility functions, test scaffolding, configuration files. Having an AI agent generate these accurately from a one-line description reclaims real blocks of time across a development week.</p>
-
-                <h3>Repository Understanding</h3>
-                <p>Here's the thing that actually sets OpenCode apart from simpler AI coding tools: it builds context about your repository as a whole rather than treating each prompt as an isolated interaction. When you ask it about how a specific module works, or ask it to extend an existing function while respecting the patterns already established in your codebase, it draws on indexed understanding of your project — not just whatever's visible in a single file.</p>
-
-                <p>This matters enormously for real projects. A toy example for a demo looks very different from a production codebase with its own naming conventions, architectural decisions, established patterns, and accumulated technical context. An AI agent that can actually read and respect those conventions produces suggestions that fit your codebase rather than suggestions that'd work in isolation but create inconsistency when you actually put them in.</p>
-
-                <h3>Code Refactoring</h3>
-                <p>Refactoring is one of the highest-leverage applications of AI assistance in professional development — and honestly one of the most underused, because the cognitive load of restructuring existing code while preserving behavior is genuinely demanding. OpenCode handles refactoring tasks through natural language instructions: "extract this logic into a separate utility function," "convert this callback-based API to async/await," or "break this class into smaller components following the single responsibility principle."</p>
-
-                <p>The agent's multi-file awareness is particularly useful here. Refactoring typically cascades across files — renaming a function means updating every call site, extracting a module means adjusting imports throughout the project. OpenCode can identify and handle these cascading changes rather than leaving you to track them manually or rely on IDE rename tools that might miss dynamic references.</p>
-
-                <h3>Bug Detection</h3>
-                <p>Describing a bug you've encountered and asking OpenCode to investigate is one of the more immediately practical things you can do with it day-to-day. Paste an error message, describe unexpected behavior, or ask it to review a specific block of code for potential issues. It'll analyze the code in context, explain what it finds, and propose concrete fixes rather than generic "check your logic" suggestions.</p>
-
-                <p>To be clear — this isn't a replacement for a debugger or a testing suite. Those tools catch different categories of problems more reliably than language model analysis. But for the kind of logical errors and off-by-one mistakes that debuggers don't flag automatically, having an AI agent that can look at your code with fresh eyes and articulate what it sees differently is genuinely useful.</p>
-
-                <h3>Multi-File Editing</h3>
-                <p>Single-file code assistance is useful. Multi-file assistance is transformative. OpenCode's ability to reason about and modify code across multiple files simultaneously is what makes it a real coding agent rather than a sophisticated autocomplete widget. When you ask it to add a new feature that requires changes across the data model, the service layer, the API controller, and the test suite, it can address all of those locations as a coherent change — not one file at a time while you frantically track what's left.</p>
-
-                <p>For developers working on feature branches with changes spanning many files, this shifts the AI from a "write this function for me" tool to something closer to a capable pair programmer that can hold the full context of a change in mind and help you execute it systematically.</p>
-
-                <h3>Terminal Integration</h3>
-                <p>OpenCode is built for the terminal. This is a deliberate choice that reflects its intended audience — developers who are comfortable in the command line and prefer tooling that integrates naturally into shell-based workflows rather than requiring a separate application window or IDE plugin.</p>
-
-                <p>Terminal-first design means OpenCode works alongside your existing editor, whether that's Neovim, Emacs, VS Code, or anything else. You don't have to adopt a new IDE or reconfigure your entire development environment. The agent runs in your terminal, receives your prompts there, and produces output you can review and apply within the same workflow you already use. No context switching required.</p>
-
-                <h3>Open Source Flexibility</h3>
-                <p>The open-source nature of OpenCode is itself a feature — arguably the most significant one for a real subset of its users. Being able to read the source code means you know exactly what the tool does with your prompts, how it handles your code, and what data flows where. You can audit it for security, adapt it to your team's specific requirements, and contribute improvements that benefit the broader community.</p>
-
-                <p>And this isn't just philosophically appealing — it has practical consequences. When a bug appears in a closed commercial tool, you wait for the vendor to fix it. When a bug appears in OpenCode, you can fix it yourself, submit a pull request, and run the patched version immediately. The time between problem identification and resolution can be dramatically shorter when you have full access to the codebase.</p>
-
-                <h3>Team Collaboration</h3>
-                <p>When deployed within a team environment, OpenCode can be configured as a shared resource — a self-hosted instance that everyone on the team uses with consistent model settings, security policies, and organizational context. This is meaningfully different from every team member running their own individual commercial subscription, where configuration drifts and there's no shared organizational context baked into the agent's behavior.</p>
-
-                <p>A shared instance also makes it possible to configure organizational-specific knowledge — coding standards, architectural decisions, internal library conventions — that the agent respects consistently across everyone who uses it. No more explaining your project's conventions from scratch every session.</p>
-
-                <h3>Custom AI Model Support</h3>
-                <p>OpenCode's multi-model architecture is one of its most practically significant features. Rather than being tied to a single AI provider's model and pricing, you can connect it to Anthropic's Claude, OpenAI's GPT models, locally hosted open-weight models through Ollama, or other compatible providers. This gives you real control over the cost-quality-privacy trade-off rather than accepting whatever a commercial vendor decided is the right balance.</p>
-
-                <p>The implications are real. A team that needs maximum capability for complex architectural questions might route those prompts to a frontier model while using a smaller, cheaper local model for routine code generation. A developer with strict privacy requirements can use only local models, keeping code entirely off external servers. The flexibility to make these choices — and change them as models evolve — is something no single-provider commercial tool can offer by design.</p>
-
-                <h3>Security and Privacy Controls</h3>
-                <p>OpenCode's security story is built around transparency and self-sovereignty. Because the code is open source, you can verify that the tool isn't doing anything with your code beyond what it claims. Because it supports self-hosting, you can run it in an environment where no external network requests are made at all. Because it supports local models, you can ensure that neither your prompts nor your code ever leave your infrastructure.</p>
-
-                <p>For security-conscious teams and regulated industries, these controls aren't nice-to-have features — they may be hard requirements for legal compliance with data handling obligations around source code and intellectual property.</p>
-
-                <h2>How OpenCode Works: A Step-by-Step Workflow</h2>
-                <p>Understanding the practical workflow of OpenCode helps set realistic expectations for what adoption actually involves. Here's how it goes.</p>
-
-                <p><strong>Step 1 — Installation:</strong> OpenCode installs through standard package managers or by cloning the repository and following the setup docs. Depending on your system and chosen configuration, this is a few terminal commands. It's not a one-click installer, but it's also not unusually complex for developers familiar with setting up developer tooling.</p>
-
-                <p><strong>Step 2 — Connecting an AI Model:</strong> After installation, you configure OpenCode with the AI model provider you want to use. This means providing API credentials for a commercial model provider, or pointing to a locally running model server. The configuration lives in a local config file that you control.</p>
-
-                <p><strong>Step 3 — Connecting Your Repository:</strong> Navigate to your project directory in the terminal and initialize OpenCode's repository indexing. The agent reads your codebase and builds a contextual understanding of your project structure, existing patterns, and dependencies. For large codebases, this initial indexing takes some time but runs in the background — nothing blocks you while it works.</p>
-
-                <p><strong>Step 4 — Prompt-Driven Development:</strong> With the agent running in your terminal, you start interacting through natural language prompts. Ask it to explain a confusing piece of code, generate a new function, refactor an existing module, or investigate a bug. The agent responds in context, drawing on its understanding of your repository.</p>
-
-                <p><strong>Step 5 — Code Generation and Review:</strong> OpenCode proposes code changes in response to your prompts. You review those changes, accept or modify them, and integrate them into your codebase. The agent doesn't apply changes without your review — you stay in control of what actually goes into your code.</p>
-
-                <p><strong>Step 6 — Testing and Iteration:</strong> Run your existing test suite against AI-generated code as you would with any change. Ask OpenCode to generate or update tests if your project has a testing convention, and iterate through the prompt-review-test cycle until the implementation meets your standards.</p>
-
-                <p><strong>Step 7 — Deployment:</strong> OpenCode doesn't handle deployment directly — it's a coding agent, not a CI/CD tool. Once your changes are tested and committed through your normal version control workflow, deployment follows whatever process your team already uses. The agent's job ends at well-tested, committed code.</p>
-
-                <h2>OpenCode User Interface and Experience</h2>
-                <p>Let's be honest about OpenCode's user experience: it's not polished in the way commercial products are. The terminal-first design means there's no visual dashboard, no drag-and-drop interface, no onboarding wizard walking you through your first five minutes. You open a terminal, run a command, and start typing prompts.</p>
-
-                <p>For many developers, that's exactly what they want. A lean interface that stays out of the way and lets you interact directly with the capability you came for. No unnecessary UI chrome, no subscription upsell banners, no feature discovery tooltips. Just the agent and your terminal.</p>
-
-                <p>But if you're accustomed to the polished experience of Cursor or the deep VS Code integration of Copilot, the initial experience of OpenCode may feel rough by comparison. There's a real learning curve — not just understanding the tool, but learning how to structure prompts effectively, how to configure model settings for your use case, and how to get the best results from the agent's repository understanding capabilities.</p>
-
-                <p>The productivity ceiling, once you're past that learning curve, is genuinely high. Developers who invest the time to configure OpenCode well and develop effective prompting habits report that it becomes a natural extension of their terminal workflow rather than something they have to consciously switch to.</p>
-
-                <h2>Real Use Cases</h2>
-                <p>Where does OpenCode actually fit in realistic development scenarios? Let's look at some concrete examples.</p>
-
-                <h3>Startup MVP Development</h3>
-                <div class="use-case-block">
-                    <h4>The Indie Hacker Building Fast Without Privacy Compromises</h4>
-                    <p>A solo developer building a SaaS product needs to move quickly but is building in a sensitive domain — healthcare, fintech, or enterprise software — where the idea itself may be confidential and sending code to third-party APIs creates real intellectual property exposure. OpenCode with a local model gives them AI-assisted development speed without the code leaving their machine. They get the productivity benefits of AI pair programming without gambling on a commercial provider's data handling commitments.</p>
-                </div>
-
-                <h3>Full-Stack Web Applications</h3>
-                <div class="use-case-block">
-                    <h4>The Full-Stack Developer Managing Multi-Layer Changes</h4>
-                    <p>A developer building a new feature in a full-stack web application needs to coordinate changes across the database schema, the API layer, the frontend components, and the test suite all at once. OpenCode's multi-file editing and repository awareness means the developer can describe the feature in plain language and have the agent propose coordinated changes across all layers — which they then review, adjust, and integrate rather than manually tracking what needs to change where across a sprawling codebase.</p>
-                </div>
-
-                <h3>Open Source Projects</h3>
-                <div class="use-case-block">
-                    <h4>The Open Source Maintainer Handling Contributor PRs</h4>
-                    <p>An open source project maintainer reviewing incoming pull requests benefits from OpenCode's code explanation and analysis capabilities. Understanding what a contributor's change actually does — including subtle behavioral changes that aren't immediately obvious from the diff — is faster with AI assistance than reading through everything manually. OpenCode can also help maintainers write thorough review comments, suggest improvements to contributor code, and draft documentation for new features before merging.</p>
-                </div>
-
-                <h3>Internal Business Tools</h3>
-                <div class="use-case-block">
-                    <h4>The Engineering Team Building on Sensitive Internal Systems</h4>
-                    <p>An internal engineering team building tooling on top of proprietary business systems — customer databases, financial records, operational infrastructure — where code snippets necessarily contain sensitive internal structure can't easily use commercial AI coding tools that send data externally. Self-hosted OpenCode with a local model or a privately deployed model instance solves this cleanly. The team gets AI assistance; their internal system architecture stays internal.</p>
-                </div>
-
-                <h3>Learning and Education</h3>
-                <div class="use-case-block">
-                    <h4>The Computer Science Student Learning Through Transparent Tooling</h4>
-                    <p>A student learning software development gets more educational value from a tool they can inspect and understand than from a black box that generates code without explanation. OpenCode's open-source nature means a curious student can read the agent's code, understand how it structures prompts, see how it handles repository context, and contribute back to the project — building real development skills on an active open-source codebase rather than just consuming a commercial product.</p>
-                </div>
-
-                <h3>Enterprise Engineering Teams</h3>
-                <div class="use-case-block">
-                    <h4>The Enterprise Team Meeting Data Governance Requirements</h4>
-                    <p>A large engineering organization with legal and compliance requirements around source code handling needs AI coding assistance that can be deployed entirely within its own cloud infrastructure. OpenCode deployed as a self-hosted instance connected to a privately hosted model gives enterprise teams the developer productivity benefits of AI coding assistance while satisfying the data handling requirements their legal and security teams have established. The alternative — negotiating custom data processing agreements with commercial providers — is both slower and less certain.</p>
-                </div>
-
-                <h2>OpenCode vs Other AI Coding Agents</h2>
-                <p>Comparing OpenCode honestly against the commercial tools it competes with requires acknowledging that each tool makes a different set of trade-offs. There's no universally superior option — the right choice depends on your specific priorities.</p>
-
-                <table>
+                <div class="data-table-wrapper">
+                <table class="data-table">
                     <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>OpenCode</th>
-                            <th>Cursor</th>
-                            <th>GitHub Copilot</th>
-                            <th>Claude Code</th>
-                            <th>Windsurf</th>
-                        </tr>
+                        <tr><th>Route</th><th>Rough cost</th><th>Notes</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Open Source</td>
-                            <td>&#10003; Yes</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                        </tr>
-                        <tr>
-                            <td>Self Hosting</td>
-                            <td>&#10003; Full</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                        </tr>
-                        <tr>
-                            <td>Privacy / Code Ownership</td>
-                            <td>&#10003; Complete</td>
-                            <td>Partial</td>
-                            <td>Partial</td>
-                            <td>Partial</td>
-                            <td>Partial</td>
-                        </tr>
-                        <tr>
-                            <td>Custom AI Models</td>
-                            <td>&#10003; Yes</td>
-                            <td>Limited</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>Limited</td>
-                        </tr>
-                        <tr>
-                            <td>Local Model Support</td>
-                            <td>&#10003; Yes</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                            <td>&#10007; No</td>
-                        </tr>
-                        <tr>
-                            <td>Repository Awareness</td>
-                            <td>&#10003; Strong</td>
-                            <td>&#10003; Strong</td>
-                            <td>Moderate</td>
-                            <td>&#10003; Strong</td>
-                            <td>&#10003; Strong</td>
-                        </tr>
-                        <tr>
-                            <td>Multi-File Editing</td>
-                            <td>&#10003; Yes</td>
-                            <td>&#10003; Yes</td>
-                            <td>Limited</td>
-                            <td>&#10003; Yes</td>
-                            <td>&#10003; Yes</td>
-                        </tr>
-                        <tr>
-                            <td>Team Collaboration</td>
-                            <td>&#10003; Self-hosted</td>
-                            <td>&#10003; Teams plan</td>
-                            <td>&#10003; Enterprise</td>
-                            <td>Limited</td>
-                            <td>&#10003; Teams plan</td>
-                        </tr>
-                        <tr>
-                            <td>Cost</td>
-                            <td>Free + API/infra</td>
-                            <td>Paid subscription</td>
-                            <td>Paid subscription</td>
-                            <td>Usage-based</td>
-                            <td>Paid subscription</td>
-                        </tr>
-                        <tr>
-                            <td>Vendor Lock-in</td>
-                            <td>&#10003; None</td>
-                            <td>High</td>
-                            <td>High</td>
-                            <td>Moderate</td>
-                            <td>High</td>
-                        </tr>
-                        <tr>
-                            <td>Setup Complexity</td>
-                            <td>Moderate</td>
-                            <td>Low</td>
-                            <td>Very Low</td>
-                            <td>Low</td>
-                            <td>Low</td>
-                        </tr>
-                        <tr>
-                            <td>Community Contributions</td>
-                            <td>&#10003; Open</td>
-                            <td>&#10007; Closed</td>
-                            <td>&#10007; Closed</td>
-                            <td>&#10007; Closed</td>
-                            <td>&#10007; Closed</td>
-                        </tr>
+                        <tr><td><strong>Your own API key</strong></td><td>Pay per token, uncapped</td><td>Most flexible, most dangerous. A long agentic session can spend real money without you watching.</td></tr>
+                        <tr><td><strong>Existing subscription</strong></td><td>Already paying</td><td>OpenCode can authenticate against Claude Pro/Max, ChatGPT Plus/Pro, or GitHub Copilot accounts. Often the cheapest route by a wide margin.</td></tr>
+                        <tr><td><strong>OpenCode Zen</strong></td><td>Per token, published rates</td><td>The team's own curated gateway. Claude Opus 4.8 runs $5 in / $25 out per million tokens; DeepSeek V4 Flash is $0.14 / $0.28. Five models are free during trial periods.</td></tr>
+                        <tr><td><strong>Local models</strong></td><td>$0 plus electricity</td><td>Ollama or LM Studio. Quality drops sharply versus frontier models, but nothing leaves your machine.</td></tr>
                     </tbody>
                 </table>
-
-                <p>The pattern in this comparison is clear. OpenCode wins decisively on the dimensions that matter most to privacy-conscious developers and compliance-driven organizations: open source transparency, self-hosting, local model support, and freedom from vendor lock-in. Commercial tools like Cursor and Windsurf win on polish, ease of onboarding, and IDE integration depth. GitHub Copilot wins on ecosystem reach and seamless GitHub integration. Claude Code wins on the quality of AI reasoning when used with frontier Anthropic models.</p>
-
-                <p>So the useful question isn't "which tool is objectively best" — it's "which tool is best for the priorities I actually have." For most individual developers who want a capable AI assistant immediately without configuration overhead, commercial tools have real advantages. For developers and teams who need self-hosted infrastructure, custom model flexibility, or full code sovereignty, OpenCode offers something no commercial tool can match.</p>
-
-                <h2>Advantages of OpenCode</h2>
-                <p>The case for OpenCode is strongest when you look at the cumulative advantages it offers rather than evaluating any single feature in isolation.</p>
-
-                <ul>
-                    <li><strong>Complete code privacy:</strong> In self-hosted configurations with local models, your source code never touches an external server under any circumstances. This isn't just a policy promise — it's a technical guarantee.</li>
-                    <li><strong>No vendor dependency:</strong> OpenCode can't be taken away, paused, or pivoted away from its original purpose without your knowledge. The codebase is yours to run indefinitely.</li>
-                    <li><strong>Auditable by design:</strong> Every developer who uses OpenCode can read the code that handles their prompts. There are no hidden behaviors, no undocumented data flows, and no need to take anyone's word for what the tool does.</li>
-                    <li><strong>Model flexibility:</strong> Switch between AI providers based on performance, cost, or privacy requirements without rebuilding your workflow around a new tool.</li>
-                    <li><strong>Cost structure you control:</strong> Your only recurring costs are the AI model APIs you choose to use and the infrastructure you run it on. No subscription fees to a tool vendor on top of those.</li>
-                    <li><strong>Community-driven improvement:</strong> Bug fixes and new features can come from any developer in the community — including you — rather than waiting for a commercial roadmap to prioritize your use case.</li>
-                    <li><strong>Terminal-native workflow:</strong> Works alongside your existing editor and tools without requiring you to adopt a new IDE or change your whole development environment setup.</li>
-                    <li><strong>Enterprise deployment flexibility:</strong> Can be deployed inside private cloud infrastructure, isolated networks, or air-gapped environments where commercial SaaS tools simply can't operate.</li>
-                    <li><strong>Educational transparency:</strong> Developers learning how AI coding agents work can study the implementation directly rather than treating it as a black box.</li>
-                    <li><strong>Contributing to the ecosystem:</strong> Using OpenCode means contributing to an open developer ecosystem rather than concentrating more capability in a handful of commercial vendors.</li>
-                </ul>
-
-                <h2>Potential Limitations</h2>
-                <p>OpenCode's honest limitations are worth discussing directly. Glossing over them would be misleading to anyone trying to make an informed adoption decision.</p>
-
-                <p><strong>Setup complexity:</strong> OpenCode requires more configuration than commercial alternatives. You need to install the software, configure your AI model provider, set up your repository indexing, and potentially configure a local model server if you're going that route. It's not unusually difficult for experienced developers, but it's significantly more involved than installing a browser extension or accepting a VS Code plugin.</p>
-
-                <p><strong>Community maturity:</strong> OpenCode's community is growing but it's younger and smaller than the ecosystems around major commercial tools. Documentation gaps exist. Edge cases may not have Stack Overflow answers yet. When you hit an unusual problem, you may need to dig into the source code yourself rather than finding an existing solution — which is actually feasible precisely because it's open source, but it requires a different kind of engagement than commercial support.</p>
-
-                <p><strong>Documentation gaps:</strong> Open-source projects often have documentation that lags behind development. Configuration options may not be fully documented, edge-case behaviors may not be explained, and setup guides may assume a level of technical familiarity that not all developers have. This is improving as the community matures, but it remains a real friction point for new users right now.</p>
-
-                <p><strong>Model dependency:</strong> OpenCode's output quality is fundamentally constrained by the quality of the AI model you connect. A well-configured OpenCode instance with a capable frontier model will produce strong results. An instance connected to a weak or poorly suited model will produce mediocre results regardless of how well OpenCode itself is configured. Getting the model selection right is part of the setup investment.</p>
-
-                <p><strong>No integrated IDE:</strong> Developers who prefer a single unified environment where the AI is deeply embedded in the editor experience — like Cursor's approach — will find OpenCode's terminal-first design requires a different mental model. It works alongside your editor rather than being inside it, which is a feature for some and a limitation for others. Fair enough either way.</p>
-
-                <h2>Security and Privacy</h2>
-                <p>OpenCode's security story is worth examining carefully because it operates differently from commercial tools in ways that matter for specific use cases.</p>
-
-                <p>The most significant security property of OpenCode is its auditability. When a commercial AI coding tool claims your code isn't stored or used for training, you're accepting that claim on trust. When OpenCode makes the same claim, you can verify it by reading the source code. For security teams that are used to verifying rather than trusting, that's not a minor distinction.</p>
-
-                <p>Self-hosted deployments with local models represent the strongest possible privacy posture for AI-assisted development. When OpenCode runs on your infrastructure and the AI model also runs on your infrastructure, there's no network path for your code to travel off-premises. This is technically verifiable through network monitoring rather than contractually asserted through a data processing agreement.</p>
-
-                <p>When using external API-based models — Claude, GPT-4, or others — the privacy properties revert to whatever those providers guarantee. OpenCode itself doesn't introduce additional data exposure beyond what the model API does, but it also can't compensate for data handling policies you may find inadequate in those providers' terms of service.</p>
-
-                <p>For enterprises evaluating OpenCode, the relevant compliance question is whether a self-hosted deployment with appropriate model selection can satisfy the data governance requirements their legal and security functions impose. For most organizations with genuine code sovereignty requirements, the answer is yes — with the caveat that the infrastructure itself must be properly secured, which is a standard infrastructure responsibility rather than something OpenCode uniquely creates.</p>
-
-                <h2>Pricing and Cost Considerations</h2>
-                <p>OpenCode is free to use as software. There's no licensing fee, no subscription, and no per-seat charge for the agent itself. But understanding the full cost picture requires looking at what OpenCode depends on.</p>
-
-                <p>If you use OpenCode with commercial AI model APIs — Anthropic's Claude, OpenAI's GPT models, or others — you pay those providers based on your usage. These costs vary by model, context window usage, and the volume of prompts you make. For an individual developer with moderate usage, API costs are typically modest. For a large engineering team with heavy usage, these costs can become meaningful and should be budgeted for explicitly.</p>
-
-                <p>If you use OpenCode with locally hosted models through Ollama or similar tools, the API cost disappears but is replaced by infrastructure cost — the hardware, cloud compute, or server capacity needed to run the model. For small local models that run on a developer laptop, this cost is essentially zero beyond electricity. For larger models that require dedicated GPU capacity, the infrastructure cost can actually exceed what commercial API fees would've been for the same usage volume. So model selection has real cost implications beyond just output quality.</p>
-
-                <p>Self-hosting OpenCode itself in a team environment requires server infrastructure — even a small cloud instance is enough for most team deployments. This is a negligible cost for most organizations that already run cloud infrastructure, but it's a real cost that solo developers and students should factor in if they're exploring self-hosted team configurations.</p>
-
-                <p>The total cost of ownership comparison with commercial alternatives depends heavily on your usage pattern and model choices. For developers already paying for frontier model API access, OpenCode represents a free addition to that spend. For teams replacing multiple commercial coding assistant subscriptions with a single self-hosted OpenCode instance, the cost dynamics often favor OpenCode meaningfully.</p>
-
-                <h2>Who Should Use OpenCode?</h2>
-                <p>Being specific about who benefits most from OpenCode — and who's probably better served by commercial alternatives — produces more useful guidance than claiming it's right for everyone.</p>
-
-                <p><strong>Solo developers and indie hackers</strong> who care about privacy, want to avoid subscription lock-in, and are comfortable with terminal-based tooling will find OpenCode a strong fit. The setup investment pays off quickly for developers who use AI assistance daily.</p>
-
-                <p><strong>Freelancers</strong> working with clients in regulated industries or on confidential projects benefit from the ability to guarantee code privacy in a way commercial tools can't. Being able to credibly tell a client "our AI tooling is self-hosted and your code never leaves our infrastructure" is a real professional differentiator.</p>
-
-                <p><strong>Startups</strong> in early stages building on ideas that represent genuine competitive advantage benefit from AI coding assistance that doesn't require sharing their codebase with third-party AI providers during the most sensitive period of development.</p>
-
-                <p><strong>Open source contributors and maintainers</strong> have a natural affinity for tools that are themselves open source — both philosophically and practically, since contributing improvements to OpenCode as a maintainer of open source projects is a coherent way to give back to developer tooling.</p>
-
-                <p><strong>Students</strong> learning programming with a genuine curiosity about how things work — not just how to use them — will get more long-term value from engaging with OpenCode's internals than from treating a commercial tool as a black box. Contributing to an active open-source project is also a meaningful way to build a real portfolio.</p>
-
-                <p><strong>Enterprise engineering teams</strong> subject to data governance requirements that commercial tools can't satisfy without complex contractual arrangements are strong candidates for self-hosted OpenCode deployments with appropriate model selection.</p>
-
-                <p><strong>Security-focused teams</strong> in cybersecurity, fintech, healthcare, and government contexts where source code handling has legal or regulatory implications will find OpenCode's self-hosted model uniquely capable of meeting their requirements without asking the legal team to review a vendor's data processing addendum.</p>
-
-                <p><strong>Who should probably start elsewhere:</strong> Developers who want a ready-to-use AI coding experience with minimal setup, teams whose workflow is deeply embedded in VS Code or GitHub's ecosystem, and organizations with no particular concern about code privacy who simply want the most polished AI coding experience available right now.</p>
-
-                <h2>Practical Tips for Getting Started</h2>
-                <p>For developers who decide OpenCode is worth exploring, a few practical recommendations make the adoption experience significantly smoother.</p>
-
-                <ul>
-                    <li><strong>Start with a commercial API for your first experience:</strong> Rather than starting with a local model — which adds setup complexity — begin with an API key from a provider you already have access to. Get comfortable with OpenCode's interaction patterns before adding the local model configuration layer on top.</li>
-                    <li><strong>Read the full installation documentation before starting:</strong> OpenCode's docs may have prerequisites that aren't immediately obvious. Reviewing the full setup guide before beginning saves time compared to hitting dependency issues mid-installation.</li>
-                    <li><strong>Begin with a smaller, well-understood codebase:</strong> Your first OpenCode experience will be smoother on a project you know thoroughly than on a large unfamiliar codebase. The agent's value becomes clearer when you can immediately judge whether its suggestions are contextually appropriate.</li>
-                    <li><strong>Invest in learning effective prompting:</strong> The quality difference between a vague prompt and a specific, contextual prompt is substantial. Spending thirty minutes reading about effective prompt engineering for coding contexts before your first production use is time well spent.</li>
-                    <li><strong>Organize your repository clearly:</strong> OpenCode's repository understanding is better when your codebase has clear structure, descriptive naming, and at least minimal inline documentation on non-obvious decisions. Improving your repository hygiene before indexing produces noticeably better agent outputs.</li>
-                    <li><strong>Configure security boundaries explicitly:</strong> If you're deploying in a team environment, define which model providers are approved, what data classification rules apply to different codebases, and who has configuration access to the shared instance before opening it up for team use.</li>
-                    <li><strong>Join the community early:</strong> OpenCode's GitHub repository and any associated Discord or forum are where you'll find answers to setup questions, learn about configuration options the documentation may not fully cover, and connect with other developers solving similar problems.</li>
-                    <li><strong>Evaluate local models for your use case:</strong> If privacy is a primary driver for adopting OpenCode, take the time to evaluate which local models work best for your typical coding tasks. The model landscape changes fast and a model that was mediocre six months ago may now be significantly better.</li>
-                </ul>
-
-                <h2>Future Roadmap and Community Potential</h2>
-                <p>Projecting the future of any open-source project requires acknowledging real uncertainty. Unlike a commercial product with a funded roadmap and a team responsible for hitting milestones, open-source development velocity depends on community engagement, contributor motivation, and whether the project attracts developers who find it compelling enough to invest their own time.</p>
-
-                <p>The structural conditions for OpenCode's continued growth are favorable. Developer concern about AI tool privacy and vendor lock-in isn't going away — if anything, it's intensifying as AI coding tools become more embedded in production workflows and the implications of long-term dependency become clearer. Projects that address genuine and growing developer concerns tend to attract sustained community interest.</p>
-
-                <p>The AI model ecosystem is also developing in ways that improve OpenCode's value proposition over time. Local models are getting faster, cheaper to run, and more capable with each successive generation. The gap between what you can do with a locally hosted model and what requires a frontier API model is narrowing measurably. As that gap closes, the cost-privacy trade-off of self-hosted configurations becomes increasingly favorable.</p>
-
-                <p>Integration with the broader developer tooling ecosystem — editors, CI systems, code review workflows, documentation generation — is where open-source projects like OpenCode can build an extensibility advantage that commercial tools find difficult to match. Community contributors building integrations specific to their own tooling stacks create a long tail of supported workflows that no single commercial team could prioritize and maintain.</p>
-
-                <p>The community potential is real. Whether it's fully realized depends on continued investment of developer time and attention — which in turn depends on OpenCode continuing to solve real problems better than closed alternatives for the people it serves most clearly.</p>
-
-                <h2>Frequently Asked Questions</h2>
-                <div class="faq-section">
-                    <div class="faq-item">
-                        <p class="faq-q">Is OpenCode free?</p>
-                        <p class="faq-a">OpenCode is open-source software, so the agent itself has no licensing cost. In practice, you'll incur costs based on your configuration — API fees if you use commercial AI model providers, or infrastructure costs if you run local models on dedicated hardware. The tool itself is free; the underlying AI compute isn't, regardless of which coding assistant you use.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Is OpenCode truly open source?</p>
-                        <p class="faq-a">Yes. OpenCode is developed as an open-source project with the full source code publicly available. This is central to its identity — the transparency it offers around how it handles your code is only possible because the codebase can be inspected, audited, and contributed to by any developer. This is a hard technical guarantee, not a policy statement.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Can OpenCode replace GitHub Copilot?</p>
-                        <p class="faq-a">For many use cases, yes. OpenCode handles code generation, completion, explanation, refactoring, and bug analysis — the same core functions Copilot provides. The practical difference is that Copilot offers deeper IDE integration and a more polished out-of-the-box experience, while OpenCode offers transparency, self-hosting, and custom model flexibility. Whether it replaces Copilot for you depends on which of those factors matters more in your specific situation.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Does OpenCode support local models?</p>
-                        <p class="faq-a">Yes, and this is honestly one of its most significant advantages. Through integration with tools like Ollama, OpenCode can use AI models running entirely on your own hardware — no external API calls, no data leaving your infrastructure. Local model quality varies significantly by model size and your hardware, so choosing the right local model for your use case is worth some research before committing.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Is OpenCode suitable for enterprises?</p>
-                        <p class="faq-a">OpenCode is a strong candidate for enterprises with data governance requirements that commercial AI coding tools can't satisfy without complex contractual arrangements. A self-hosted deployment with locally hosted models can meet code sovereignty requirements in regulated industries and security-sensitive environments. The trade-off is that enterprise deployment requires more internal technical expertise than a commercial SaaS subscription.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">How secure is OpenCode?</p>
-                        <p class="faq-a">OpenCode's security posture depends on your configuration. In a fully self-hosted setup with local models, it offers the highest level of code privacy available in AI-assisted development — your code never leaves your infrastructure and the tool's behavior is fully auditable. When using external AI model APIs, the privacy properties are those of the AI provider, not OpenCode specifically. The open-source codebase itself can be audited for security by anyone, which is more than you can say for the commercial alternatives.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">What AI models does OpenCode support?</p>
-                        <p class="faq-a">OpenCode supports multiple AI model providers rather than being tied to one. Common configurations include Anthropic Claude, OpenAI GPT models, and locally hosted open-weight models through Ollama. This flexibility lets you choose based on cost, capability, and privacy requirements — and switch between providers as your needs or the model landscape evolves.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">How does OpenCode compare to Cursor?</p>
-                        <p class="faq-a">Cursor is a polished commercial AI-first code editor with excellent IDE integration and a low-friction setup experience. OpenCode is a terminal-native open-source agent that prioritizes flexibility, transparency, and developer control. Cursor is better for developers who want an immediately polished AI coding experience. OpenCode is better for developers who need self-hosting, custom model support, or full code privacy — and are willing to invest in configuration to get there.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Does OpenCode work in the terminal?</p>
-                        <p class="faq-a">Yes — the terminal is OpenCode's native environment. It's built for developers who live in the command line and want AI assistance that integrates into their shell-based workflow without requiring a separate application or IDE change. This makes it editor-agnostic: it works alongside Neovim, VS Code, Emacs, or any other editor you prefer.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Is OpenCode suitable for students and beginners?</p>
-                        <p class="faq-a">OpenCode can be valuable for students, particularly those interested in both AI-assisted development and open-source contribution. The setup requires more technical confidence than commercial alternatives, so it's better suited to students who are comfortable in a terminal than those who are still learning basic tooling. The educational depth available — including the ability to read and contribute to the agent's own code — makes it uniquely valuable for developers who want to understand the tools they use rather than just operate them.</p>
-                    </div>
-                    <div class="faq-item">
-                        <p class="faq-q">Can OpenCode handle large codebases?</p>
-                        <p class="faq-a">OpenCode is built with repository-level understanding as a core feature, which means it works better than purely context-window-limited tools on large codebases. In practice, very large projects may hit limits imposed by the underlying AI model's context window size rather than OpenCode's architecture. Choosing a model with a larger context window helps, and the indexing approach OpenCode uses is designed to prioritize the most relevant repository context for each specific prompt.</p>
-                    </div>
                 </div>
 
-                <h2>Final Verdict</h2>
-                <div class="verdict-box">
-                    <h3>&#127942; Our Assessment: OpenCode</h3>
-                    <p>OpenCode is a genuine and capable open-source AI coding agent — not a demo project, not a feature-incomplete prototype, but a real alternative to commercial AI coding assistants for developers whose requirements commercial tools can't satisfy. Its core value proposition — transparency, self-hosting, custom model support, and freedom from vendor lock-in — addresses a real and growing set of concerns in the developer community. If those concerns match your situation, OpenCode deserves serious evaluation rather than dismissal in favor of a more polished but closed alternative.</p>
+                <p>Reported real-world spend for heavy daily use on a frontier model lands somewhere around $20&ndash;50/month in API costs &mdash; which can exceed a flat Copilot subscription. If you already pay for Claude Max or ChatGPT Pro, authenticating OpenCode against that subscription is the obvious first move, and it makes the tool genuinely free at the margin.</p>
+
+                <div class="warning-box">
+                    <h4>The free models are free for a reason</h4>
+                    <p>OpenCode Zen's free tier models &mdash; the ones with "Free" in the name &mdash; carry a documented caveat: data from them may be used for improvement during their trial phase. That's a fair trade for hobby code and an obvious non-starter for client work or anything under NDA. The irony is worth naming: OpenCode's strongest pitch is privacy and control, and its free tier is the one path in the product where your code may be retained. Read the model's terms before you point it at a repo you don't own.</p>
                 </div>
 
-                <p>The honest trade-off is setup complexity and community maturity. OpenCode asks more of you upfront than Copilot or Cursor. The onboarding isn't guided, the documentation has gaps, and the community support ecosystem is smaller than what commercial tools offer. For developers who equate ease of setup with quality of tool, that'll be a dealbreaker. But for developers who understand that initial configuration investment often unlocks long-term advantages in flexibility and control, it's a one-time cost rather than a persistent limitation.</p>
+                <h2>Before you go searching for it: there are two OpenCodes</h2>
 
-                <p>The question to ask yourself isn't "is OpenCode as polished as Cursor?" — it's not, and it's not trying to be. The question is "do the things OpenCode offers that Cursor can't provide — self-hosting, local models, full code privacy, open-source transparency — matter enough to my situation to justify the configuration investment?" For a growing number of developers and organizations in 2026, the honest answer to that question is yes.</p>
+                <p>This will cost you time if nobody warns you, so here's the warning.</p>
 
-                <p>AI-assisted development isn't a novelty anymore — it's part of how software gets built. The tools that persist will be the ones that earn developer trust on the dimensions that matter: capability, reliability, transparency, and control. OpenCode is staking its claim on the transparency and control end of that spectrum, and it's doing so in a way that's credible precisely because the code is there for anyone to read. That's a compelling foundation to build on, and a reason to watch this project closely as both the open-source ecosystem and the AI model landscape continue to mature.</p>
+                <p>In mid-2025 the original OpenCode project went through a public and fairly ugly split. Charm &mdash; the company behind the Bubble Tea and Lip Gloss terminal libraries &mdash; brought the original creator and the repository under its organisation. Other major contributors, who held the opencode.ai domain, objected. Accusations flew about rewritten git history and banned critics. It resolved with Charm renaming their version <strong>Crush</strong>, while the remaining team kept the OpenCode name and rewrote the project in TypeScript.</p>
 
-                <blockquote>
-                    Want to stay ahead of what's actually happening in AI developer tooling — not just the press releases but the real adoption stories? Explore more in-depth, honest technology reviews on RapidFast.
-                </blockquote>
+                <p>The practical consequences for you today:</p>
+
+                <ul>
+                    <li>The current repo is <strong>anomalyco/opencode</strong>. Older links point at <code>sst/opencode</code> and redirect; older tutorials may reference a Go codebase that no longer exists.</li>
+                    <li><strong>Crush</strong> is a different, actively maintained product from Charm with a notably prettier interface. If you're comparing terminal agents, it belongs on your list.</li>
+                    <li>Tutorials and benchmarks written before roughly August 2025 may describe either project. Check which one before you trust the conclusions.</li>
+                </ul>
+
+                <p>The split is now old news and both projects are healthy. It just makes searching unusually noisy, and it's the single most common way people get confused about this tool.</p>
+
+                <h2>The speed problem, and why it might be a feature</h2>
+
+                <p>This is the finding that should shape your expectations. In DataCamp's head-to-head testing, OpenCode completed a four-task benchmark in 16 minutes 20 seconds against Claude Code's 9 minutes 9 seconds &mdash; roughly 78% slower on the same underlying model.</p>
+
+                <p>That is a large gap and it is not a rounding error. But the reason is interesting. OpenCode is slower largely because it insists on doing things Claude Code skips: reinstalling dependencies, running the full test suite rather than a subset, and generating more tests. The same testing found OpenCode produced about 21 more tests on average and raised test coverage by around 29%.</p>
+
+                <p>So the honest framing isn't "slower tool." It's a different default on a real trade-off. Claude Code optimises for you getting an answer; OpenCode optimises for the answer being verified before you see it. Whether that's worth doubling your wait depends entirely on whether you were going to run those tests yourself.</p>
+
+                <p>My read: for exploratory work and small edits, the wait is annoying and Claude Code's defaults are better. For anything touching code you'd have to review carefully anyway, OpenCode's thoroughness is buying you something real. You can also configure a lot of this &mdash; the defaults are a philosophy, not a hard limit.</p>
+
+                <h2>What the repo tells you that the homepage doesn't</h2>
+
+                <p>Open source means the health metrics are public, so there's no need to take anyone's word for anything. As of July 2026:</p>
+
+                <ul>
+                    <li><strong>~187,000 stars and ~23,500 forks.</strong> Genuinely enormous for a fifteen-month-old project, and it makes OpenCode the most-starred open-source coding agent by a wide margin.</li>
+                    <li><strong>~4,700 open issues.</strong> This is the number worth pausing on. It's not necessarily a red flag &mdash; a project this popular generates issues faster than any team can close them, and many are feature requests rather than defects. But it does mean that if you hit a bug, you are joining a long queue.</li>
+                    <li><strong>Commits landing daily.</strong> The project is actively maintained, not a popular-but-abandoned repo, which is a failure mode worth checking for in any open-source dependency.</li>
+                    <li><strong>MIT licensed.</strong> No commercial-use restriction, no relicensing surprise, no CLA drama. You can fork it and ship it.</li>
+                </ul>
+
+                <p>The claim I couldn't verify is the "7.5 million developers monthly" figure on the homepage. There's no published methodology for it and no independent source. It may well be accurate &mdash; download counts across a dozen package managers are hard to audit either way &mdash; but treat it as marketing rather than measurement. The star and fork counts are checkable and impressive enough on their own.</p>
+
+                <h2>How it compares</h2>
+
+                <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Tool</th><th>Rough cost</th><th>Best when</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>OpenCode</strong></td><td>Free + your token spend</td><td>You want model choice, LSP-aware editing, and an auditable open-source toolchain</td></tr>
+                        <tr><td><strong>Claude Code</strong></td><td>Subscription or API</td><td>Speed matters and you're happy inside Anthropic's ecosystem</td></tr>
+                        <tr><td><strong>Crush (Charm)</strong></td><td>Free + your token spend</td><td>You want the same open, multi-model idea with a more polished terminal UI</td></tr>
+                        <tr><td><strong>GitHub Copilot</strong></td><td>Flat monthly fee</td><td>Predictable billing and IDE-native completion matter more than agent autonomy</td></tr>
+                        <tr><td><strong>Cursor</strong></td><td>Subscription</td><td>You want a full editor rather than a terminal tool</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <p>The category is crowded and moving fast. What OpenCode has that the proprietary options structurally cannot is the ability to switch models when one gets worse, more expensive, or discontinued &mdash; without switching tools. In a market where model pricing has changed repeatedly in eighteen months, that's not a small hedge.</p>
+
+                <h2>Who it suits &mdash; and who should skip it</h2>
+
+                <p><strong>Worth installing if:</strong> you're comfortable in a terminal, you already pay for Claude or ChatGPT and want more from that subscription, you work somewhere that needs an auditable toolchain, or you specifically want the LSP integration &mdash; which no proprietary competitor currently matches.</p>
+
+                <p><strong>Probably skip if:</strong> you want something that works in five minutes with no configuration (Copilot or Cursor will serve you better), you need predictable flat billing rather than variable token spend, you don't work in a terminal by preference, or you're new enough to programming that you can't yet review what an agent hands you. That last one applies to every coding agent, but it applies harder to one whose defaults let it run your test suite and reinstall your dependencies.</p>
+
+                <h2>How to evaluate it in an afternoon</h2>
+
+                <p>It's free and installs in one command, so evaluation costs you time rather than money. Five things worth doing deliberately:</p>
+
+                <ol>
+                    <li><strong>Connect your existing subscription first, not an API key.</strong> Run <code>/connect</code> and authenticate against Claude, ChatGPT, or Copilot if you have one. This tells you whether the tool is useful before you've spent a cent, and stops an exploratory session turning into a surprise invoice.</li>
+                    <li><strong>Test the LSP integration on purpose.</strong> Ask for a change in a strongly typed file and watch whether it catches its own type errors before reporting done. This is the headline feature &mdash; confirm it works in your language, since LSP quality varies a lot across the twenty-plus supported.</li>
+                    <li><strong>Time one real task against your current tool.</strong> The 78% figure is someone else's codebase. Find out what the gap looks like on yours, and whether the extra tests it writes are ones you'd have written.</li>
+                    <li><strong>Use plan mode before build mode on anything non-trivial.</strong> Read the plan. This is where you catch a misunderstanding for free instead of reviewing a diff for it.</li>
+                    <li><strong>If you're evaluating for work, check the model terms, not the tool's.</strong> OpenCode itself stores nothing. But the provider you connect it to has its own retention policy, and the Zen free models explicitly may use your data. The tool's privacy posture is only as good as the endpoint you point it at.</li>
+                </ol>
+
+                <h2>The bottom line</h2>
+
+                <p>OpenCode is the most credible tool I've looked at on this site, and the reason is structural rather than a matter of taste: everything it claims can be checked. The licence is MIT, the repo is public, the issue count is visible, the model prices are published, and an independent benchmark says plainly that it's slower than its main competitor. Very few AI products let you verify the unflattering parts.</p>
+
+                <p>It's not the right pick for everyone. It's slower, it assumes terminal fluency, and "free" is doing some real work in the marketing given that you still have to pay for tokens. If you want to open something and have it work, buy Copilot.</p>
+
+                <p>But if you're going to be paying a model provider anyway, and you'd rather not have your tooling welded to whichever lab is currently winning, this is the one to install. The switching cost when the market moves again is close to zero &mdash; and on current evidence, the market will move again.</p>
+
+                <h2>Frequently asked questions</h2>
+
+                <div class="info-box">
+                    <h4>Is OpenCode really free?</h4>
+                    <p>The software is genuinely free and MIT-licensed with no paid tier. But it has no model of its own, so you pay whichever provider you connect it to &mdash; either per token via an API key, or by authenticating an existing Claude, ChatGPT, or GitHub Copilot subscription. Local models via Ollama cost nothing beyond your own hardware.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Why are there two projects called OpenCode?</h4>
+                    <p>The original project split in mid-2025 after Charm brought it under its organisation and other major contributors objected. It resolved with Charm renaming their version <strong>Crush</strong>, while the remaining team kept the OpenCode name and rewrote it in TypeScript. The current repo is anomalyco/opencode; older links to sst/opencode redirect there.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Is OpenCode slower than Claude Code?</h4>
+                    <p>Yes, measurably. Independent benchmarking found it around 78% slower on the same underlying model &mdash; 16 minutes 20 seconds versus 9 minutes 9 seconds on a four-task suite. The gap comes from OpenCode running full test suites and reinstalling dependencies where Claude Code takes shortcuts. The same testing found OpenCode generated about 21 more tests and raised coverage by roughly 29%.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Can OpenCode run local models?</h4>
+                    <p>Yes. It supports local models through Ollama and LM Studio, so nothing has to leave your machine. Output quality drops noticeably compared with frontier models, but for privacy-sensitive work or offline use it is a genuine option rather than a checkbox feature.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>What is OpenCode Zen?</h4>
+                    <p>Zen is the team's own model gateway &mdash; a curated set of 50+ models tested to work well with coding agents, billed per token at published rates. Claude Opus 4.8 runs $5 input / $25 output per million tokens; cheaper options like DeepSeek V4 Flash run $0.14 / $0.28. Five models are free during trial periods, but data from those may be used for improvement.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Does OpenCode store my code?</h4>
+                    <p>OpenCode itself runs locally and does not store your code. However, its privacy posture is only as strong as the model provider you connect it to, each of which has its own retention policy. The free models on OpenCode Zen explicitly may use your data for improvement during their trial phase, so avoid those for client or NDA work.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Is OpenCode suitable for beginners?</h4>
+                    <p>Not especially. It assumes comfort with the terminal, and configuration &mdash; particularly for local models &mdash; requires more technical knowledge than installing Cursor or Copilot. More importantly, any coding agent needs a user who can review what it produces. If you can't yet evaluate the diff, start somewhere with more guardrails.</p>
+                </div>
 
             </div>
 
-            <!-- Tags -->
             <div class="article-tags">
                 <span class="tag-label">Tags:</span>
                 <a href="javascript:void(0)" class="tag">OpenCode</a>

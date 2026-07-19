@@ -31,3 +31,13 @@ html, body { max-width: 100%; overflow-x: hidden; }
     padding: 0;
   }
 }
+
+/* Research methodology disclosure - sourcing transparency on tool overviews */
+.research-note{background:var(--blog-card-bg);border:1px solid var(--blog-border);border-left:4px solid var(--blog-accent);border-radius:0 8px 8px 0;padding:1.25rem 1.5rem;margin:0 0 2rem;font-size:0.95rem;line-height:1.75;color:var(--blog-text-secondary)}
+.research-note-title{font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blog-accent);margin:0 0 0.75rem}
+.research-note p{margin:0 0 0.85rem}
+.research-note p:last-child{margin-bottom:0}
+.research-note strong{color:var(--blog-text);font-weight:600}
+.research-note a{color:var(--blog-accent);text-decoration:underline}
+.research-note a:hover{color:var(--blog-accent-hover)}
+@media (max-width:576px){.research-note{padding:1rem 1.15rem;font-size:0.9rem}}
