@@ -73,6 +73,12 @@
 
   <!-- ===== Blog Articles ===== -->
   <url>
+    <loc>https://rapidfast.page/blogs/ai-tools-save-10-hours-a-week-i-tracked-mine.html</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://rapidfast.page/blogs/free-ai-tiers-2026-chatgpt-claude-gemini-perplexity.html</loc>
     <lastmod>2026-07-19</lastmod>
     <changefreq>monthly</changefreq>
@@ -171,6 +177,42 @@
   <url>
     <loc>https://rapidfast.page/blogs/run-llm-on-laptop-8gb-ram-no-gpu-ollama.html</loc>
     <lastmod>2026-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://rapidfast.page/blogs/ai-entry-level-jobs-what-changed.html</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://rapidfast.page/blogs/i-stopped-using-ai-for-a-week-of-coding.html</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://rapidfast.page/blogs/ai-ml-fresher-salary-bangalore-2026.html</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://rapidfast.page/blogs/do-you-need-a-masters-for-ai-jobs-india.html</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://rapidfast.page/blogs/ai-skills-in-indian-job-postings-2026.html</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://rapidfast.page/blogs/portfolio-projects-that-got-interviews.html</loc>
+    <lastmod>2026-07-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
