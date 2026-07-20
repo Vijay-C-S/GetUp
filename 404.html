@@ -20,6 +20,7 @@
     <meta property="og:site_name" content="RapidFast">
 
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/cookie-consent.css">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"></noscript>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -167,28 +168,21 @@
         </div>
     </section>
 
+    <script src="/script.js" defer></script>
+
     <!-- Cookie Consent Banner -->
-    <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:#fff;padding:1rem 1.5rem;z-index:9999;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;box-shadow:0 -2px 12px rgba(0,0,0,0.3);">
-        <p style="margin:0;font-size:0.9rem;flex:1;min-width:250px;">We use cookies and similar technologies to improve your experience and show relevant ads. See our <a href="/privacy-policy.html" style="color:#7c3aed;text-decoration:underline;">Privacy Policy</a> and <a href="/cookie-policy.html" style="color:#7c3aed;text-decoration:underline;">Cookie Policy</a>.</p>
-        <div style="display:flex;gap:0.75rem;flex-shrink:0;">
-            <button id="cookie-decline" style="background:transparent;border:1px solid #666;color:#ccc;padding:0.5rem 1.25rem;border-radius:6px;cursor:pointer;font-size:0.9rem;">Decline</button>
-            <button id="cookie-accept" style="background:#7c3aed;border:none;color:#fff;padding:0.5rem 1.25rem;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:600;">Accept</button>
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
         </div>
     </div>
-    <script>
-        (function(){
-            if(!localStorage.getItem('cookieConsent')){document.getElementById('cookie-banner').style.display='flex';}
-            document.getElementById('cookie-accept').addEventListener('click',function(){
-                localStorage.setItem('cookieConsent','accepted');
-                document.getElementById('cookie-banner').style.display='none';
-            });
-            document.getElementById('cookie-decline').addEventListener('click',function(){
-                localStorage.setItem('cookieConsent','declined');
-                document.getElementById('cookie-banner').style.display='none';
-            });
-        })();
-    </script>
-    <script src="/script.js" defer></script>
+    <script src="/js/cookie-consent.js" defer></script>
 </body>
 
 </html>
