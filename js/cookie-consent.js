@@ -3,7 +3,7 @@
 (function () {
     'use strict';
 
-    const CONSENT_KEY = 'RapidFast_cookie_consent';
+    const CONSENT_KEY = 'GetUp_cookie_consent';
     const CONSENT_EXPIRY_DAYS = 365;
 
     function getConsent() {

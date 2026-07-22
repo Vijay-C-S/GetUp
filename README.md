@@ -1,6 +1,6 @@
-# Rapid_Fast
+# GetUp
 
-AI-focused static website for RapidFast (rapidfast.page), with curated AI blogs, legal pages, SEO files, and homepage UI custom styling.
+AI-focused static website for GetUp (getupdated.tech), with curated AI blogs, legal pages, SEO files, and homepage UI custom styling.
 
 ## Project Overview
 
@@ -60,4 +60,4 @@ git push origin main
 
 ## Repository
 
-- GitHub: https://github.com/Vijay-C-S/Rapid_Fast
+- GitHub: https://github.com/Vijay-C-S/GetUp

@@ -1,5 +1,5 @@
-# RapidFast robots.txt
-# https://rapidfast.page/
+# GetUp robots.txt
+# https://getupdated.tech/
 
 User-agent: *
 Allow: /
@@ -23,4 +23,4 @@ Disallow: /fix-adsense.ps1
 Crawl-delay: 10
 
 # Primary Sitemap
-Sitemap: https://rapidfast.page/sitemap.xml
+Sitemap: https://getupdated.tech/sitemap.xml

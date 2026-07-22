@@ -695,11 +695,11 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                console.log('RapidFast website loaded successfully!');
+                console.log('GetUp website loaded successfully!');
             });
         }
 
-        console.log('%c RapidFast', 'font-size: 24px; font-weight: bold; color: #6366f1');
-        console.log('%c Welcome to RapidFast - Your Gateway to Success!', 'font-size: 14px; color: #0ea5e9;');
+        console.log('%c GetUp', 'font-size: 24px; font-weight: bold; color: #6366f1');
+        console.log('%c Welcome to GetUp - Your Gateway to Success!', 'font-size: 14px; color: #0ea5e9;');
     });
 })();
