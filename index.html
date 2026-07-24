@@ -84,7 +84,7 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: var(--font-sans);
             background: #0a0a0f;
             color: #e5e7eb;
             line-height: 1.6
@@ -333,8 +333,8 @@
     </style>
     <link rel="preload" href="styles.css" as="style">
     <link rel="stylesheet" href="styles.css">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         media="print" onload="this.media='all'">
     <noscript>
@@ -391,11 +391,12 @@
 
     <!-- Google AdSense verification -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="css/theme-terminal.css">
 </head>
 
 <body class="home-v2">
     <!-- Skip to content for accessibility -->
-    <a href="#home" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:var(--primary,#6366f1);color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 8px 0;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 8px 0;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <a href="#home" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:var(--primary,#6366f1);color:#fff;text-decoration:none;font-weight:600;border-radius:0 0 8px 0;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;border-radius:0 0 8px 0;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
     <!-- Noscript fallback -->
     <noscript>
         <div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">
@@ -451,14 +452,15 @@
 
         <div class="container hero-v2-layout">
             <div class="hero-content">
-                <div class="hero-badge">Independent AI + Tech Briefing</div>
+                <div class="hero-badge">Independent Dev + Tech Briefing</div>
                 <h1 class="hero-title">
-                    A Home For <span class="gradient-text">AI News</span><br>
-                    That Actually Helps You Act
+                    Write Better <span class="gradient-text">Code</span><br>
+                    In Any Language You Pick
                 </h1>
                 <p class="hero-subtitle">
-                    Fast, readable coverage on AI tools, model updates, hiring trends,
-                    and practical guides for students and early-career builders.
+                    Practical, no-fluff writing on programming languages, tooling and
+                    developer workflow &mdash; for students and early-career engineers
+                    who'd rather ship than skim.
                 </p>
                 <div class="hero-cta">
                     <a href="/#blogs" class="btn btn-primary">
@@ -466,12 +468,12 @@
                         <i class="fas fa-arrow-right"></i>
                     </a>
                     <a href="/blogs.html" class="btn btn-outline">
-                        <span>All AI Blogs</span>
+                        <span>Browse All Posts</span>
                     </a>
                 </div>
                 <div class="hero-stats">
                     <div class="stat">
-                        <span class="stat-number" data-count="15">15</span>
+                        <span class="stat-number" data-count="30">30</span>+
                         <span class="stat-label">Articles</span>
                     </div>
                     <div class="stat">
@@ -485,6 +487,32 @@
                 </div>
             </div>
 
+            <div class="hero-visual">
+                <div class="term-window" role="img"
+                     aria-label="Terminal window showing a script that prints a list of programming languages covered on this blog.">
+                    <div class="term-bar" aria-hidden="true">
+                        <span class="term-dot red"></span>
+                        <span class="term-dot yellow"></span>
+                        <span class="term-dot green"></span>
+                        <span class="term-title">getup — bash — 80&times;24</span>
+                    </div>
+                    <div class="term-body" aria-hidden="true">
+<div class="term-line"><span class="term-prompt">$</span> cat <span class="term-path">stack.py</span></div>
+<div class="term-line"><span class="term-comment"># what we write about</span></div>
+<div class="term-line"><span class="term-key">langs</span> = [<span class="term-str">"python"</span>, <span class="term-str">"javascript"</span>,</div>
+<div class="term-line">         <span class="term-str">"rust"</span>, <span class="term-str">"go"</span>, <span class="term-str">"sql"</span>]</div>
+<div class="term-line">&nbsp;</div>
+<div class="term-line"><span class="term-key">for</span> l <span class="term-key">in</span> langs:</div>
+<div class="term-line">    <span class="term-fn">print</span>(<span class="term-str">f"learn {l} &rarr; ship it"</span>)</div>
+<div class="term-line">&nbsp;</div>
+<div class="term-line"><span class="term-prompt">$</span> python stack.py</div>
+<div class="term-line"><span class="term-num">&gt;</span> learn python &rarr; ship it</div>
+<div class="term-line"><span class="term-num">&gt;</span> learn javascript &rarr; ship it</div>
+<div class="term-line"><span class="term-prompt">$</span> <span class="term-cursor"></span></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -493,9 +521,18 @@
     <section class="blogs-section" id="blogs">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">Read & Learn</span>
-                <h2 class="section-title">Our <span class="gradient-text">Blogs</span></h2>
-                <p class="section-subtitle">Insights, tutorials, and stories to help you grow</p>
+                <span class="section-badge">read &amp; learn</span>
+                <h2 class="section-title">Latest <span class="gradient-text">Posts</span></h2>
+                <p class="section-subtitle">Tutorials, deep dives and field notes on languages, tools and the work of shipping software</p>
+                <div class="lang-tags">
+                    <span class="lang-tag">python</span>
+                    <span class="lang-tag">javascript</span>
+                    <span class="lang-tag">rust</span>
+                    <span class="lang-tag">go</span>
+                    <span class="lang-tag">sql</span>
+                    <span class="lang-tag">typescript</span>
+                    <span class="lang-tag">tooling</span>
+                </div>
             </div>
             <div class="blogs-grid">                <!-- AI/ML Fresher Salary in Bangalore 2026 -->
                 <a href="blogs/ai-ml-fresher-salary-bangalore-2026.html" class="blog-card clickable-card">

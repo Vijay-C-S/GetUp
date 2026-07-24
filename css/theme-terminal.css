@@ -1,0 +1,1125 @@
+/* =========================================================================
+   GetUp — Terminal / Code-Editor Theme
+   -------------------------------------------------------------------------
+   A theme override layer. Loads AFTER styles.css and blog-styles.css and
+   re-skins the site without touching existing markup structure, URLs, or
+   content. Everything here is either a CSS-variable override or a scoped
+   restyle of an existing class.
+   ========================================================================= */
+
+/* ===== 1. Palette ======================================================== */
+
+/* Dark is the default experience. Values follow a GitHub-dark style ramp,
+   chosen so body text clears WCAG AA on its own background. */
+:root,
+[data-theme="dark"] {
+    --primary: #3fb950;          /* terminal green — primary accent  */
+    --primary-dark: #2ea043;
+    --primary-light: #56d364;
+    --secondary: #58a6ff;        /* keyword blue                     */
+    --accent: #d2a8ff;           /* string/const magenta             */
+    --success: #3fb950;
+    --warning: #d29922;
+    --danger: #f85149;
+
+    --bg-primary: #0d1117;
+    --bg-secondary: #010409;
+    --bg-tertiary: #161b22;
+    --bg-card: #161b22;
+
+    --text-primary: #e6edf3;
+    --text-secondary: #9da7b3;
+    --text-tertiary: #6e7681;
+
+    --border-color: #30363d;
+
+    /* Terminal-specific tokens */
+    --term-chrome: #161b22;
+    --term-line: rgba(240, 246, 252, 0.06);
+    --code-bg: #010409;
+    --glow: rgba(63, 185, 80, 0.35);
+
+    /* Sharper, more "editor" geometry than the old rounded look */
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+    --radius-full: 999px;
+
+    --shadow-sm: 0 1px 0 rgba(1, 4, 9, 0.6);
+    --shadow-md: 0 4px 12px rgba(1, 4, 9, 0.55);
+    --shadow-lg: 0 12px 32px rgba(1, 4, 9, 0.65);
+    --shadow-xl: 0 20px 48px rgba(1, 4, 9, 0.75);
+
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono',
+                 Menlo, Consolas, 'Liberation Mono', monospace;
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    /* Aliases: cookie-consent.css reads --primary-color/--accent-color/--card-bg,
+       names the rest of the site never defined, so it was falling back to its
+       hardcoded indigo. Defining them here re-points it at the theme. */
+    --primary-color: var(--primary);
+    --accent-color: var(--secondary);
+    --card-bg: var(--bg-card);
+}
+
+/* Light mode keeps the same editor language, just inverted. */
+[data-theme="light"] {
+    --primary: #1a7f37;
+    --primary-dark: #116329;
+    --primary-light: #2da44e;
+    --secondary: #0969da;
+    --accent: #8250df;
+    --success: #1a7f37;
+    --warning: #9a6700;
+    --danger: #cf222e;
+
+    --bg-primary: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eaeef2;
+    --bg-card: #ffffff;
+
+    --text-primary: #1f2328;
+    --text-secondary: #59636e;
+    --text-tertiary: #818b98;
+
+    --border-color: #d1d9e0;
+
+    --term-chrome: #eaeef2;
+    --term-line: rgba(31, 35, 40, 0.06);
+    --code-bg: #f6f8fa;
+    --glow: rgba(26, 127, 55, 0.25);
+
+    --shadow-sm: 0 1px 0 rgba(31, 35, 40, 0.06);
+    --shadow-md: 0 4px 12px rgba(31, 35, 40, 0.1);
+    --shadow-lg: 0 12px 32px rgba(31, 35, 40, 0.12);
+    --shadow-xl: 0 20px 48px rgba(31, 35, 40, 0.16);
+}
+
+/* ===== 2. Typography ===================================================== */
+
+body {
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Headings go monospace — the single strongest "this is a dev site" signal. */
+h1, h2, h3, h4, h5, h6,
+.hero-title,
+.section-title,
+.article-title,
+.logo-text,
+.nav-link,
+.btn,
+.stat-number,
+.blog-card h3,
+.footer-brand .logo-text {
+    font-family: var(--font-mono);
+    letter-spacing: -0.02em;
+}
+
+.hero-title,
+.section-title,
+.article-title {
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* Inline code + pre blocks inside articles */
+.article-content code,
+.article-content kbd,
+code, kbd, samp {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.15em 0.4em;
+    color: var(--accent);
+}
+
+.article-content pre {
+    font-family: var(--font-mono);
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    line-height: 1.7;
+    margin: 1.75rem 0;
+}
+
+.article-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+}
+
+/* ===== 3. Page shell ===================================================== */
+
+body {
+    background-color: var(--bg-primary);
+    background-image:
+        linear-gradient(var(--term-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--term-line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-attachment: fixed;
+}
+
+/* ===== 4. Navbar ========================================================= */
+
+.navbar {
+    background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
+.navbar.scrolled {
+    background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
+    border-bottom-color: var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+/* Logo becomes a shell prompt: getup:~$ _ */
+.logo-text {
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.logo-text .highlight {
+    color: var(--primary);
+    -webkit-text-fill-color: var(--primary);
+    background: none;
+}
+
+.navbar .logo-text::after {
+    content: ':~$';
+    color: var(--text-tertiary);
+    font-weight: 400;
+    margin-left: 0.35rem;
+}
+
+.navbar .logo::after {
+    content: '';
+    display: inline-block;
+    width: 0.5em;
+    height: 1.05em;
+    margin-left: 0.35rem;
+    background: var(--primary);
+    vertical-align: -0.15em;
+    animation: term-blink 1.15s steps(1) infinite;
+}
+
+@keyframes term-blink {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+/* Nav links styled as file paths */
+.nav-link {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    position: relative;
+    padding: 0.35rem 0.15rem;
+}
+
+.nav-link::before {
+    content: '/';
+    color: var(--text-tertiary);
+    opacity: 0.55;
+    margin-right: 0.1rem;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary);
+}
+
+.nav-link.active::after,
+.nav-link:hover::after {
+    background: var(--primary);
+}
+
+/* Theme toggle — override the hardcoded slate colors from styles.css */
+.theme-toggle {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.theme-toggle .toggle-circle {
+    background: var(--primary);
+    border-radius: var(--radius-sm);
+}
+
+.theme-toggle .toggle-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+}
+
+.theme-toggle .toggle-label-night {
+    color: var(--text-secondary);
+}
+
+.theme-toggle .toggle-label-day {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .theme-toggle {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="light"] .theme-toggle .toggle-circle {
+    background: var(--primary);
+}
+
+.hamburger span {
+    background: var(--text-primary);
+    border-radius: 1px;
+}
+
+/* ===== 5. Hero =========================================================== */
+
+.hero,
+.hero-v2 {
+    background: radial-gradient(
+        ellipse 90% 70% at 50% -10%,
+        color-mix(in srgb, var(--primary) 12%, transparent),
+        transparent 70%
+    );
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Retire the old floating blobs — they read as marketing, not developer. */
+.hero .floating-shapes,
+.hero-v2 .floating-shapes {
+    display: none;
+}
+
+/* Hero badge as a code comment */
+.hero-badge {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.85rem;
+    letter-spacing: 0;
+}
+
+.hero-badge::before {
+    content: '// ';
+    color: var(--primary);
+}
+
+.hero-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+    max-width: 60ch;
+}
+
+.gradient-text {
+    background: linear-gradient(120deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Hero stats as a status line */
+.hero-stats {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.75rem;
+    gap: 2.5rem;
+}
+
+.hero-stats .stat-number {
+    font-family: var(--font-mono);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.hero-stats .stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+/* ---- Terminal window (new hero visual, markup added in index.html) ---- */
+.term-window {
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.75;
+    width: 100%;
+    max-width: 540px;
+}
+
+.term-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--term-chrome);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.term-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+.term-dot.red    { background: #ff5f57; }
+.term-dot.yellow { background: #febc2e; }
+.term-dot.green  { background: #28c840; }
+
+.term-title {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.02em;
+}
+
+.term-body {
+    padding: 1.15rem 1.25rem 1.4rem;
+    overflow-x: auto;
+}
+
+.term-line {
+    white-space: pre;
+    color: var(--text-secondary);
+}
+
+.term-prompt   { color: var(--primary); }
+.term-path     { color: var(--secondary); }
+.term-comment  { color: var(--text-tertiary); font-style: italic; }
+.term-key      { color: #ff7b72; }
+.term-str      { color: var(--accent); }
+.term-fn       { color: #d2a8ff; }
+.term-num      { color: #79c0ff; }
+
+[data-theme="light"] .term-key { color: #cf222e; }
+[data-theme="light"] .term-fn  { color: #8250df; }
+[data-theme="light"] .term-num { color: #0550ae; }
+
+.term-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    background: var(--primary);
+    vertical-align: -0.18em;
+    animation: term-blink 1.15s steps(1) infinite;
+}
+
+/* ---- home-v2 split hero overrides -------------------------------------
+   styles.css sets these with `body.home-v2 ...` specificity and hardcoded
+   indigo/cyan gradients, so they must be matched selector-for-selector. */
+
+body.home-v2 .hero-v2,
+body.home-v2[data-theme="dark"] .hero-v2,
+[data-theme="dark"] body.home-v2 .hero-v2,
+body.home-v2[data-theme="light"] .hero-v2,
+[data-theme="light"] body.home-v2 .hero-v2 {
+    background:
+        radial-gradient(circle at 12% -5%,
+            color-mix(in srgb, var(--primary) 14%, transparent), transparent 42%),
+        radial-gradient(circle at 88% 12%,
+            color-mix(in srgb, var(--secondary) 12%, transparent), transparent 44%);
+    min-height: auto;
+    padding: 8rem 0 5rem;
+}
+
+body.home-v2 .hero-v2 .hero-v2-layout {
+    align-items: center;
+    gap: 3rem;
+}
+
+body.home-v2 .hero-v2 .hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+}
+
+/* Stat tiles lose their card chrome — they read as a terminal status line.
+   styles.css sets these twice (base + a [data-theme="dark"] pair), so both
+   selector shapes are matched here. */
+body.home-v2 .hero-v2 .hero-stats .stat,
+body.home-v2[data-theme="dark"] .hero-v2 .hero-stats .stat,
+[data-theme="dark"] body.home-v2 .hero-v2 .hero-stats .stat {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    color: var(--primary);
+    font-family: var(--font-mono);
+}
+
+body.home-v2 .hero-v2 .hero-stats .stat-number,
+body.home-v2[data-theme="dark"] .hero-v2 .hero-stats .stat-number,
+[data-theme="dark"] body.home-v2 .hero-v2 .hero-stats .stat-number {
+    color: var(--primary);
+}
+
+body.home-v2 .hero-v2 .hero-stats .stat-label,
+body.home-v2[data-theme="dark"] .hero-v2 .hero-stats .stat-label,
+[data-theme="dark"] body.home-v2 .hero-v2 .hero-stats .stat-label {
+    color: var(--text-tertiary);
+    flex-basis: 100%;
+}
+
+.hero-visual {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+@media (max-width: 980px) {
+    body.home-v2 .hero-v2 {
+        padding: 7rem 0 3.5rem;
+    }
+
+    body.home-v2 .hero-v2 .hero-stats {
+        grid-template-columns: none;
+        gap: 1.75rem;
+    }
+
+    .hero-visual {
+        justify-content: flex-start;
+    }
+}
+
+/* ===== 6. Buttons ======================================================== */
+
+.btn {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    padding: 0.8rem 1.5rem;
+    letter-spacing: -0.01em;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #04140a;
+    border: 1px solid var(--primary);
+}
+
+[data-theme="light"] .btn-primary {
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--glow);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ===== 7. Section headers ================================================ */
+
+.section-badge {
+    font-family: var(--font-mono);
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.8rem;
+}
+
+.section-badge::before {
+    content: '// ';
+    color: var(--primary);
+}
+
+.section-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+}
+
+/* ===== 8. Blog cards ===================================================== */
+
+/* styles.css layers a slate/cyan gradient on this section in both modes */
+.blogs-section,
+[data-theme="dark"] .blogs-section,
+[data-theme="light"] .blogs-section {
+    background: transparent;
+}
+
+.blog-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: none;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.blog-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Thin accent rail that lights up on hover, like an active editor tab */
+.blog-card::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.blog-card:hover::after {
+    opacity: 1;
+}
+
+.blog-image {
+    border-bottom: 1px solid var(--border-color);
+    background: var(--code-bg);
+}
+
+.blog-card:hover .blog-image img {
+    transform: scale(1.03);
+}
+
+.blog-content {
+    padding: 1.4rem 1.5rem 1.6rem;
+}
+
+/* Meta line reads like a comment */
+.blog-meta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+    gap: 1rem;
+}
+
+.blog-meta i {
+    color: var(--primary);
+    opacity: 0.85;
+}
+
+.blog-card h3 {
+    font-size: 1.0625rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.blog-card:hover h3 {
+    color: var(--primary);
+}
+
+.blog-card p {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+.read-more {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.read-more::before {
+    content: '$ ';
+    opacity: 0.7;
+}
+
+/* ===== 9. Article pages ================================================== */
+
+.blog-wrapper,
+.blog-layout {
+    background: transparent;
+}
+
+.article-title {
+    letter-spacing: -0.03em;
+}
+
+.article-meta,
+.article-meta-item {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+}
+
+.article-meta-item i {
+    color: var(--primary);
+}
+
+.article-content {
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+}
+
+.article-content h2,
+.article-content h3 {
+    font-family: var(--font-mono);
+    letter-spacing: -0.025em;
+    scroll-margin-top: 6rem;
+}
+
+/* Section headings get a subtle hash prefix, like a markdown source view */
+.article-content h2::before {
+    content: '## ';
+    color: var(--primary);
+    opacity: 0.6;
+    font-weight: 400;
+}
+
+.article-content h3::before {
+    content: '### ';
+    color: var(--primary);
+    opacity: 0.5;
+    font-weight: 400;
+}
+
+.article-content a {
+    color: var(--secondary);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, var(--secondary) 45%, transparent);
+}
+
+.article-content a:hover {
+    text-decoration-color: var(--secondary);
+}
+
+.article-content blockquote {
+    border-left: 3px solid var(--primary);
+    background: var(--bg-tertiary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 1rem 1.4rem;
+    color: var(--text-secondary);
+    font-style: normal;
+}
+
+.lead {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+}
+
+.featured-image-container,
+.featured-image {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--code-bg);
+}
+
+.image-caption {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.research-note {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--secondary);
+    border-radius: var(--radius-md);
+}
+
+.research-note-title {
+    font-family: var(--font-mono);
+    color: var(--secondary);
+}
+
+/* Tables as data output */
+table {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.9375rem;
+}
+
+th {
+    font-family: var(--font-mono);
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] th {
+    background: var(--bg-tertiary) !important;
+}
+
+td {
+    font-family: var(--font-sans);
+}
+
+tr:nth-child(even),
+[data-theme="dark"] tr:nth-child(even) {
+    background: color-mix(in srgb, var(--bg-tertiary) 45%, transparent);
+}
+
+tr:nth-child(odd),
+[data-theme="dark"] tr:nth-child(odd) {
+    background: transparent;
+}
+
+tr:hover,
+[data-theme="dark"] tr:hover {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+/* ===== 10. Blog listing page ============================================= */
+
+.blog-header-simple {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-form input,
+.search-form {
+    font-family: var(--font-mono);
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+
+.search-form input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--glow);
+}
+
+.search-btn {
+    font-family: var(--font-mono);
+    background: var(--primary);
+    color: #04140a;
+    border-radius: var(--radius-md);
+}
+
+[data-theme="light"] .search-btn {
+    color: #ffffff;
+}
+
+/* ===== 11. Forms & contact =============================================== */
+
+input, textarea, select {
+    font-family: var(--font-mono);
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--glow);
+}
+
+label {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.contact-section {
+    border-top: 1px solid var(--border-color);
+    background: transparent;
+}
+
+/* ===== 12. Footer ======================================================== */
+
+.footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.footer .logo-text {
+    font-family: var(--font-mono);
+}
+
+.footer-brand p {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+}
+
+.footer-links h4,
+.footer-grid h4 {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.footer-links a {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+    transition: color 0.15s ease;
+}
+
+.footer-links a:hover {
+    color: var(--primary);
+}
+
+.footer-bottom {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    border-top: 1px solid var(--border-color);
+}
+
+.back-to-top {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--primary);
+    border-radius: var(--radius-md);
+}
+
+.back-to-top:hover {
+    border-color: var(--primary);
+    box-shadow: 0 6px 20px var(--glow);
+}
+
+/* ===== 12b. Cookie consent bar =========================================== */
+
+.cookie-consent {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    font-family: var(--font-sans);
+}
+
+.cookie-consent-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.cookie-consent-text a {
+    color: var(--secondary);
+}
+
+.cookie-btn {
+    font-family: var(--font-mono);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+}
+
+.cookie-btn-accept {
+    background: var(--primary);
+    color: #04140a;
+    border: 1px solid var(--primary);
+}
+
+[data-theme="light"] .cookie-btn-accept {
+    color: #ffffff;
+}
+
+.cookie-btn-accept:hover {
+    background: var(--primary-light);
+    box-shadow: 0 4px 15px var(--glow);
+}
+
+.cookie-btn-decline {
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.cookie-btn-decline:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--primary);
+}
+
+/* ===== 13. Language tag chips (new, used on cards + hero) ================= */
+
+.lang-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1.25rem;
+}
+
+.lang-tag {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.lang-tag::before {
+    content: '#';
+    color: var(--text-tertiary);
+    margin-right: 0.1rem;
+}
+
+.lang-tag:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ===== 14. Accessibility & motion ======================================== */
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+.skip-to-content {
+    font-family: var(--font-mono);
+    background: var(--primary);
+    color: #04140a;
+}
+
+::selection {
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+    color: var(--text-primary);
+}
+
+/* Custom scrollbar, editor-style */
+* {
+    scrollbar-color: var(--border-color) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar .logo::after,
+    .term-cursor {
+        animation: none;
+        opacity: 1;
+    }
+
+    .blog-card:hover,
+    .btn:hover,
+    .lang-tag:hover {
+        transform: none;
+    }
+}
+
+/* ===== 15. Responsive ==================================================== */
+
+@media (max-width: 900px) {
+    .term-window {
+        max-width: 100%;
+        font-size: 0.8125rem;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        background-size: 40px 40px;
+    }
+
+    .navbar .logo::after {
+        display: none;
+    }
+
+    .hero-stats {
+        gap: 1.5rem;
+    }
+
+    .term-body {
+        padding: 1rem;
+    }
+}
+
+/* Mobile nav panel needs an opaque backdrop against the grid background */
+@media (max-width: 968px) {
+    .nav-menu {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+    }
+
+    .nav-link::before {
+        content: none;
+    }
+}
