@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="How I built rook, bishop and queen move generation in Java using simple ray walking instead of magic bitboards — the algorithm, the direction arrays, the bugs that ate my weekends, and why starting simple taught me more than copying an optimisation.">
+    <title>Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)">
+    <meta property="og:description" content="Rook, bishop and queen move generation in Java using plain ray walking — the direction arrays, the blocker logic, the debugging stories, and why correctness should come before clever optimisation.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)">
+    <meta name="twitter:description" content="I skipped magic bitboards and wrote the slow, obvious sliding piece move generator first. It taught me more than the optimisation ever could have.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)",
+        "description": "A first-person account of implementing rook, bishop and queen move generation in a Java chess engine using ray-based traversal instead of magic bitboards — direction arrays, blocker detection, capture handling, the bugs, the tests, and the case for correctness before optimisation.",
+        "datePublished": "2026-07-25",
+        "dateModified": "2026-07-25",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Rooks, bishops and queens slide until something stops them. That one sentence is the whole algorithm.",
+            "name": "Generating Sliding Piece Moves Without Magic Bitboards"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What are sliding pieces in chess programming?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Sliding pieces are the rook, the bishop and the queen. Unlike a knight or a king, they do not move a fixed distance. They travel along a line — ranks and files for the rook, diagonals for the bishop, both for the queen — for as many squares as are free, stopping when they reach the edge of the board or another piece. If that piece is an enemy, the sliding piece may capture it and stop there. If it is a friendly piece, the slide stops one square earlier. This dependence on the rest of the board is what makes sliding piece move generation harder than generating moves for jumping pieces."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you generate rook and bishop moves without magic bitboards?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "You use ray-based move generation. Define the directions a piece can travel as offsets — a rook has four (north, south, east, west) and a bishop has four diagonals. For each direction, step one square at a time from the piece's square. At every step, check that you are still on the board. If the square is empty, record a quiet move and continue. If it holds an enemy piece, record a capture and stop. If it holds a friendly piece, stop without recording anything. A queen simply uses all eight directions, which is the union of the rook's and the bishop's."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Are magic bitboards necessary for a chess engine?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Magic bitboards are a performance optimisation, not a correctness requirement. They matter enormously for competitive engines that search millions of positions per second, which is why strong engines such as Stockfish use sophisticated sliding-attack techniques. For a learning project, a college assignment, a depth-limited search or a first chess engine, straightforward ray-based generation is correct, readable and generally fast enough. Implementing the simple version first also makes magic bitboards far easier to understand later, because you already know exactly which problem they are solving."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the most common bug in sliding piece move generation?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Board wrapping. If you represent the board as a flat 64-element array and step east by adding one to the index, a rook on the h-file will silently continue onto the a-file of the next rank, producing moves that are impossible in chess. The same problem hits bishops on the diagonals. The fix is to validate the file and rank separately rather than validating the raw index, which is why many developers switch to explicit row and column coordinates for their rays."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should beginners learn magic bitboards first?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Most people are better served by learning ray-based generation first. Magic bitboards combine several ideas at once — occupancy masks, perfect hashing by multiplication, and large precomputed lookup tables — and none of them make intuitive sense until you understand what a blocker is and why a sliding piece's attack set depends on it. Building the simple generator gives you that understanding plus a correct reference implementation you can test the optimised version against."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer working through rook, bishop and queen move generation for a Java chess engine" title="Generating sliding piece moves without magic bitboards" class="featured-image" width="800" height="450">
+                <p class="image-caption">A rook slides until something stops it. Turning that one sentence into correct code took me longer than I'd like to admit.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+
+                <p class="lead">The first thing I searched when I started writing move generation for my chess engine was, roughly, "how do rooks and bishops move in a chess engine." The third result mentioned <strong>magic bitboards</strong> in the opening paragraph. So did the fifth. By the time I'd read four articles I had a browser tab full of 64-bit hexadecimal constants, a diagram about "perfect hashing," and absolutely no idea how a rook was supposed to stop when it bumped into a pawn.</p>
+
+                <p>That's not a criticism of those resources — they're written by people who solved this years ago and moved on to the interesting part. But it left me with a strange feeling: everyone was optimising a thing I hadn't built yet. So I closed the tabs and decided to write the dumbest possible sliding piece move generator, and not look at an optimisation until my version was provably correct. I gave myself permission to be slow.</p>
+
+                <p>That decision taught me more than any optimisation could have. This is the article I wanted back then: what sliding pieces actually are, how to generate their moves from first principles in Java, every bug I hit, and what I gained by deliberately skipping the clever solution.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#different">What makes sliding pieces different?</a></li>
+                    <li><a href="#bad-attempt">My first (very bad) attempt</a></li>
+                    <li><a href="#directions">Thinking in directions instead of squares</a></li>
+                    <li><a href="#ray">Walking along a ray</a></li>
+                    <li><a href="#java">Building it in Java</a></li>
+                    <li><a href="#bugs">The bugs that consumed most of my time</a></li>
+                    <li><a href="#testing">Testing every direction</a></li>
+                    <li><a href="#performance">Performance was better than I expected</a></li>
+                    <li><a href="#magic">So what <em>are</em> magic bitboards?</a></li>
+                    <li><a href="#no-regret">Why I don't regret starting simple</a></li>
+                    <li><a href="#when-simple">When simple is actually the better choice</a></li>
+                    <li><a href="#improve">What I'd improve today</a></li>
+                    <li><a href="#lessons">Lessons learned</a></li>
+                    <li><a href="#faq">Frequently asked questions</a></li>
+                    <li><a href="#conclusion">Conclusion</a></li>
+                </ul>
+
+                <h2 id="different">What Makes Sliding Pieces Different?</h2>
+
+                <p>Chess has two families of moving pieces. The first jumps: knights and kings move a fixed distance and don't care what sits between them and their destination. A knight on d4 attacks the same eight squares whether the board is empty or packed. The second family <em>slides</em>: rooks, bishops and queens travel along a line for an unbounded number of squares, and everything about their movement depends on what else is on the board.</p>
+
+                <ul>
+                    <li><strong>Rook</strong> — moves along ranks and files. Four directions: north, south, east, west.</li>
+                    <li><strong>Bishop</strong> — moves along diagonals. Four directions: north-east, north-west, south-east, south-west.</li>
+                    <li><strong>Queen</strong> — moves along both. All eight directions. A queen is genuinely just a rook and a bishop standing on the same square.</li>
+                </ul>
+
+                <p>Three rules govern every slide, and getting any one of them wrong produces illegal chess:</p>
+
+                <ol>
+                    <li><strong>Continuous movement.</strong> The piece occupies every square along the way. It cannot skip over a square and land beyond it.</li>
+                    <li><strong>Blocking.</strong> The first occupied square along the ray ends the slide. If it holds a friendly piece, the piece stops <em>before</em> it. If it holds an enemy piece, the piece may capture and stop <em>on</em> it. Either way, nothing beyond that square is reachable in that direction.</li>
+                    <li><strong>Board edges.</strong> The ray ends at the edge of the board. There is nothing past the h-file.</li>
+                </ol>
+
+                <p>Compare that with the jumpers. A knight's move list is a fixed set of offsets you precompute once and reuse forever; a king's is the same, only shorter. Pawns are fiddly — different capture and move directions, a double-step, en passant, promotion — but a pawn's reach is still local. You can look at a pawn and its immediate neighbourhood and know everything.</p>
+
+                <p>Sliding pieces are the only pieces whose legal moves depend on <em>arbitrarily distant squares</em>. A pawn appearing on g7 changes what a bishop on a1 can do. That's the whole difficulty in one sentence, and it's why an entire branch of chess programming exists just to answer "given this square and this occupancy, what does the rook attack?" quickly.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Key Takeaway.</strong> Knights and kings have fixed move sets. Sliding pieces have move sets that are a function of the entire board. Every technique in this article — simple or advanced — is an answer to that one complication.</p>
+                </div>
+
+                <h2 id="bad-attempt">My First (Very Bad) Attempt</h2>
+
+                <p>My first instinct was, I think, everyone's first instinct: loop over the whole board and ask each square whether the rook could reach it.</p>
+
+                <pre><code>// My first rook generator. Please don't ship this.
+for (int r = 0; r &lt; 8; r++) {
+    for (int c = 0; c &lt; 8; c++) {
+        if (r == rookRow || c == rookCol) {
+            moves.add(new Move(rookRow, rookCol, r, c));
+        }
+    }
+}</code></pre>
+
+                <p>It "worked," which is the dangerous part. On an empty board with a lone rook it produced exactly fourteen moves — the correct number — and I felt briefly like a genius. Bishops got the equivalent check with <code>Math.abs(r - row) == Math.abs(c - col)</code> and looked right too.</p>
+
+                <p>Then I loaded a real position and my rook casually moved through three of its own pawns to reach the eighth rank.</p>
+
+                <p>Of course it did. The loop asks "is this square on my line?" It never asks "can I get there?" There's no notion of a path in that code at all. So I patched it: a check for the destination holding a friendly piece. That fixed self-capture and nothing else — the rook still teleported past enemy pieces onto the square behind them.</p>
+
+                <p>So I patched the patch, writing a helper that walked between source and destination looking for blockers. Now every candidate move triggered its own little loop, plus special cases for whether to increment or decrement each coordinate. Eighty-odd lines for one piece type, and I couldn't hold it in my head. The bishop version was worse — four sign combinations, one of which I got backwards, so bishops moving south-west were validated along the north-east path. That one survived two days because it only surfaced when a specific square was occupied.</p>
+
+                <p>What I eventually understood is that <strong>I was asking the question backwards</strong>. "Which squares can this piece reach?" invites you to enumerate the board. But a sliding piece doesn't experience the board as a set of squares — it experiences a handful of lines it walks down until something stops it. The destination isn't an input to the problem. It's an output.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #e3b341;background:rgba(227,179,65,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0 0 0.5rem;"><strong>Common Mistakes — the "check every square" approach</strong></p>
+                    <ul style="margin:0;">
+                        <li>Treating "is on the same rank or file" as the whole rule, ignoring the path entirely</li>
+                        <li>Checking only the destination square for a blocker, so pieces jump over things</li>
+                        <li>Allowing captures of your own pieces because you only tested for emptiness</li>
+                        <li>Hand-rolling direction signs for path validation and getting one combination wrong</li>
+                        <li>Ending up with nested loops that are impossible to reason about or test</li>
+                    </ul>
+                </div>
+
+                <p><em>Reflection.</em> The useful thing about that attempt wasn't the code — I deleted all of it. It was learning that a bad model produces code that fights you. Every fix made it longer instead of clearer, and that's a reliable signal the abstraction is wrong. I now treat "my patches are making this worse" as a prompt to step back rather than push harder.</p>
+
+                <h2 id="directions">Thinking in Directions Instead of Squares</h2>
+
+                <p>What fixed this wasn't a clever algorithm. It was a change of mental model, and it happened while I was drawing a board on paper.</p>
+
+                <p>I put a rook on d4 and traced lines outward, and it struck me that I wasn't thinking about squares at all — I was thinking about <em>arms</em> reaching out from the piece. Four of them. They're independent: what happens on the north arm has nothing to do with the east arm. Each just extends until it hits something.</p>
+
+                <p>In chess programming that arm is called a <strong>ray</strong>, and once I had the word, the code wrote itself. Here's the rook on d4 with its four rays on an empty board:</p>
+
+                <pre><code>Rook on d4 — four rays
+
+     a   b   c   d   e   f   g   h
+   +---+---+---+---+---+---+---+---+
+ 8 |   |   |   | N |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 7 |   |   |   | N |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 6 |   |   |   | N |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 5 |   |   |   | N |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 4 | W | W | W | R | E | E | E | E |
+   +---+---+---+---+---+---+---+---+
+ 3 |   |   |   | S |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 2 |   |   |   | S |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 1 |   |   |   | S |   |   |   |   |
+   +---+---+---+---+---+---+---+---+</code></pre>
+
+                <p>And the bishop, same square, four diagonal rays:</p>
+
+                <pre><code>Bishop on d4 — four rays
+
+     a   b   c   d   e   f   g   h
+   +---+---+---+---+---+---+---+---+
+ 8 |   |   |   |   |   |   | NE|   |
+   +---+---+---+---+---+---+---+---+
+ 7 | NW|   |   |   |   | NE|   |   |
+   +---+---+---+---+---+---+---+---+
+ 6 |   | NW|   |   | NE|   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 5 |   |   | NW| . | NE|   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 4 |   |   |   | B |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 3 |   |   | SW|   | SE|   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 2 |   | SW|   |   |   | SE|   |   |
+   +---+---+---+---+---+---+---+---+
+ 1 | SW|   |   |   |   |   | SE|   |
+   +---+---+---+---+---+---+---+---+</code></pre>
+
+                <p>Eight directions exist in total. Every sliding piece uses some subset:</p>
+
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Direction</th>
+                            <th>Row change</th>
+                            <th>Column change</th>
+                            <th>Used by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>North</td><td>+1</td><td>0</td><td>Rook, Queen</td></tr>
+                        <tr><td>South</td><td>-1</td><td>0</td><td>Rook, Queen</td></tr>
+                        <tr><td>East</td><td>0</td><td>+1</td><td>Rook, Queen</td></tr>
+                        <tr><td>West</td><td>0</td><td>-1</td><td>Rook, Queen</td></tr>
+                        <tr><td>North-East</td><td>+1</td><td>+1</td><td>Bishop, Queen</td></tr>
+                        <tr><td>North-West</td><td>+1</td><td>-1</td><td>Bishop, Queen</td></tr>
+                        <tr><td>South-East</td><td>-1</td><td>+1</td><td>Bishop, Queen</td></tr>
+                        <tr><td>South-West</td><td>-1</td><td>-1</td><td>Bishop, Queen</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <p>Look at what that table does to the problem. The difference between a rook, a bishop and a queen collapses into <em>which rows you iterate over</em>. The movement logic is identical for all three. I'd been writing three algorithms; there was only ever one, with three different inputs.</p>
+
+                <p><em>Reflection.</em> The breakthrough here was a noun. Once "ray" existed in my head, the code became a direct translation of the thing I was picturing — and code that mirrors your mental model is code you can debug at 1am. I've since noticed the pattern generally: when an implementation feels tangled, I'm usually missing a word for something.</p>
+
+                <h2 id="ray">Walking Along a Ray</h2>
+
+                <p>The algorithm for one piece, in plain English, is five steps. That's the whole thing.</p>
+
+                <p><strong>For each direction the piece can travel:</strong></p>
+
+                <ol>
+                    <li><strong>Start at the piece's square</strong> and step one square in that direction.</li>
+                    <li><strong>Check bounds.</strong> If you've walked off the board, this ray is finished. Move to the next direction.</li>
+                    <li><strong>If the square is empty</strong>, record a quiet move and keep stepping in the same direction.</li>
+                    <li><strong>If the square holds an enemy piece</strong>, record a capture — then stop. You may take it, but you can't go past it.</li>
+                    <li><strong>If the square holds a friendly piece</strong>, record nothing and stop. You can't take your own piece and you can't jump it.</li>
+                </ol>
+
+                <p>Here it is as pseudocode, deliberately written the way you'd say it out loud:</p>
+
+                <pre><code>for each direction in piece.directions:
+    row = startRow + direction.rowStep
+    col = startCol + direction.colStep
+
+    while (row, col) is on the board:
+        target = board[row][col]
+
+        if target is empty:
+            addMove(start, (row, col))          // quiet move, keep walking
+        else if target is an enemy:
+            addMove(start, (row, col))          // capture
+            break                               // and stop
+        else:
+            break                               // friendly piece, stop
+
+        row = row + direction.rowStep           // take another step
+        col = col + direction.colStep</code></pre>
+
+                <p>Five things are worth saying explicitly, because each is a place I'd previously gone wrong:</p>
+
+                <ul>
+                    <li><strong>The bounds check is the loop condition.</strong> Checking bounds <em>before</em> reading <code>board[row][col]</code> is what prevents the array index exception. Order matters.</li>
+                    <li><strong>The step happens at the end.</strong> Increment at the top and you skip the ray's first square — a classic off-by-one that produces a rook unable to move one square.</li>
+                    <li><strong>Both "stop" cases break the inner loop, not the outer.</strong> A blocker ends one ray, not the whole piece. I got this wrong once and my queen only generated moves in a single direction.</li>
+                    <li><strong>The capture is recorded before the break.</strong> Reversing those two lines silently removes every capture from your engine.</li>
+                    <li><strong>There's no special code for board edges.</strong> The bounds check handles it. A rook in a corner just finds two of its four rays terminate immediately.</li>
+                </ul>
+
+                <p>Notice what's <em>not</em> in there: any mention of rook, bishop or queen. It's piece-agnostic. That's the payoff of thinking in directions.</p>
+
+                <h2 id="java">Building It in Java</h2>
+
+                <p>Here's the shape of my implementation, trimmed for readability. The board is a plain 8×8 array where <code>0</code> means empty, positive values are white pieces and negative values are black. It's not sophisticated, and that's deliberate — I wanted to be able to print it and read it.</p>
+
+                <h3>Direction arrays</h3>
+
+                <p>Directions are just pairs of offsets, stored as a 2D int array where each row is <code>{rowStep, colStep}</code>.</p>
+
+                <pre><code>// {rowStep, colStep} — N, S, E, W, then NE, NW, SE, SW
+private static final int[][] ROOK_DIRS = {
+    { 1,  0}, {-1,  0}, { 0,  1}, { 0, -1}
+};
+
+private static final int[][] BISHOP_DIRS = {
+    { 1,  1}, { 1, -1}, {-1,  1}, {-1, -1}
+};
+
+// A queen is literally both sets concatenated
+private static final int[][] QUEEN_DIRS = {
+    { 1,  0}, {-1,  0}, { 0,  1}, { 0, -1},
+    { 1,  1}, { 1, -1}, {-1,  1}, {-1, -1}
+};</code></pre>
+
+                <h3>Board indexing and helpers</h3>
+
+                <p>These three tiny methods carry surprising weight. Every bounds check goes through <code>onBoard</code>, so if my definition of "on the board" is ever wrong, it's wrong in exactly one place.</p>
+
+                <pre><code>private boolean onBoard(int row, int col) {
+    return row &gt;= 0 &amp;&amp; row &lt; 8 &amp;&amp; col &gt;= 0 &amp;&amp; col &lt; 8;
+}
+
+private boolean isEmpty(int row, int col) {
+    return board[row][col] == EMPTY;
+}
+
+/** True if the square holds a piece of the opposite colour to 'white'. */
+private boolean isEnemy(int row, int col, boolean white) {
+    int piece = board[row][col];
+    if (piece == EMPTY) return false;
+    return white ? piece &lt; 0 : piece &gt; 0;
+}</code></pre>
+
+                <h3>The single generator that does all the work</h3>
+
+                <p>This is the method the whole article builds to. It takes a square and a set of directions, and it doesn't know or care what kind of piece it's generating for.</p>
+
+                <pre><code>/**
+ * Walks every given direction from (startRow, startCol), collecting moves
+ * until each ray is blocked or leaves the board.
+ */
+private void generateSlidingMoves(int startRow, int startCol,
+                                  int[][] directions,
+                                  boolean white,
+                                  List&lt;Move&gt; moves) {
+
+    for (int[] dir : directions) {
+        int rowStep = dir[0];
+        int colStep = dir[1];
+
+        int row = startRow + rowStep;
+        int col = startCol + colStep;
+
+        while (onBoard(row, col)) {
+
+            if (isEmpty(row, col)) {
+                moves.add(new Move(startRow, startCol, row, col));
+            } else {
+                // First piece we meet ends this ray, one way or another.
+                if (isEnemy(row, col, white)) {
+                    moves.add(new Move(startRow, startCol, row, col));
+                }
+                break;
+            }
+
+            row += rowStep;
+            col += colStep;
+        }
+    }
+}</code></pre>
+
+                <p>In plain English: for each direction, take the two offsets, step once off the origin square, then loop while we're still on the board. Empty square — add a move and fall through to the step at the bottom. Occupied square — add a move only if it's an enemy, then <code>break</code> out of this ray entirely. The outer <code>for</code> picks up the next direction and starts fresh from the origin.</p>
+
+                <h3>Rook, bishop and queen</h3>
+
+                <p>With that in place, the three piece types become three one-line methods:</p>
+
+                <pre><code>public void generateRookMoves(int row, int col, boolean white, List&lt;Move&gt; moves) {
+    generateSlidingMoves(row, col, ROOK_DIRS, white, moves);
+}
+
+public void generateBishopMoves(int row, int col, boolean white, List&lt;Move&gt; moves) {
+    generateSlidingMoves(row, col, BISHOP_DIRS, white, moves);
+}
+
+public void generateQueenMoves(int row, int col, boolean white, List&lt;Move&gt; moves) {
+    generateSlidingMoves(row, col, QUEEN_DIRS, white, moves);
+}</code></pre>
+
+                <p>You could also express the queen as a rook call plus a bishop call into the same list, which is arguably more honest about what a queen is. I used the explicit eight-direction array because it saves a loop setup. Either is fine — taste, not correctness.</p>
+
+                <h3>Why the helper methods mattered more than I expected</h3>
+
+                <p>I nearly inlined <code>onBoard</code> and <code>isEnemy</code> to "avoid the overhead." I'm glad I didn't, for reasons that had nothing to do with performance:</p>
+
+                <ul>
+                    <li><strong>One definition of each rule.</strong> My earlier code checked bounds in six places with slightly different conditions. One used <code>&lt;= 8</code>. Guess which one crashed.</li>
+                    <li><strong>Named conditions read as sentences.</strong> <code>while (onBoard(row, col))</code> tells you what it means; the raw four-way comparison makes you parse it.</li>
+                    <li><strong>They're trivially testable.</strong> Ten lines covered <code>isEnemy</code> for every piece-and-colour combination, and then I could trust it forever.</li>
+                    <li><strong>Changing board representation touched three methods.</strong> When I later experimented with a flat 64-element array, only the helpers changed. The ray walking was untouched.</li>
+                </ul>
+
+                <p><em>Reflection.</em> That last point is the one I'd underline. The helpers accidentally created a seam between "how the board is stored" and "how pieces move." I didn't design that — I extracted them to stop repeating myself — but it's why move generation survived a representation change without a rewrite.</p>
+
+                <h2 id="bugs">The Bugs That Consumed Most of My Time</h2>
+
+                <p>Let me be honest about the ratio. Writing the generator above took maybe an hour. Making it <em>correct</em> took most of two weekends. Here are the bugs, roughly in the order they humbled me.</p>
+
+                <h3>1. The rook that wrapped around the board</h3>
+
+                <p>Before I moved to row/column coordinates, my first ray implementation used a flat 64-element array and stepped east by adding 1 to the index. A rook on h4 generated a move to a5 — not a legal chess move, not even a legal <em>shape</em> of one. I reproduced it with a lone rook on h4 on an empty board: the east ray produced eight moves instead of zero, marching across the next rank.</p>
+
+                <p>Index 31 (h4) plus 1 is index 32 (a5), a perfectly valid array index. The array has no concept of an edge, so validating <code>index &gt;= 0 &amp;&amp; index &lt; 64</code> can never catch it. I switched to explicit row and column coordinates, where "off the east edge" means <code>col == 8</code>. <strong>Lesson:</strong> validate in the coordinate system where the constraint actually exists. Flattening the board is fine; flattening your validation throws away the information you need.</p>
+
+                <h3>2. Bishops leaking onto the wrong diagonal</h3>
+
+                <p>The same bug in a different hat, and far harder to spot. A bishop near the a-file produced a move that looked plausible — diagonal square, correct colour — but on the far side of the board. Because it was still <em>a</em> diagonal relative to the wrapped position, nothing screamed in a move list. I only caught it by printing the board with every destination marked rather than reading a list.</p>
+
+                <p><strong>Lesson:</strong> the rook version of a wrapping bug shouts; the bishop version whispers. Diagonal wrapping produces output that passes a casual glance.</p>
+
+                <h3>3. Capturing my own pieces</h3>
+
+                <p>My engine happily played Rxd4 onto its own knight. Evaluation then recorded that it had won a knight, found this delightful, and did it constantly. The cause: <code>if (!isEmpty(row, col)) { addMove(...); break; }</code>. I'd correctly worked out that the first occupied square ends the ray, then forgot that <em>whether to record a move</em> depends on the colour of what's there.</p>
+
+                <p><strong>Lesson:</strong> "stop here" and "you may take this" are two separate decisions that happen at the same square. Collapsing them into one condition is the most natural mistake in this algorithm.</p>
+
+                <h3>4. Moving beyond a blocker</h3>
+
+                <p>Rooks passing straight through enemy pawns — the move list contained both the capture and every square behind it. The cause was <code>continue</code> where I meant <code>break</code>. One word. I didn't find it by reading; I'd read that block a dozen times. I found it by printing the ray as I walked it, one line per square, and watching the walk carry on past a square it had just described as a capture. The output narrated the bug better than my eyes could.</p>
+
+                <h3>5. The off-by-one that made pieces immobile</h3>
+
+                <p>During a refactor all my rooks lost the ability to move exactly one square. Two, three, seven — fine. Never one. I'd restructured the loop so the step happened at the top of the body rather than the bottom, skipping each ray's first square. It's invisible on reading, because both versions look reasonable.</p>
+
+                <p><strong>Lesson:</strong> loops that both step and test have two correct orderings and several plausible wrong ones. I now trace that kind of loop by hand for a two-square case before running it.</p>
+
+                <h3>6. Duplicate moves from the queen</h3>
+
+                <p>Move counts for positions with a queen were consistently too high, with exact duplicates — same origin, same destination, twice. I'd originally implemented the queen as "call rook, then call bishop," later switched it to the generic generator with <code>QUEEN_DIRS</code>, and left the old calls sitting above the new one.</p>
+
+                <p><strong>Lesson:</strong> two implementations of the same rule will eventually both run. Pick one, delete the other. Duplicates are also worse than they look — they inflate node counts, skew move ordering, and quietly corrupt the search statistics you'll later use to judge whether an optimisation helped.</p>
+
+                <h3>7. Row/column confusion</h3>
+
+                <p><code>board[row][col]</code> in one file, <code>board[col][row]</code> in another. Both compile, both run, neither is wrong in isolation. Everything was mirrored along the diagonal — and rooks hid it, because a rook's move set is symmetric that way. It only surfaced when I integrated the board printer and pieces appeared transposed.</p>
+
+                <p>The fix was a comment stating the convention at the top of the board class, and a rule that nothing outside that class touches the raw array. I also added a <code>squareName(row, col)</code> helper so debug output spoke in "d4" rather than "3,3" — "d4" is something I can check against a real chess board; "3,3" is something I have to decode first.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #58a6ff;background:rgba(88,166,255,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Debugging Tip.</strong> Print your moves in algebraic notation, not array indices. The moment my log said <code>Rd4-h4</code> instead of <code>3,3 -&gt; 3,7</code>, I could spot illegal moves at a glance instead of translating each one in my head. Debug output that speaks your domain's language is worth the twenty minutes it takes to write.</p>
+                </div>
+
+                <p><em>Reflection.</em> Nearly all of these shared a shape: the code was <em>almost</em> right, and the wrongness only appeared in specific positions. That's the defining characteristic of move generation bugs, and the reason systematic testing matters so much here. You cannot find them by staring.</p>
+
+                <h2 id="testing">Testing Every Direction</h2>
+
+                <p>After the fourth bug I stopped fixing things ad hoc and built a small harness. Every ray, in every position, ends for one of three reasons: it hit the edge, it hit a friendly piece, or it hit an enemy piece. So I wrote positions that force each ending, in each direction, from squares where the geometry differs.</p>
+
+                <ul>
+                    <li><strong>Empty board, centre square.</strong> A rook on d4 produces exactly 14 moves, a bishop 13, a queen 27. Easy to verify by hand on a real board, which makes them excellent anchors.</li>
+                    <li><strong>Empty board, corners.</strong> A rook on a1 still has 14 moves but only two live rays; a bishop on a1 has 7. Corners stress the bounds check hardest — half your directions terminate on step one.</li>
+                    <li><strong>Empty board, every square.</strong> Loop all 64 squares and assert the rook always yields 14. Cheap, and it catches any edge-handling asymmetry instantly.</li>
+                    <li><strong>Friendly blocker.</strong> Rook d4, own pawn d6 — the north ray yields d5 and stops. This caught the self-capture bug.</li>
+                    <li><strong>Enemy blocker.</strong> Rook d4, enemy pawn d6 — the ray yields d5 <em>and</em> d6, then stops. This caught the <code>continue</code>/<code>break</code> bug.</li>
+                    <li><strong>Adjacent blockers.</strong> A ray terminating on its very first square: zero moves that way, and crucially no crash.</li>
+                    <li><strong>Nearly full board.</strong> The starting position, where a rook on a1 has exactly zero legal moves — a wonderfully unambiguous assertion.</li>
+                    <li><strong>All eight directions blocked.</strong> A queen boxed in by its own pieces should generate nothing at all.</li>
+                </ul>
+
+                <p>The tests are unglamorous, and that's the point:</p>
+
+                <pre><code>@Test
+void rookOnEmptyBoardHasFourteenMoves() {
+    Board b = Board.empty();
+    b.place(3, 3, WHITE_ROOK);              // d4
+
+    List&lt;Move&gt; moves = new ArrayList&lt;&gt;();
+    b.generateRookMoves(3, 3, true, moves);
+
+    assertEquals(14, moves.size());
+}
+
+@Test
+void rookStopsBeforeFriendlyPiece() {
+    Board b = Board.empty();
+    b.place(3, 3, WHITE_ROOK);              // d4
+    b.place(5, 3, WHITE_PAWN);              // d6, own pawn
+
+    List&lt;Move&gt; moves = new ArrayList&lt;&gt;();
+    b.generateRookMoves(3, 3, true, moves);
+
+    assertTrue(contains(moves, "d5"));
+    assertFalse(contains(moves, "d6"));     // can't take our own pawn
+    assertFalse(contains(moves, "d7"));     // and can't jump it
+}
+
+@Test
+void rookCapturesEnemyThenStopsThere() {
+    Board b = Board.empty();
+    b.place(3, 3, WHITE_ROOK);              // d4
+    b.place(5, 3, BLACK_PAWN);              // d6, enemy pawn
+
+    List&lt;Move&gt; moves = new ArrayList&lt;&gt;();
+    b.generateRookMoves(3, 3, true, moves);
+
+    assertTrue(contains(moves, "d5"));
+    assertTrue(contains(moves, "d6"));      // capture is legal
+    assertFalse(contains(moves, "d7"));     // nothing beyond it
+}</code></pre>
+
+                <p>The other tool that earned its place was a printer that drew a move list's destinations onto an ASCII board. This told me more in one glance than a hundred logged move objects:</p>
+
+                <pre><code>Rook d4, own pawn d6, enemy pawn f4:
+
+     a   b   c   d   e   f   g   h
+   +---+---+---+---+---+---+---+---+
+ 8 |   |   |   |   |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 7 |   |   |   |   |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 6 |   |   |   | P |   |   |   |   |  &lt;- own pawn, ray stops below it
+   +---+---+---+---+---+---+---+---+
+ 5 |   |   |   | * |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 4 | * | * | * | R | * | x |   |   |  &lt;- x = capture, nothing past it
+   +---+---+---+---+---+---+---+---+
+ 3 |   |   |   | * |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 2 |   |   |   | * |   |   |   |   |
+   +---+---+---+---+---+---+---+---+
+ 1 |   |   |   | * |   |   |   |   |
+   +---+---+---+---+---+---+---+---+</code></pre>
+
+                <p>I should also mention the standard technique, because it's the right thing to graduate to: chess programmers verify move generation with <strong>perft</strong>, which counts leaf nodes reachable from a position at a given depth and compares against published reference values. It's a far stronger check than hand-written cases, because it exercises rule interactions you'd never think to test. I added it later than I should have — but the directional tests weren't wasted, because when perft told me a count was wrong, they told me <em>where</em>.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Key Takeaway.</strong> Test the three ways a ray can end — edge, friendly, enemy — in every direction, from a centre square and a corner. That's a small, finite matrix, and it catches almost every sliding piece bug that exists.</p>
+                </div>
+
+                <h2 id="performance">Performance Was Better Than I Expected</h2>
+
+                <p>I'll be careful here, because this is exactly the kind of section where it's tempting to invent impressive numbers. I didn't build a rigorous benchmark harness comparing implementations under controlled conditions, so I won't quote figures I can't stand behind.</p>
+
+                <p>What I can say is qualitative and honest: <strong>the naive ray walker was never the thing that made my engine feel slow.</strong> That surprised me, given how strongly the internet implied sliding piece generation is the bottleneck you must solve first.</p>
+
+                <p>In hindsight it makes sense. A rook has four rays of at most seven squares, so the absolute worst case is 28 iterations of a very short loop — and real positions have pieces on them, so rays terminate early. The work per node is small, predictable, and touches memory that's already hot. When I profiled, the time was going to search and evaluation, not to walking rays.</p>
+
+                <p>That's what profiling teaches you that intuition doesn't: <em>the bottleneck is rarely where the tutorials say it is for your particular program.</em> Magic bitboards are a significant, real optimisation for engines searching enormous numbers of positions per second, where move generation genuinely is a top cost. At the scale I was working — depth-limited search, a learning project — the ray walker had headroom to spare. Which gives you the order: make it correct, measure it, then optimise what the measurement points at. I skipped to step three exactly once on this project and spent a day making something faster that was never slow.</p>
+
+                <h2 id="magic">So What <em>Are</em> Magic Bitboards?</h2>
+
+                <p>Having deferred them all article, I owe you an explanation — a conceptual one. I'll stay deliberately shallow, because magic bitboards deserve their own careful treatment and a half-explanation is worse than none.</p>
+
+                <p>Start from the problem. For jumping pieces you can precompute everything: a knight on d4 attacks the same eight squares forever, so you build a 64-entry table at startup and never compute again. You'd love to do that for a rook, but you can't — a rook's attack set depends on the blockers around it, and there are many possible blocker arrangements per square. So the question becomes: <em>can we still make it a table lookup, by including the blockers in the key?</em></p>
+
+                <p>That's what magic bitboards do, and the chain of ideas is roughly:</p>
+
+                <ul>
+                    <li><strong>Occupancy.</strong> For a given square, only certain squares can possibly block the rook — the ones along its rays, excluding the outermost, since a piece on the edge blocks nothing beyond itself. That's a small set of relevant squares.</li>
+                    <li><strong>Hashing.</strong> You take the bits describing which of those relevant squares are occupied and turn them into a compact index — traditionally by multiplying by a carefully chosen 64-bit constant and shifting, which scatters the bits into a small range.</li>
+                    <li><strong>Magic numbers.</strong> Those constants are "magic" because they're found by search, not derived. Someone runs a program that tries candidates until it finds one where no two meaningful occupancies collide. That's it. There's no deep mathematics being invoked; there's a lot of trial and error, done once, and the winning numbers get published and reused.</li>
+                    <li><strong>Lookup tables.</strong> The index goes into a precomputed table holding the correct attack bitboard for that square-and-occupancy combination. Move generation becomes a mask, a multiply, a shift and an array read — no loop at all.</li>
+                </ul>
+
+                <p>Here's the thing to take from this. Every one of those bullets describes <em>an optimisation of the ray walk you already understand</em>. "Relevant occupancy" only means something if you know a rook's ray stops at the first blocker. "The correct attack set for this occupancy" is precisely what my slow loop computes each time. Magic bitboards don't do anything different — they just refuse to redo the walk.</p>
+
+                <p>When I finally read an implementation properly, I understood it in an afternoon. Not because I'm quick, but because I'd spent two weekends becoming intimate with the exact problem it solves. The article that had baffled me a year earlier was suddenly describing a faster route to an answer I knew how to compute by hand.</p>
+
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dimension</th>
+                            <th>Ray-based generation</th>
+                            <th>Magic bitboards</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Core operation</td><td>Loop outward until blocked</td><td>Mask, multiply, shift, table lookup</td></tr>
+                        <tr><td>Work per query</td><td>Proportional to ray length</td><td>Effectively constant</td></tr>
+                        <tr><td>Memory used</td><td>Almost none</td><td>Sizeable precomputed tables</td></tr>
+                        <tr><td>Startup cost</td><td>None</td><td>Table generation (and finding magics)</td></tr>
+                        <tr><td>Lines of code</td><td>Roughly one screen</td><td>Considerably more, plus constants</td></tr>
+                        <tr><td>Readability</td><td>Reads like the chess rule</td><td>Opaque without prior context</td></tr>
+                        <tr><td>Debuggability</td><td>Step through it square by square</td><td>Wrong answers give few clues</td></tr>
+                        <tr><td>Best suited to</td><td>Learning, small engines, correctness reference</td><td>Competitive engines at high node counts</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <h2 id="no-regret">Why I Don't Regret Starting Simple</h2>
+
+                <p>I could have copied a magic bitboard implementation on day one — it's freely available, well documented, and it would have worked. Here's what I'd have missed.</p>
+
+                <ul>
+                    <li><strong>Confidence.</strong> There's a specific unease that comes from code you didn't derive. If I'd pasted in magics and got a wrong move count, I'd have had no idea whether the bug was mine or my misunderstanding of theirs. Because I built the slow version, I knew move generation was right and could look elsewhere. Narrowing the search space like that is worth a lot over a long project.</li>
+                    <li><strong>Actual understanding.</strong> I can explain why a rook's attacks depend on occupancy, why edge squares don't matter for the occupancy mask, and why a queen needs no code of its own. Those aren't memorised facts — they're things I worked out with a pen and verified in a debugger, which is a different quality of knowing.</li>
+                    <li><strong>Debugging ability.</strong> The bug list above is a catalogue of my own carelessness, but each entry left a transferable habit: validate in the right coordinate system, separate "stop" from "capture," print in domain language.</li>
+                    <li><strong>Reading other engines.</strong> When I see <code>rookAttacks(square, occupancy)</code> in someone's source now, I know exactly what contract it fulfils regardless of the implementation. Understanding the interface came from implementing the naive version of it.</li>
+                    <li><strong>Maintaining my own code.</strong> Six months later I came back to add a feature and could still read my move generator. Code you understood once and code you understood deeply age very differently.</li>
+                </ul>
+
+                <p><em>Reflection.</em> Starting simple turned an optimisation from a mystery into a decision. Magic bitboards went from something I'd adopt because strong engines use them to something I could adopt for a reason I could articulate, with a correct reference implementation to test against. That second position is so much better to be in.</p>
+
+                <h2 id="when-simple">When Simple Is Actually the Better Choice</h2>
+
+                <p>I'm not arguing the simple version is <em>always</em> right. Strong engines use advanced sliding-attack techniques for excellent reasons, and if you need to search as deeply as possible, you'll want them. But there's a substantial set of situations where ray-based generation is genuinely the better engineering choice, not merely an acceptable compromise:</p>
+
+                <ul>
+                    <li><strong>College projects.</strong> Your grade and your viva depend on explaining your design. "I walk each direction until blocked" is defensible. A wall of magic constants you can't derive is a liability under questioning.</li>
+                    <li><strong>Personal learning projects.</strong> If the point is to learn, the slow version teaches. Optimised code you don't understand teaches you how to copy.</li>
+                    <li><strong>A first chess engine.</strong> Castling, en passant, promotion, check detection, pins and legality filtering are all ahead of you, and that's where the real rule complexity lives. Don't spend your budget on a performance problem you haven't measured.</li>
+                    <li><strong>Practising Java.</strong> A genuinely good exercise in arrays, loops, extracted helpers and unit testing — everyday craft skills applied to an interesting problem.</li>
+                    <li><strong>Learning algorithms.</strong> Ray traversal, bounds checking and early termination show up in grid problems, pathfinding and graphics. Chess is a pleasant way to internalise them.</li>
+                    <li><strong>Technical interviews.</strong> The directional solution is the one you can write on a whiteboard in five minutes and explain clearly. Nobody's asking you to recall a magic constant.</li>
+                    <li><strong>As a correctness oracle.</strong> Even in a fast engine, keeping the slow implementation around to cross-check the fast one is genuinely useful.</li>
+                </ul>
+
+                <p>This is the old premature-optimisation principle, with a wrinkle: the cost of optimising early isn't only wasted effort, it's <em>the complexity you take on before you can evaluate whether it's worth it</em>. Complexity you don't understand is a permanent tax on every future change.</p>
+
+                <h2 id="improve">What I'd Improve Today</h2>
+
+                <p>Being fair to the other side, here's what I'd genuinely change and the order I'd do it in.</p>
+
+                <ol>
+                    <li><strong>Bitboards for board representation.</strong> Not for sliding pieces specifically — for everything. Representing the board as 64-bit longs makes occupancy tests, material counting and evaluation much cheaper, and it's the foundational change that makes the rest possible.</li>
+                    <li><strong>Precomputed attack tables for jumping pieces.</strong> Knight, king and pawn attacks never change. Computing them once at startup into a 64-entry array is a small change with a clear win and no conceptual risk.</li>
+                    <li><strong>Profile before touching sliding pieces.</strong> Actually run a profiler rather than guessing. If move generation isn't near the top, sliding-piece optimisation isn't the next job regardless of what any article says.</li>
+                    <li><strong>Incremental updates instead of regeneration.</strong> A lot of my engine recomputed things from scratch after every move that it could have updated in place. Often a bigger win than optimising generation itself, and cheaper to implement.</li>
+                    <li><strong>Then, and only then, magic bitboards.</strong> With a correct reference implementation to test against and a profile that justifies it. I'd keep the ray walker behind a flag so I could diff outputs across thousands of positions.</li>
+                </ol>
+
+                <p>The ordering is deliberate: every step is testable against what came before, and justified by a measurement rather than a reputation.</p>
+
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Simple arrays + rays</th>
+                            <th>Bitboards for sliding pieces</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Learning curve</td><td>Low — mirrors the chess rule directly</td><td>Higher — needs bitwise fluency first</td></tr>
+                        <tr><td>Code volume</td><td>Small and self-contained</td><td>Larger, with masks and constants</td></tr>
+                        <tr><td>Speed</td><td>Adequate for learning and shallow search</td><td>Substantially faster at high node counts</td></tr>
+                        <tr><td>Memory</td><td>Negligible</td><td>Tables, from modest to large</td></tr>
+                        <tr><td>Ease of debugging</td><td>Print the board and step through</td><td>Needs custom bitboard printers</td></tr>
+                        <tr><td>Portability of the idea</td><td>Transfers to any grid problem</td><td>Fairly chess-specific</td></tr>
+                        <tr><td>When to choose it</td><td>First engine, coursework, reference impl</td><td>After profiling says generation is hot</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <h2 id="lessons">Lessons Learned</h2>
+
+                <p>Stepping back from chess entirely, here's what this part of the project changed about how I work.</p>
+
+                <ul>
+                    <li><strong>Decomposition beats cleverness.</strong> Three piece types became one algorithm plus a data table. I found that by asking what rooks, bishops and queens genuinely have in common — a question I now ask first whenever code feels repetitive.</li>
+                    <li><strong>The right noun is half the design.</strong> "Ray" gave me the whole implementation. When I'm stuck now, I try to name the thing I'm missing before I code around it.</li>
+                    <li><strong>Small helpers are structural, not cosmetic.</strong> <code>onBoard</code> and <code>isEnemy</code> looked like tidying, and turned out to be the seam that let me change board representation without rewriting move generation.</li>
+                    <li><strong>Debugging patience is a practisable skill.</strong> The <code>continue</code>-versus-<code>break</code> bug taught me that re-reading code you believe is correct is nearly worthless. Make the program tell you what it's doing.</li>
+                    <li><strong>Incremental development compounds.</strong> Rook, then bishop, then queen, then blockers, then captures — each step small enough to verify, so "what changed" stayed tiny when something broke.</li>
+                    <li><strong>Tests are a debugging tool, not a chore.</strong> I wrote most of mine <em>after</em> hitting bugs, and they immediately started catching regressions I'd otherwise have shipped.</li>
+                    <li><strong>"Fast enough" is a respectable answer.</strong> Engineering isn't the pursuit of maximum performance; it's meeting a requirement with the least complexity you can get away with. Sometimes the boring loop is the correct professional choice.</li>
+                </ul>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>What are sliding pieces in chess programming?</h3>
+                <p>Sliding pieces are the rook, bishop and queen. Unlike knights and kings they don't move a fixed distance — they travel along a line for as many squares as are free, stopping at the edge of the board or at the first piece they meet. If that piece is an enemy they may capture it and stop there; if it's friendly they stop one square earlier. That dependence on the rest of the board is what makes their move generation harder than the jumping pieces'.</p>
+
+                <h3>How do you generate rook and bishop moves without magic bitboards?</h3>
+                <p>Use ray-based move generation. Define the directions as offset pairs — four for a rook, four diagonals for a bishop, all eight for a queen. For each direction, step one square at a time from the piece's square, checking bounds first. Empty square: record a quiet move and keep stepping. Enemy piece: record a capture and stop. Friendly piece: stop without recording. That's the entire algorithm, and it's identical for all three piece types.</p>
+
+                <h3>Are magic bitboards necessary for a chess engine?</h3>
+                <p>No — they're a performance optimisation, not a correctness requirement. They matter greatly for competitive engines searching enormous numbers of positions per second, which is why strong engines such as Stockfish use sophisticated sliding-attack techniques. For coursework, a depth-limited search or a first engine, ray-based generation is correct, readable and typically fast enough. Building the simple version first also makes magic bitboards much easier to learn later.</p>
+
+                <h3>What's the most common bug in sliding piece move generation?</h3>
+                <p>Board wrapping. With a flat 64-element array, stepping east by adding one to the index lets a rook on the h-file silently continue onto the a-file of the next rank. The same affects bishops on diagonals, where it's harder to spot because the result still looks diagonal. The fix is to validate file and rank separately rather than the raw index — which is why many developers use explicit row and column coordinates for ray walking.</p>
+
+                <h3>Should beginners learn magic bitboards first?</h3>
+                <p>Most people are better served learning ray-based generation first. Magic bitboards combine occupancy masks, hashing by multiplication and large lookup tables, and none of those are intuitive until you understand what a blocker is and why a sliding piece's attacks depend on it. The simple generator gives you that understanding plus a correct reference implementation to validate the optimised version against.</p>
+
+                <h3>How do I know my move generation is correct?</h3>
+                <p>Start with targeted tests — a rook on an empty centre square has 14 moves, a bishop 13, a queen 27 — then add friendly blockers, enemy blockers and corners. Once those pass, move to perft, the standard technique of counting leaf nodes at a given depth and comparing against published reference values for known positions. Perft tells you a bug exists; targeted tests tell you where. You want both.</p>
+
+                <h2 id="conclusion">Conclusion</h2>
+
+                <p>If you'd asked me at the start what I hoped to learn, I'd have said something about performance. Search speed, node counts, the satisfaction of making something fast. That's what the articles I was reading were about, so I assumed that's what the skill was.</p>
+
+                <p>It wasn't. What I actually took from sliding piece move generation is that I'm now much slower to reach for a solution I don't understand — not because clever solutions are bad, but because I've felt the concrete difference between owning an implementation and borrowing one. Owning it means that when the program does something strange at 11pm, you have somewhere to start.</p>
+
+                <p>The naive ray walker isn't the fastest way to generate rook and bishop moves, and I'd never claim otherwise. What it is, is the version I could reason about, test exhaustively, explain to another person and later use as a yardstick for something faster. Every one of those turned out to be worth more than the speed I gave up — and I only gave up speed I wasn't using.</p>
+
+                <p>So if you're at the start of a chess engine, or honestly anything where the internet has strong opinions about the optimal approach: build the obvious version first. Let it be slow. Let it be a bit embarrassing. Get it right, prove it's right, then read about the fast way with the enormous advantage of already knowing what problem it solves.</p>
+
+                <p>Techniques change. Magic bitboards weren't always the standard answer, and something else may eventually replace them. What doesn't change is the value of having genuinely understood a problem, because understanding is what lets you evaluate the next clever technique instead of just adopting it. Memorised solutions expire. The understanding underneath them is what you get to keep.</p>
+
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Move Generation</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Sliding Pieces</a>
+                <a href="javascript:void(0)" class="tag">Magic Bitboards</a>
+                <a href="javascript:void(0)" class="tag">Algorithms</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+                <a href="javascript:void(0)" class="tag">Debugging</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">Bitboards Explained: Representing a Chess Board in 64 Bits</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>

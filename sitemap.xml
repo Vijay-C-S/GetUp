@@ -73,170 +73,26 @@
 
   <!-- ===== Blog Articles ===== -->
   <url>
-    <loc>https://getupdated.tech/blogs/ai-tools-save-10-hours-a-week-i-tracked-mine.html</loc>
-    <lastmod>2026-07-20</lastmod>
+    <loc>https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</loc>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://getupdated.tech/blogs/free-ai-tiers-2026-chatgpt-claude-gemini-perplexity.html</loc>
-    <lastmod>2026-07-19</lastmod>
+    <loc>https://getupdated.tech/blogs/magic-bitboards-in-java-what-finally-made-them-click.html</loc>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://getupdated.tech/blogs/subscripkiller-find-cancel-hidden-subscriptions.html</loc>
-    <lastmod>2026-02-12</lastmod>
+    <loc>https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html</loc>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://getupdated.tech/blogs/opencode-open-source-ai-coding-agent-review.html</loc>
-    <lastmod>2026-02-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/dzine-ai-image-video-studio-review.html</loc>
-    <lastmod>2026-03-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/tettra-ai-stop-answering-repetitive-questions-slack.html</loc>
-    <lastmod>2026-03-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/voibe-ai-get-1-hour-back-every-day-review.html</loc>
-    <lastmod>2026-03-30</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/nbot-build-trackers-for-what-matters.html</loc>
-    <lastmod>2026-04-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/potions-done-for-you-newsletter-system-review.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/zealos-ai-operating-system-founders-revenue-teams.html</loc>
-    <lastmod>2026-04-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/fast-image-ai-free-headshot-generator-review.html</loc>
-    <lastmod>2026-05-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/paperanimator-photo-to-paper-animation-ai-review.html</loc>
-    <lastmod>2026-05-14</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/reka-clip-viral-clips-from-long-videos.html</loc>
-    <lastmod>2026-05-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/raphael-ai-free-ai-image-generator-review.html</loc>
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/expertise-ai-turn-website-visitors-into-meetings-qualified-pipeline.html</loc>
-    <lastmod>2026-06-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/neamx-ai-get-the-clicks-you-deserve.html</loc>
-    <lastmod>2026-06-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/claude-fable-5-mythos-ai-storytelling-review.html</loc>
-    <lastmod>2026-06-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/run-llm-on-laptop-8gb-ram-no-gpu-ollama.html</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/ai-entry-level-jobs-what-changed.html</loc>
-    <lastmod>2026-07-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/i-stopped-using-ai-for-a-week-of-coding.html</loc>
-    <lastmod>2026-07-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/ai-ml-fresher-salary-bangalore-2026.html</loc>
-    <lastmod>2026-07-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/do-you-need-a-masters-for-ai-jobs-india.html</loc>
-    <lastmod>2026-07-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/ai-skills-in-indian-job-postings-2026.html</loc>
-    <lastmod>2026-07-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/portfolio-projects-that-got-interviews.html</loc>
-    <lastmod>2026-07-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/ai-resume-rejected-what-actually-fixed-it.html</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/free-ai-study-stack-notes-flashcards-summaries.html</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/how-to-write-a-prompt-that-actually-works.html</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://getupdated.tech/blogs/using-ai-for-coding-interview-prep.html</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://getupdated.tech/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html</loc>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>

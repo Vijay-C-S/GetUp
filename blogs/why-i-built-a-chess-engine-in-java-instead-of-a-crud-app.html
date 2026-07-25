@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Why I built a chess engine in Java instead of another CRUD app — an honest, technical account of the design, the minimax and alpha-beta code, the hardest bugs, and what a genuinely difficult side project teaches you.">
+    <title>Why I Built a Chess Engine in Java Instead of Another CRUD App</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Why I Built a Chess Engine in Java Instead of Another CRUD App">
+    <meta property="og:description" content="After a stack of Todo apps and inventory systems, I built a chess engine in Java. The design decisions, the minimax and alpha-beta code, the brutal bugs, and what it actually taught me.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Why I Built a Chess Engine in Java Instead of Another CRUD App">
+    <meta name="twitter:description" content="A chess engine is a state machine, a search problem, and a debugging nightmare all at once. Here's why that was worth more than a fifth CRUD app.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Why I Built a Chess Engine in Java Instead of Another CRUD App",
+        "description": "A first-person account of building a chess engine in Java as a side project instead of another CRUD application — covering architecture, the minimax algorithm, alpha-beta pruning, evaluation functions, the hardest bugs, testing, and the engineering lessons a technically difficult project teaches.",
+        "datePublished": "2026-07-25",
+        "dateModified": "2026-07-25",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Building a chess engine in Java taught me more than five CRUD apps combined.",
+            "name": "Why I Built a Chess Engine in Java Instead of Another CRUD App"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Is building a chess engine a good portfolio project for a software engineer?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "It is an excellent project if your goal is to demonstrate engineering thinking rather than web or backend plumbing. A chess engine forces you to work with real algorithms, careful state management and genuinely hard debugging, which gives you a lot to talk about in interviews. It is a weaker choice if you specifically need to show REST APIs, databases and deployment for a web role. For most people, one strong chess engine plus a couple of practical web apps is a stronger portfolio than five CRUD apps alone."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why choose Java to build a chess engine instead of Python?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Java suits a chess engine because the domain is naturally object-oriented and the compiler catches a lot of the interlocking mistakes before you run the code. Strong typing, a clear class structure, the collections framework and JIT-compiled performance all help when you are searching millions of positions. Python is faster to prototype and perfectly capable, but Java's discipline pays off in a project where a single sloppy shortcut can corrupt your entire board state."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the minimax algorithm and how does alpha-beta pruning improve it?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Minimax explores the game as a tree of possible moves, assuming you try to maximise your score while your opponent tries to minimise it, then picks the move that leads to the best guaranteed outcome. Alpha-beta pruning is an optimisation that gives the same answer while examining far fewer positions: it tracks the best result each side can already guarantee and stops exploring a branch as soon as it proves that branch can never be chosen. In practice, adding alpha-beta pruning let my engine search deeper and faster with only a few extra lines of code."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What are the hardest bugs when building a chess engine?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The hardest bugs cluster around move legality and board state. Kings moving into check, castling through an attacked square, infinite recursion when checking whether a square is attacked, undo logic that forgets the captured piece, and shallow board copies where pieces are shared between positions are all classic traps. Most of them come from the same root cause: not cleanly separating pseudo-legal moves from legal moves, and not restoring the complete previous state when you undo a move."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What prerequisites do I need before building a chess engine?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "You need to be comfortable with functions, classes, arrays and basic recursion in your chosen language, and you need to know the rules of chess thoroughly, because you will be encoding every one of them including castling, en passant and promotion. You do not need to be a strong chess player. It also helps to be prepared for long debugging sessions, since a lot of the value of the project comes from working through problems that do not have a ready-made answer online."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Will a self-built chess engine be able to beat strong engines like Stockfish?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, and that should not be the goal. A first hand-built engine typically plays at a modest level, making a reasonable move most of the time and occasionally blundering. Strong open-source engines are the product of many years of specialised work using techniques like bitboards, transposition tables and highly tuned evaluation. The value of building your own engine is the engineering you learn along the way, not the playing strength you reach."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Why I Built a Chess Engine in Java Instead of Another CRUD App</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer working at a laptop, representing the decision to build a technically demanding chess engine in Java instead of another CRUD application" title="Building a chess engine in Java instead of another CRUD app" class="featured-image" width="800" height="450">
+                <p class="image-caption">A chess engine is a state machine, a search problem, and a debugging nightmare all at once. That was the point.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+
+                <p class="lead">Every learning path for developers eventually hands you the same shopping list. Build a Todo app. Then a Notes app. Then a Blog CMS. Then, if you're feeling adventurous, an Inventory System with user roles. I built most of those. Some of them twice, in different frameworks, because that's what you're told to do when you're trying to "get serious."</p>
+
+                <p>And for a while, it worked. Those projects taught me real things. But somewhere around my fourth CRUD app, I noticed I'd stopped learning and started copying myself. I could scaffold a new one in an afternoon without thinking. That's a nice feeling for about a week, and then it turns into a quiet panic: <em>am I actually getting better, or just faster at the same trick?</em></p>
+
+                <p>So I did something that made no sense on paper. Instead of building a fifth CRUD app to round out my portfolio, I built a chess engine in Java. No product. No users. No monetization. Just a program that could look at a chessboard and decide on a decent move.</p>
+
+                <p>It was the single most frustrating, humbling, and genuinely useful thing I've done as a self-taught programmer. This is the story of why I chose it, what broke, and what it did to the way I think about code.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#crud-problem">The problem with endless CRUD projects</a></li>
+                    <li><a href="#why-chess">Why chess is an unusually rich problem</a></li>
+                    <li><a href="#why-java">Why I chose Java on purpose</a></li>
+                    <li><a href="#designing">Designing the engine</a></li>
+                    <li><a href="#hardest-bugs">The hardest bugs</a></li>
+                    <li><a href="#minimax">Implementing minimax and alpha-beta pruning</a></li>
+                    <li><a href="#evaluation">Building an evaluation function</a></li>
+                    <li><a href="#performance">Performance optimizations</a></li>
+                    <li><a href="#testing">Testing everything</a></li>
+                    <li><a href="#lessons">What this project taught me</a></li>
+                    <li><a href="#recommend">Would I recommend it?</a></li>
+                    <li><a href="#again">If I started again</a></li>
+                    <li><a href="#faq">Frequently asked questions</a></li>
+                    <li><a href="#conclusion">Conclusion</a></li>
+                </ul>
+
+                <h2 id="crud-problem">The Problem With Endless CRUD Projects</h2>
+
+                <p>Let me be fair to CRUD apps first, because they get dunked on and they don't deserve all of it.</p>
+
+                <p>If you've never built one, a CRUD app teaches you the actual plumbing of modern software:</p>
+
+                <ul>
+                    <li>How a request travels from a browser to a server to a database and back</li>
+                    <li>Authentication and authorization</li>
+                    <li>REST API design and status codes</li>
+                    <li>Database schema design, migrations, and relationships</li>
+                    <li>Form validation and error handling</li>
+                    <li>Deployment, environment variables, and the joy of a broken build at 2 a.m.</li>
+                </ul>
+
+                <p>Those are not small skills. They're most of a real job. So build a couple. Genuinely.</p>
+
+                <p>The problem is the ceiling. Watch what these classic beginner projects actually have in common:</p>
+
+                <ul>
+                    <li><strong>Todo App</strong> — create tasks, list tasks, mark done, delete</li>
+                    <li><strong>Student Management</strong> — create students, list students, edit grades, delete</li>
+                    <li><strong>Expense Tracker</strong> — create expenses, list expenses, edit categories, delete</li>
+                    <li><strong>Hospital Management</strong> — create patients, list appointments, edit records, delete</li>
+                    <li><strong>Library System</strong> — create books, list loans, edit due dates, delete</li>
+                    <li><strong>Employee Portal</strong> — create employees, list departments, edit roles, delete</li>
+                </ul>
+
+                <p>Notice anything? Strip away the domain and it's the same four operations wired to a different-looking table. The nouns change. The verbs never do. Once you've internalized the pattern, you're not solving an engineering problem anymore — you're renaming columns.</p>
+
+                <blockquote>The tenth CRUD app doesn't teach you the tenth thing. It teaches you the first thing, again, in a new costume.</blockquote>
+
+                <p>The core issue is that CRUD apps rarely have <em>hard logic</em>. The database does the heavy lifting. Your code is mostly a polite translator between an HTML form and a SQL row. There's no moment where you have to sit with a whiteboard and genuinely think about an algorithm, because there isn't really an algorithm — there's a query.</p>
+
+                <p>I wanted a project where the difficulty lived in <em>my</em> code, not in a library I was gluing together. I wanted something where being clever actually mattered and being sloppy actually hurt. Chess turned out to be exactly that. If you want the broader argument about which side projects actually stand out, I wrote separately about <a href="/blogs/portfolio-projects-that-got-interviews.html">the portfolio projects that got people interviews</a>.</p>
+
+                <h2 id="why-chess">Why Chess Is an Unusually Rich Problem</h2>
+
+                <p>Here's the thing about chess that sneaks up on you: the rules sound simple until you try to write them down as code. Then they explode.</p>
+
+                <p>Consider what "make a move" actually involves. A piece moves from one square to another. Easy. Except:</p>
+
+                <ul>
+                    <li>A pawn moves forward but captures diagonally, and only diagonally.</li>
+                    <li>A pawn can move two squares, but only from its starting rank.</li>
+                    <li>A pawn reaching the far side <strong>promotes</strong> into a queen, rook, bishop, or knight.</li>
+                    <li><strong>En passant</strong> lets a pawn capture another pawn that just walked past it — a rule that depends on what happened <em>last move</em>, not the current board.</li>
+                    <li><strong>Castling</strong> moves two pieces at once, but only if neither has moved, the squares between are empty, and the king isn't currently in check, doesn't pass through check, and doesn't land in check.</li>
+                    <li>You can't make any move that leaves your own king in <strong>check</strong>. Even a legal-looking move is illegal if it exposes your king.</li>
+                    <li><strong>Checkmate</strong> is check with no legal escape. <strong>Stalemate</strong> is no legal move <em>without</em> being in check — and that's a draw, not a loss.</li>
+                </ul>
+
+                <p>Every one of those is a special case that interacts with the others. A move that's legal in isolation can be illegal because of a pin. A game that looks winnable is actually a draw. This is a state machine with genuinely tricky rules, and there's no ORM that models it for you.</p>
+
+                <p>That's what makes chess a rich programming problem. It forces you to confront things CRUD never does:</p>
+
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Chess concept</th>
+                            <th>Software engineering skill it exercises</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Board and piece state</td><td>Careful state management, immutability vs mutation</td></tr>
+                        <tr><td>Move validation</td><td>Complex conditional logic, rule composition</td></tr>
+                        <tr><td>Special moves (castling, en passant)</td><td>Edge cases and historical state dependencies</td></tr>
+                        <tr><td>Check / checkmate detection</td><td>Recursive reasoning, "what if" simulation</td></tr>
+                        <tr><td>Choosing a move</td><td>Search algorithms, evaluation, trade-offs</td></tr>
+                        <tr><td>Undo / redo</td><td>Reversible operations, clean state transitions</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <p>CRUD asks "where do I store this?" Chess asks "given this situation, what happens next, and is it even allowed?" The second question is the one that makes you a better engineer.</p>
+
+                <h3>CRUD app vs chess engine, side by side</h3>
+
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dimension</th>
+                            <th>Typical CRUD app</th>
+                            <th>Chess engine</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Where the difficulty lives</td><td>In the framework and database</td><td>In your own code and logic</td></tr>
+                        <tr><td>Core skill practised</td><td>Wiring forms to tables</td><td>Algorithms and state management</td></tr>
+                        <tr><td>Algorithms involved</td><td>Rarely any</td><td>Tree search, pruning, evaluation</td></tr>
+                        <tr><td>Debugging difficulty</td><td>Usually shallow</td><td>Deep, often multi-day</td></tr>
+                        <tr><td>Copy-paste-able from a tutorial</td><td>Almost entirely</td><td>Only the scaffolding</td></tr>
+                        <tr><td>Interview conversation value</td><td>Limited</td><td>High — real decisions to defend</td></tr>
+                        <tr><td>Reusable job skills (auth, REST, deploy)</td><td>High</td><td>Low</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <p>Neither column is strictly better. The point is that they train different muscles, and if you've only ever trained the left column, the right one is where the growth is hiding.</p>
+
+                <h2 id="why-java">Why I Chose Java on Purpose</h2>
+
+                <p>I could have written this in Python. Fewer keystrokes, faster to prototype. I deliberately didn't, and I stand by it.</p>
+
+                <p>Chess is fundamentally about <strong>objects</strong> with clear identities and behaviors. A board, pieces, moves, a game. Java's insistence on structure — which feels like bureaucracy when you're building a Todo app — becomes a feature when your domain is genuinely object-shaped.</p>
+
+                <p>Here's what Java gave me that mattered:</p>
+
+                <ul>
+                    <li><strong>Strong OOP</strong> — a <code>Piece</code> hierarchy with a <code>Bishop</code> and a <code>Knight</code> that override behavior maps naturally onto the problem.</li>
+                    <li><strong>Type safety</strong> — the compiler caught dozens of mistakes before I ever ran the code. When your logic is this interlocking, catching a wrong type at compile time saves hours.</li>
+                    <li><strong>The Collections framework</strong> — <code>List</code>, <code>Map</code>, <code>EnumMap</code>, and friends handle move lists and lookups without me reinventing anything.</li>
+                    <li><strong>Performance</strong> — a chess engine searches millions of positions. Java's JIT-compiled speed matters once you go more than a couple of moves deep.</li>
+                    <li><strong>Debugging and IDE support</strong> — stepping through a recursive search with the debugger, setting conditional breakpoints on "only stop when depth == 0," was invaluable.</li>
+                    <li><strong>JUnit</strong> — testing game logic is central to this project, and JUnit made writing hundreds of assertions painless.</li>
+                </ul>
+
+                <p>Java encourages disciplined design almost against your will. It nudges you toward interfaces, clear class boundaries, and explicit types. For a project where a single sloppy shortcut can corrupt your entire board state, that discipline is a gift, not a tax. This was the Java programming project that finally made object-oriented programming <em>click</em> for me, instead of being a thing I recited in interviews.</p>
+
+                <h2 id="designing">Designing the Engine</h2>
+
+                <p>I'll be honest: my first design was bad. Not "junior developer" bad — genuinely, "this cannot work" bad. But you learn more from a design that collapses than from one that's handed to you correct.</p>
+
+                <p>My eventual class breakdown looked roughly like this:</p>
+
+                <pre><code>Game          -&gt; owns the current Board, whose turn it is, move history
+Board         -&gt; an 8x8 grid of squares, knows how to apply/undo moves
+Square        -&gt; a coordinate (file, rank), may hold a Piece
+Piece         -&gt; abstract base: Pawn, Knight, Bishop, Rook, Queen, King
+Move          -&gt; from-square, to-square, plus flags (capture, castle, promo)
+MoveGenerator -&gt; produces all legal moves for a side
+Evaluation    -&gt; scores a position for the AI
+Engine        -&gt; runs the search and picks a move</code></pre>
+
+                <h3>The inheritance mistake</h3>
+
+                <p>My first instinct was deep inheritance. <code>Piece</code> was abstract, and each piece overrode a <code>getMoves()</code> method. That part was fine. Where it went wrong was that I stuffed board-scanning logic <em>inside</em> each piece — the bishop knew how to slide diagonally by directly reaching into the board and mutating things.</p>
+
+                <p>That coupling was a disaster. Pieces and the board became tangled. When I needed to simulate a move to check for check, pieces were mutating real board state as a side effect of <em>asking</em> what their moves were. Asking a question changed the answer.</p>
+
+                <p>Here's a trimmed version of the piece hierarchy after I fixed it — pieces <em>describe</em> their movement, the board <em>executes</em> it:</p>
+
+                <pre><code>public abstract class Piece {
+    protected final Color color;
+
+    protected Piece(Color color) {
+        this.color = color;
+    }
+
+    // Return candidate moves. Does NOT mutate the board.
+    public abstract List&lt;Move&gt; pseudoLegalMoves(Board board, Square from);
+
+    public Color getColor() { return color; }
+}
+
+public class Bishop extends Piece {
+    private static final int[][] DIRECTIONS = {
+        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+
+    public Bishop(Color color) { super(color); }
+
+    @Override
+    public List&lt;Move&gt; pseudoLegalMoves(Board board, Square from) {
+        List&lt;Move&gt; moves = new ArrayList&lt;&gt;();
+        for (int[] dir : DIRECTIONS) {
+            board.slide(from, dir[0], dir[1], color, moves);
+        }
+        return moves;
+    }
+}</code></pre>
+
+                <p>The lesson underneath this is one you hear as a slogan and only believe after it bites you: <strong>favor composition over deep inheritance, and keep responsibilities separate.</strong> The piece shouldn't own board state. The board shouldn't know a bishop's movement rules. Once I drew that line clearly, half my bugs became impossible instead of merely fixed.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Lessons Learned — Design.</strong> Your first architecture is a hypothesis, not a commitment. I rewrote the piece/board boundary three times. Each rewrite was faster than the last because I finally understood the problem I was actually solving.</p>
+                </div>
+
+                <h2 id="hardest-bugs">The Hardest Bugs</h2>
+
+                <p>This is the section I'd have wanted to read before I started. Move validation is where the pain lives, and it's a specific, memorable kind of pain.</p>
+
+                <h3>Bug 1: The king that walked into check</h3>
+
+                <p>My first move generator happily let the king move into a square attacked by an enemy piece. Illegal, obviously. But <em>detecting</em> it is subtle: to know if a move is legal, you have to make the move, then ask "is my king now under attack?", then undo it.</p>
+
+                <p>The naive fix caused a worse bug — infinite recursion. To check if a king move was safe, I generated the opponent's moves. To generate the opponent's moves, I checked if <em>those</em> left <em>their</em> king safe. Which generated my moves. Which... you see it.</p>
+
+                <p>The fix was to separate two ideas cleanly:</p>
+
+                <ul>
+                    <li><strong>Pseudo-legal moves</strong> — moves that follow a piece's movement rules, ignoring check.</li>
+                    <li><strong>Legal moves</strong> — pseudo-legal moves that don't leave your own king in check.</li>
+                </ul>
+
+                <p>And critically, "is this square attacked?" must <em>not</em> recurse into full legality — it only needs pseudo-legal attacks. That one distinction killed the infinite loop.</p>
+
+                <pre><code>public List&lt;Move&gt; legalMoves(Color side) {
+    List&lt;Move&gt; legal = new ArrayList&lt;&gt;();
+    for (Move move : pseudoLegalMoves(side)) {
+        board.make(move);
+        if (!isKingInCheck(side)) {   // uses pseudo-legal attacks only
+            legal.add(move);
+        }
+        board.undo(move);             // this line hid a monster
+    }
+    return legal;
+}</code></pre>
+
+                <h3>Bug 2: Undo that didn't undo</h3>
+
+                <p>See <code>board.undo(move)</code> above? For two days it silently corrupted the game. After a capture-and-undo, the captured piece would vanish. My <code>Move</code> object recorded <em>where</em> a piece moved but not <em>what</em> it captured, so undo had nothing to restore.</p>
+
+                <p>The symptom was maddening: the AI would evaluate positions based on a board that was slowly losing pieces during the search, then make an insane move in the real game. The board on screen looked fine. The board inside the search was rotting.</p>
+
+                <p>The fix was to make moves carry everything undo needs:</p>
+
+                <pre><code>public class Move {
+    final Square from;
+    final Square to;
+    Piece captured;        // filled in when the move is made
+    boolean wasEnPassant;
+    Piece promotion;
+    // castling rights + en passant target before the move,
+    // so undo can restore them exactly
+    CastlingRights prevRights;
+}</code></pre>
+
+                <p><strong>Undo must restore the <em>complete</em> prior state — captured piece, castling rights, en passant target, everything.</strong> Miss one field and your search silently lies to you.</p>
+
+                <h3>Bug 3: Castling through check</h3>
+
+                <p>Castling has, by my count, five preconditions. I implemented four. I forgot that the king can't <em>pass through</em> an attacked square. So my engine would castle its king straight through a square controlled by an enemy rook, which is illegal and also looks like cheating to anyone who knows the game. Caught it only because a friend playing against it said, "wait, you can't do that."</p>
+
+                <h3>Bug 4: Checkmate that never triggered</h3>
+
+                <p>My checkmate detection asked "is the king in check and are there zero legal moves?" Correct logic. But it was calling my <em>pseudo-legal</em> generator by mistake, so it always found some move — including illegal ones — and concluded the game wasn't over. Games would continue past checkmate into nonsense. The bug wasn't in the checkmate logic at all; it was one wrong method call feeding it bad data.</p>
+
+                <h3>Bug 5: Evaluation returning garbage</h3>
+
+                <p>At one point my evaluation function returned wildly positive scores for losing positions. Turned out I was summing material for both sides but forgetting to negate the opponent's. The AI thought sacrificing its queen was brilliant. It was very confident and very wrong.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #e3b341;background:rgba(227,179,65,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0 0 0.5rem;"><strong>Common Mistakes — Move Logic</strong></p>
+                    <ul style="margin:0;">
+                        <li>Confusing pseudo-legal moves with legal moves</li>
+                        <li>Undo that forgets captured pieces or castling rights</li>
+                        <li>Recursion in "is this square attacked?" that never bottoms out</li>
+                        <li>Sharing piece objects between board copies so a change ripples everywhere</li>
+                        <li>Sign errors in evaluation (the AI helps its opponent)</li>
+                    </ul>
+                </div>
+
+                <p>That fourth one deserves a word. Early on I "copied" the board for the search by copying the array of squares — but the squares still pointed at the <em>same</em> piece objects. Mutating a piece in the search mutated the real game. Deep versus shallow copy stops being a textbook question the moment your king teleports.</p>
+
+                <h2 id="minimax">Implementing Minimax and Alpha-Beta Pruning</h2>
+
+                <p>Once the rules worked, the fun part began: making the computer <em>choose</em>. This is where the minimax algorithm in Java comes in, and it's more intuitive than its reputation.</p>
+
+                <p>The idea: chess is a tree. From the current position, you have some legal moves. Each leads to a new position where your opponent has moves, and so on. Minimax explores this tree assuming both players play their best.</p>
+
+                <ul>
+                    <li><strong>You</strong> want to <em>maximize</em> the score.</li>
+                    <li><strong>Your opponent</strong> wants to <em>minimize</em> it.</li>
+                </ul>
+
+                <p>You look ahead a fixed number of moves — the <strong>depth</strong> — then use an evaluation function to score the leaf positions, and let those scores bubble back up.</p>
+
+                <pre><code>                (you: pick MAX)
+                /      |      \
+           +2         -5        +1        &lt;- opponent replies (pick MIN)
+          / \        / \       / \
+       +3  +2    -5  +4    +6  +1          &lt;- leaf scores from evaluation</code></pre>
+
+                <p>At the bottom, you evaluate. One level up (opponent's turn) you take the <em>minimum</em> of each group. One more level up (your turn) you take the <em>maximum</em>. The move leading to the best guaranteed outcome wins.</p>
+
+                <pre><code>int minimax(Board board, int depth, boolean maximizing) {
+    if (depth == 0 || board.isGameOver()) {
+        return evaluate(board);
+    }
+
+    if (maximizing) {
+        int best = Integer.MIN_VALUE;
+        for (Move move : board.legalMoves(WHITE)) {
+            board.make(move);
+            best = Math.max(best, minimax(board, depth - 1, false));
+            board.undo(move);
+        }
+        return best;
+    } else {
+        int best = Integer.MAX_VALUE;
+        for (Move move : board.legalMoves(BLACK)) {
+            board.make(move);
+            best = Math.min(best, minimax(board, depth - 1, true));
+            board.undo(move);
+        }
+        return best;
+    }
+}</code></pre>
+
+                <p>The catch: the tree is enormous. There are around 20 legal opening moves, and branching stays high. Searching even a few moves deep means evaluating an eye-watering number of positions. Plain minimax at depth 4 was already sluggish.</p>
+
+                <p>Enter <strong>alpha-beta pruning</strong>. The insight is beautifully simple: if you've found a move so good that your opponent would never allow the position leading to it, you can stop examining that branch. You track two bounds — <code>alpha</code> (best the maximizer can guarantee) and <code>beta</code> (best the minimizer can guarantee). When they cross, you prune.</p>
+
+                <pre><code>int alphaBeta(Board board, int depth, int alpha, int beta, boolean maximizing) {
+    if (depth == 0 || board.isGameOver()) {
+        return evaluate(board);
+    }
+    if (maximizing) {
+        int best = Integer.MIN_VALUE;
+        for (Move move : board.legalMoves(WHITE)) {
+            board.make(move);
+            best = Math.max(best, alphaBeta(board, depth - 1, alpha, beta, false));
+            board.undo(move);
+            alpha = Math.max(alpha, best);
+            if (beta &lt;= alpha) break;   // prune: opponent won't allow this
+        }
+        return best;
+    } else {
+        int best = Integer.MAX_VALUE;
+        for (Move move : board.legalMoves(BLACK)) {
+            board.make(move);
+            best = Math.min(best, alphaBeta(board, depth - 1, alpha, beta, true));
+            board.undo(move);
+            beta = Math.min(beta, best);
+            if (beta &lt;= alpha) break;
+        }
+        return best;
+    }
+}</code></pre>
+
+                <p>Alpha-beta pruning in Java gave the same answer as plain minimax but visited a fraction of the nodes. Watching my search go deeper <em>and</em> faster after adding a few lines of pruning was one of the most satisfying moments of the whole project. Same result, far less work — that's the kind of elegance you rarely bump into wiring forms to tables.</p>
+
+                <h2 id="evaluation">Building an Evaluation Function</h2>
+
+                <p>Here's the uncomfortable truth nobody warns you about: <strong>the evaluation function is an opinion, not a fact.</strong></p>
+
+                <p>Minimax tells you how to search. Evaluation tells the engine what "good" even means, and there's no objectively correct answer. You're encoding chess judgment into numbers, and reasonable people disagree.</p>
+
+                <p>I started with the obvious: material count.</p>
+
+                <ul>
+                    <li>Pawn = 100</li>
+                    <li>Knight = 320</li>
+                    <li>Bishop = 330</li>
+                    <li>Rook = 500</li>
+                    <li>Queen = 900</li>
+                    <li>King = enormous (losing it ends the game)</li>
+                </ul>
+
+                <pre><code>int evaluate(Board board) {
+    int score = 0;
+    for (Square sq : board.occupiedSquares()) {
+        Piece p = sq.getPiece();
+        int value = pieceValue(p);
+        score += (p.getColor() == WHITE) ? value : -value;
+    }
+    return score;
+}</code></pre>
+
+                <p>Material alone produces a bot that grabs pieces and otherwise wanders aimlessly. So I layered in more factors, one at a time, testing after each:</p>
+
+                <ul>
+                    <li><strong>Piece-square tables</strong> — a knight on the rim is worse than one in the center, so each piece gets a small bonus/penalty per square.</li>
+                    <li><strong>Mobility</strong> — more legal moves usually means a better position.</li>
+                    <li><strong>King safety</strong> — an exposed king is a liability; pawns in front of it earn a bonus.</li>
+                    <li><strong>Center control</strong> — occupying or attacking the central squares matters early.</li>
+                    <li><strong>Pawn structure</strong> — doubled and isolated pawns are weaknesses.</li>
+                </ul>
+
+                <p>Each addition changed the engine's personality. Adding piece-square tables alone made it visibly less clumsy in the opening. The point I want to land: <strong>evaluation is iterative and subjective.</strong> You tweak a weight, play some games, watch what changes, and adjust. It's less like solving an equation and more like tuning an instrument by ear. I never found the "right" numbers, because there aren't any — only trade-offs I could live with.</p>
+
+                <h2 id="performance">Performance Optimizations</h2>
+
+                <p>Depth is everything in chess engines, and depth costs time exponentially. Here's what actually moved the needle for me, roughly in order of impact:</p>
+
+                <ol>
+                    <li><strong>Alpha-beta pruning</strong> — by far the biggest win. Turned a depth-4 search from painful to instant.</li>
+                    <li><strong>Move ordering</strong> — alpha-beta prunes far more when you examine good moves first. I sorted captures before quiet moves (try the promising stuff early, cut more branches). Cheap to add, big payoff.</li>
+                    <li><strong>Make/undo instead of copying the board</strong> — early on I cloned the entire board for every node in the search. That's millions of object allocations. Switching to a make/undo model on a single board cut memory churn dramatically.</li>
+                    <li><strong>Reducing object creation</strong> — I was creating a fresh <code>Move</code> list and new objects everywhere. Reusing structures and avoiding needless allocation reduced garbage collection pressure noticeably.</li>
+                    <li><strong>Profiling before guessing</strong> — I <em>assumed</em> evaluation was my bottleneck. The profiler said move generation was. I'd have optimized the wrong thing for a week without it.</li>
+                </ol>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Lessons Learned — Performance.</strong> I want to be careful here: I didn't run rigorous, publishable benchmarks, and I'm not going to invent numbers. What I can say honestly is that alpha-beta pruning and switching from copy-the-board to make/undo were the two changes where the difference was obvious without any measurement at all — the engine went from "make a coffee while it thinks" to "responds while you blink." The rest were real but incremental.</p>
+                </div>
+
+                <p>The copy-versus-undo decision is worth dwelling on, because it's a genuine engineering trade-off. Copying the board is <em>simpler</em> and less bug-prone — every node gets a clean, independent state. Make/undo is <em>faster</em> but demands that undo be flawless, which, as the bug section showed, is where bugs breed. I chose speed and paid for it in debugging. On a bigger project I might have started with copy for correctness and switched to undo only where profiling justified it. Knowing <em>when</em> to trade simplicity for speed is a judgment call, and this project gave me real reps at making it.</p>
+
+                <h2 id="testing">Testing Everything</h2>
+
+                <p>Here's a claim I'll defend: <strong>testing game logic is genuinely harder than testing CRUD endpoints,</strong> and it's where I grew the most as an engineer.</p>
+
+                <p>Testing a CRUD endpoint is mostly mechanical. POST this, expect a 201, check the row exists. The space of behaviors is small and the correct answer is obvious.</p>
+
+                <p>Testing chess is different, because "correct" is a maze of interacting rules. My test suite ended up covering:</p>
+
+                <ul>
+                    <li><strong>Unit tests</strong> — does a bishop on an empty board generate exactly the diagonal moves?</li>
+                    <li><strong>Edge cases</strong> — en passant only on the immediately following move; promotion into each piece type; castling with every precondition individually violated.</li>
+                    <li><strong>Position tests</strong> — set up a known board, count the legal moves, compare to the known-correct number. (Chess programmers call this <em>perft</em> testing, and it's brutal at catching move-generation bugs.)</li>
+                    <li><strong>Regression tests</strong> — every bug above became a permanent test so it could never come back quietly.</li>
+                    <li><strong>Stress tests</strong> — let the engine play thousands of moves against itself and assert the board never enters an impossible state.</li>
+                    <li><strong>Manual testing</strong> — actually playing it, which caught the "castling through check" bug no unit test had.</li>
+                </ul>
+
+                <pre><code>@Test
+void enPassantOnlyAvailableImmediately() {
+    Board board = Board.fromFen("... a black pawn just moved two squares ...");
+    List&lt;Move&gt; moves = board.legalMoves(WHITE);
+    assertTrue(moves.stream().anyMatch(Move::isEnPassant));
+
+    // make an unrelated move for both sides, then the window should close
+    board.make(someQuietMove());
+    board.make(anotherQuietMove());
+    assertFalse(board.legalMoves(WHITE).stream().anyMatch(Move::isEnPassant));
+}
+
+@Test
+void knightInCornerHasExactlyTwoMoves() {
+    Board board = Board.empty();
+    board.place(new Knight(WHITE), Square.of("a1"));
+    assertEquals(2, board.legalMoves(WHITE).size());
+}</code></pre>
+
+                <p>Position counting was the technique that saved me. If the known number of legal moves from a position is exactly N and my engine says N+3, I have a move-generation bug — probably an illegal move slipping through. It's a single number that validates a mountain of logic at once. I've never had a testing signal that clean in a web app.</p>
+
+                <h2 id="lessons">What This Project Taught Me</h2>
+
+                <p>I'll skip the platitudes and give you the specific things that changed.</p>
+
+                <ul>
+                    <li><strong>Thinking recursively became natural.</strong> Before this, recursion was something I understood in theory and avoided in practice. After writing minimax and check-detection, recursive reasoning stopped being scary and started being a tool I reach for.</li>
+                    <li><strong>Problem decomposition got real.</strong> "Build a chess engine" is overwhelming. "Make a bishop generate diagonal moves" is a Tuesday. Learning to slice an intimidating problem into boring, testable pieces is maybe the most transferable skill I gained.</li>
+                    <li><strong>Debugging patience.</strong> Some of these bugs took days. I learned to form a hypothesis, isolate variables, and resist the urge to change five things at once. That patience shows up in my day job now.</li>
+                    <li><strong>Clean code stopped being aesthetic and became practical.</strong> When your logic is this interlocking, a muddy design <em>causes</em> bugs. Clear class boundaries weren't about looking professional — they were about being able to reason at all.</li>
+                    <li><strong>Performance intuition.</strong> I now instinctively think about allocation, recursion cost, and profiling <em>before</em> optimizing, instead of guessing.</li>
+                    <li><strong>Object-oriented design finally clicked.</strong> Not from a tutorial — from a problem that genuinely needed it.</li>
+                </ul>
+
+                <h3>Skills gained</h3>
+
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Skill area</th>
+                            <th>What the chess engine forced me to learn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Algorithms</td><td>Minimax, alpha-beta pruning, tree search, move ordering</td></tr>
+                        <tr><td>OOP design</td><td>Piece hierarchy, composition over inheritance, clear boundaries</td></tr>
+                        <tr><td>State management</td><td>Deep vs shallow copy, reversible make/undo operations</td></tr>
+                        <tr><td>Debugging</td><td>Hypothesis-driven investigation, conditional breakpoints</td></tr>
+                        <tr><td>Testing</td><td>Perft/position testing, regression suites, edge cases</td></tr>
+                        <tr><td>Performance</td><td>Profiling, reducing allocation, exponential cost intuition</td></tr>
+                        <tr><td>Recursion</td><td>Reasoning about recursive search and base cases</td></tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <p>None of that came from wiring a form to a table.</p>
+
+                <h2 id="recommend">Would I Recommend It?</h2>
+
+                <p>Honestly? It depends who's asking, and I'd be doing you a disservice to pretend it's for everyone.</p>
+
+                <p><strong>Build a chess engine if you:</strong></p>
+
+                <ul>
+                    <li>Already have the basics of a language down and want to <em>stretch</em> rather than <em>review</em></li>
+                    <li>Enjoy algorithmic problems and don't need an immediate practical payoff</li>
+                    <li>Want a portfolio project that starts real technical conversations in interviews</li>
+                    <li>Are okay being frustrated for days at a time</li>
+                </ul>
+
+                <p><strong>Maybe skip it (for now) if you:</strong></p>
+
+                <ul>
+                    <li>Are brand new to programming — build a couple of small apps first, genuinely</li>
+                    <li>Need a project that demonstrates web/backend skills for a specific job</li>
+                    <li>Get demoralized by long debugging sessions with no visible progress</li>
+                </ul>
+
+                <p><strong>Realistic prerequisites:</strong> comfort with functions, classes, arrays, and basic recursion. You don't need to be a strong chess <em>player</em> — I'm mediocre at the game — but you need to know the rules cold, because you're about to encode every one of them.</p>
+
+                <p><strong>Realistic expectations:</strong> your engine will not be strong. Mine plays like a decent club beginner who occasionally sees something clever and occasionally hangs its queen. That's completely fine. The strength of the engine was never the point. The engineering you do to get <em>any</em> working engine is the point.</p>
+
+                <h2 id="again">If I Started Again</h2>
+
+                <p>I learned enough building this that I can see, clearly, what I'd do differently. I want to be upfront: <strong>these are things I'd add next, not things my engine already does.</strong> No pretending.</p>
+
+                <ul>
+                    <li><strong>Bitboards.</strong> I represented the board as an 8x8 array of objects. Serious engines use 64-bit integers (bitboards) where each bit is a square. Move generation becomes bitwise operations and gets dramatically faster. I understand them now; I'd use them from the start.</li>
+                    <li><strong>A cleaner architecture from day one.</strong> I'd draw the piece/board boundary correctly before writing code, having learned the hard way.</li>
+                    <li><strong>Transposition tables.</strong> The same position often arises via different move orders. Caching evaluated positions in a hash table avoids re-searching them. I skipped this entirely.</li>
+                    <li><strong>Iterative deepening.</strong> Instead of searching to a fixed depth, search depth 1, then 2, then 3, using each result to order moves for the next. Better time control and better pruning.</li>
+                    <li><strong>A stronger testing harness up front.</strong> I bolted tests on reactively. I'd build perft testing before the move generator, not after.</li>
+                    <li><strong>A better GUI.</strong> Mine was functional and ugly. Fine for learning, not for showing off.</li>
+                    <li><strong>UCI protocol support.</strong> The Universal Chess Interface is the standard protocol chess engines speak. Supporting it would let my engine plug into real chess GUIs and even play against established engines like Stockfish — not to <em>beat</em> them (it wouldn't come close), but to test and analyze against a known-strong reference. That's a future project, and I'm looking forward to it.</li>
+                </ul>
+
+                <p>That list is really a map of everything this project revealed I didn't know existed when I started. That's the sign of a good learning project — it hands you a bigger map, not a finished journey.</p>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Is building a chess engine a good portfolio project for a software engineer?</h3>
+                <p>It's an excellent project if your goal is to demonstrate engineering thinking rather than web or backend plumbing. A chess engine forces you to work with real algorithms, careful state management and genuinely hard debugging, which gives you a lot to talk about in interviews. It's a weaker choice if you specifically need to show REST APIs, databases and deployment for a web role. For most people, one strong chess engine plus a couple of practical web apps is a stronger portfolio than five CRUD apps alone.</p>
+
+                <h3>Why choose Java to build a chess engine instead of Python?</h3>
+                <p>Java suits a chess engine because the domain is naturally object-oriented and the compiler catches a lot of the interlocking mistakes before you run the code. Strong typing, a clear class structure, the collections framework and JIT-compiled performance all help when you're searching millions of positions. Python is faster to prototype and perfectly capable, but Java's discipline pays off in a project where a single sloppy shortcut can corrupt your entire board state.</p>
+
+                <h3>What is the minimax algorithm and how does alpha-beta pruning improve it?</h3>
+                <p>Minimax explores the game as a tree of possible moves, assuming you try to maximise your score while your opponent tries to minimise it, then picks the move that leads to the best guaranteed outcome. Alpha-beta pruning is an optimisation that gives the same answer while examining far fewer positions: it tracks the best result each side can already guarantee and stops exploring a branch as soon as it proves that branch can never be chosen. In practice, adding alpha-beta pruning let my engine search deeper and faster with only a few extra lines of code.</p>
+
+                <h3>What are the hardest bugs when building a chess engine?</h3>
+                <p>The hardest bugs cluster around move legality and board state. Kings moving into check, castling through an attacked square, infinite recursion when checking whether a square is attacked, undo logic that forgets the captured piece, and shallow board copies where pieces are shared between positions are all classic traps. Most of them come from the same root cause: not cleanly separating pseudo-legal moves from legal moves, and not restoring the complete previous state when you undo a move.</p>
+
+                <h3>What prerequisites do I need before building a chess engine?</h3>
+                <p>You need to be comfortable with functions, classes, arrays and basic recursion in your chosen language, and you need to know the rules of chess thoroughly, because you'll be encoding every one of them including castling, en passant and promotion. You don't need to be a strong chess player. It also helps to be prepared for long debugging sessions, since a lot of the value of the project comes from working through problems that don't have a ready-made answer online.</p>
+
+                <h3>Will a self-built chess engine be able to beat strong engines like Stockfish?</h3>
+                <p>No, and that shouldn't be the goal. A first hand-built engine typically plays at a modest level, making a reasonable move most of the time and occasionally blundering. Strong open-source engines are the product of many years of specialised work using techniques like bitboards, transposition tables and highly tuned evaluation. The value of building your own engine is the engineering you learn along the way, not the playing strength you reach.</p>
+
+                <h2 id="conclusion">Conclusion</h2>
+
+                <p>Here's what I keep coming back to.</p>
+
+                <p>The chess engine will never go in an app store. It has no users. As a "portfolio project," it's arguably worse than a polished CRUD app, because a recruiter can't click a live demo and immediately get it. By every conventional metric of building-something-to-show-people, it was the wrong choice.</p>
+
+                <p>And it was still the best thing I've built.</p>
+
+                <p>Because the value was never the artifact. The value was every hour I spent staring at a board state that shouldn't have been possible, forming a theory, testing it, being wrong, and trying again. It was the moment infinite recursion finally made sense. It was watching alpha-beta pruning do the same work in a fraction of the time and actually understanding <em>why</em>. It was the specific, hard-won intuition you can only get from problems that don't have a Stack Overflow answer waiting.</p>
+
+                <p>CRUD apps taught me to assemble known parts. The chess engine taught me to think when there were no known parts — to decompose something genuinely hard into pieces small enough to reason about, and to sit with a problem past the point of comfort. That skill doesn't transfer from a tutorial. It transfers from a fight.</p>
+
+                <blockquote>Building complex projects develops engineering intuition far more than endlessly repeating CRUD applications. The struggle is the curriculum.</blockquote>
+
+                <p>So if you've built your third or fourth CRUD app and you feel that quiet plateau — that suspicion that you're getting faster without getting better — take it as a signal. Pick a project that scares you a little. A chess engine, a small interpreter, a physics simulation, a tiny database. Something where the difficulty lives in <em>your</em> code and can't be Googled away in one search.</p>
+
+                <p>You'll be frustrated. You'll be stuck. You'll rewrite things you were proud of. And on the other side of that struggle, you won't just have a project. You'll have a way of thinking that no amount of wiring forms to tables could ever give you. Build the hard thing. That's where the engineer actually shows up.</p>
+
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Minimax</a>
+                <a href="javascript:void(0)" class="tag">Alpha-Beta Pruning</a>
+                <a href="javascript:void(0)" class="tag">Side Projects</a>
+                <a href="javascript:void(0)" class="tag">Object-Oriented Programming</a>
+                <a href="javascript:void(0)" class="tag">Portfolio Projects</a>
+                <a href="javascript:void(0)" class="tag">Software Engineering</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">Bitboards Explained: Representing a Chess Board in 64 Bits</a></li>
+                        <li><a href="/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">Generating Sliding Piece Moves Without Magic Bitboards</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
