@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="En passant, castling rights and the 50-move rule are state that lives off the board. Here are the bugs I hit in my Java chess engine, and the fixes.">
+    <title>Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Handling En Passant, Castling Rights, and the 50-Move Rule Correctly">
+    <meta property="og:description" content="Three rules every tutorial hand-waves. They're not hard to understand. They're hard to get right, because none of them live on the board.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Handling En Passant, Castling Rights, and the 50-Move Rule Correctly">
+    <meta name="twitter:description" content="A stale en passant square, castling rights that outlived a captured rook, and a halfmove clock counting the wrong thing. Real Java, real fixes.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Handling En Passant, Castling Rights, and the 50-Move Rule Correctly",
+        "description": "A first-person account of implementing the three rules that live outside piece placement in a Java chess engine — the stale en passant square, the en passant discovered check along a rank, the castling rights mask table, and the halfmove clock that counts plies rather than moves.",
+        "datePublished": "2026-07-25",
+        "dateModified": "2026-07-25",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "En passant, castling rights and the halfmove clock are the only parts of a chess position that don't live on the board.",
+            "name": "Handling En Passant, Castling Rights, and the 50-Move Rule Correctly"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Why must the en passant square be cleared on every move?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because the en passant square is a property of the current position, not an event flag. It is set by exactly one kind of move, a pawn double push, and it must be cleared by every other kind of move. A common bug is to clear it only inside the en passant capture handler, on the reasoning that the square gets used up when someone captures there. Most of the time nobody captures there, so the square goes stale and sits on the board for the rest of the game, allowing phantom en passant captures several moves later onto a square whose pawn has long since moved on."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does en passant sometimes expose the king when neither pawn is pinned?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "En passant is the only move in chess that removes two pieces from the same rank at once. The capturing pawn leaves its square and the captured pawn is lifted from the square beside it. If both pawns were together shielding the king from an enemy rook or queen along that rank, the capture opens the line and the move is illegal. Standard pin detection cannot see it, because pin detection asks whether one piece on one square is blocking a line to the king, and neither pawn is individually a blocker. The fixes are to make the move and test whether the king square is attacked, or to build the post-capture occupancy and run a targeted rook attack query along the king's rank."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should the en passant file be hashed into the Zobrist key when no capture is possible?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Hash the en passant file only when an enemy pawn is actually positioned to make the capture. If you hash it unconditionally, a position reached after a double push and the same position reached later by transposition will produce different Zobrist keys despite being identical for every practical purpose. Threefold repetition detection then silently fails to fire, the engine walks into repetitions it should avoid and misses draws it should claim, and nothing reports an error, because a key that is merely different is indistinguishable from a position that is merely new."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does capturing a rook change castling rights?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because a rook can lose its side a castling right without ever moving. It gets captured on its home square, so it never moves, it simply stops existing. Update code that only inspects the piece that moved will not notice, and the opponent will later castle with a rook that is no longer on the board. The clean fix is a 64-entry mask array that is 0b1111 on every square except a1, e1, h1, a8, e8 and h8, applied to both ends of the move as rights &= mask[from] & mask[to]. That single branchless line covers king moves, rook moves and rook captures at once."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does b1 need to be unattacked for queenside castling?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. It needs to be empty, but not safe. Occupancy and safety are separate constraints over separate square sets. For white queenside castling, b1, c1 and d1 must all be empty because the rook slides across them, while only e1, d1 and c1 must be unattacked because those are the squares the king passes through and lands on. The king never sets foot on b1. Merging the two square sets into one constant makes queenside castling illegal whenever an enemy piece happens to attack b1, which shows up in perft as a node count that is too low."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is the 50-move rule 50 moves or 100 plies?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "100 plies. A move in the rule's sense is White and Black each playing one, so fifty moves is one hundred halfmoves. The counter increments on every ply and resets to zero on any pawn move or any capture. Testing it against 50 rather than 100 makes an engine declare draws at exactly half the correct point, in positions that are still winnable. Under FIDE rules the 50-move draw is claimable rather than automatic, and the 75-move version is automatic. An engine playing under a GUI should treat 100 plies as a draw score, with the exception that checkmate delivered on the hundredth ply is still checkmate."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer implementing en passant, castling rights and the halfmove clock in a Java chess engine" title="The three chess rules that live outside piece placement" class="featured-image" width="800" height="450">
+                <p class="image-caption">Three rules that aren't hard to understand and are unreasonably hard to get right.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">I said the next post would be about search.</p>
+
+                <p>It isn't, and the reason is that two of the four bugs in <a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">the perft post</a> were really the same bug wearing different hats. I didn't see it until I sat down to write about alpha-beta and realised I'd fixed the symptoms without ever writing down the disease.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#off-board">The state that isn't on the board</a></li>
+                    <li><a href="#en-passant">En passant</a></li>
+                    <li><a href="#castling">Castling rights</a></li>
+                    <li><a href="#fifty-move">The 50-move rule</a></li>
+                    <li><a href="#resenting">The rules I stopped resenting</a></li>
+                    <li><a href="#faq">Frequently asked questions</a></li>
+                </ul>
+
+                <h2 id="off-board">The State That Isn't On The Board</h2>
+
+                <p>Here's the disease. En passant, castling rights and the halfmove clock are the only parts of a chess position that don't live on the board. Everything else is piece placement, and piece placement I'd had handled since the day I got <a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">bitboards working</a>. These three are side-channel state. They get set by one move, consumed or destroyed by another, and they have to be restored exactly when you unmake.</p>
+
+                <p>Get any of it slightly wrong and your engine still plays chess. It just plays chess that's illegal about once every ten thousand positions.</p>
+
+                <p>Nobody's blog post skips these rules because they're hard to understand. They skip them because there's nothing interesting to say about the happy path, and all the difficulty is in edge cases you only ever meet when a node count disagrees with a published one.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Key Takeaway.</strong> If a piece of position state can't be recomputed from the squares, it has to be saved and restored explicitly. Every bug in this post is some version of forgetting that.</p>
+                </div>
+
+                <h2 id="en-passant">En Passant</h2>
+
+                <p>The rule is four sentences long. My implementation of it has been wrong in three separate ways.</p>
+
+                <h3>A double push is not a legal capture</h3>
+
+                <p>My first mental model was that the en passant square meant "an en passant capture is available." It doesn't. It means "a pawn moved two squares last ply, and <em>if</em> an enemy pawn happens to be sitting on the right square, it may capture there." Those are different claims, and conflating them is what leads to the Zobrist bug at the end of this section.</p>
+
+                <p>So the board stores the target square, the square the pushing pawn skipped over rather than the one it landed on, and nothing else:</p>
+
+                <pre><code>// Set during makeMove, before the side to move flips.
+if (movedPiece == PAWN &amp;&amp; Math.abs(to - from) == 16) {
+    epSquare = (from + to) &gt;&gt;&gt; 1;      // the square jumped over
+} else {
+    epSquare = NO_SQUARE;              // 64, deliberately out of range
+}</code></pre>
+
+                <p>The <code>(from + to) &gt;&gt;&gt; 1</code> is just the midpoint of the two squares in 0&ndash;63 indexing, which for a two-rank push is exactly the skipped square. Cute, and it saved me a branch on colour.</p>
+
+                <h3>Clear it every move. Every single move</h3>
+
+                <p>That <code>else</code> branch is the whole post in miniature. My original version didn't have one. I set <code>epSquare</code> after a double push and cleared it inside the en passant capture handler, on the reasonable-sounding logic that the square gets used up when someone captures there.</p>
+
+                <p>Nobody captures there most of the time. The square just sat, stale, for the rest of the game.</p>
+
+                <p>The symptom was a phantom capture: a pawn arriving on the fifth rank two or three moves later could capture en passant onto a square whose pawn had long since moved on. Perft on position 3 came back high, and my first assumption was that capture generation was broken, when the generator was fine and the state it was reading from was a lie.</p>
+
+                <p>If you write down one thing from this post: the en passant square is set by exactly one kind of move and cleared by every other kind. It isn't an event flag. It's a property of the current position that happens to be null almost always.</p>
+
+                <h3>The FEN field engines disagree about</h3>
+
+                <p>Standard FEN says the fourth field holds the en passant target square whenever a double push just happened, whether or not a capture is possible. So after 1.e4 you get <code>e3</code>, even though Black has no pawn within reach of it.</p>
+
+                <p>Plenty of engines don't do that. They emit <code>-</code> unless an en passant capture is actually available to the side to move, because that's the version that makes position hashing correct. Both conventions are in the wild, and the practical consequence is that a FEN pasted from one engine into another may not round-trip.</p>
+
+                <p>For perft this matters more than it sounds like it should, because several standard test positions carry an en passant field. My parser takes whatever the FEN gives it and trusts it. My FEN <em>writer</em> uses the strict convention. That's inconsistent, I know it's inconsistent, and it hasn't bitten me yet.</p>
+
+                <h3>Two pawns leave the rank at once</h3>
+
+                <p>This is the one that cost me an afternoon, and it's worth restating properly, because in the perft post I fixed it without explaining why every normal legality check misses it.</p>
+
+                <p>Black king on a4, black pawn on c4, white rook on h4. All on rank 4. White plays d2&ndash;d4, and <code>c4xd3 e.p.</code> looks completely legal. The c4 pawn isn't pinned, because on its own it isn't blocking anything.</p>
+
+                <p>Except the capture removes <em>two</em> pawns from rank 4. The capturing pawn leaves c4, and the captured pawn is lifted from d4. Two squares open on one line, in one move. En passant is the only move in chess that does this, which is why pin detection can't see it. Pin detection asks whether this piece, on this square, is blocking a line to my king. Neither pawn is individually a blocker. Together they were.</p>
+
+                <p>Two ways out. The blunt one:</p>
+
+                <pre><code>boolean isLegal(int move) {
+    make(move);
+    int ksq = Long.numberOfTrailingZeros(pieces[us][KING]);
+    boolean ok = !isAttacked(ksq, them);
+    unmake(move);
+    return ok;
+}</code></pre>
+
+                <p>And the targeted one, which only costs anything on the rare move that needs it:</p>
+
+                <pre><code>// Only for EP captures. Rebuild occupancy as it will be AFTER the capture,
+// then ask whether a rook or queen now sees the king along the rank.
+long afterEp = occupied
+             ^ bit(from) ^ bit(capturedPawnSq) | bit(to);
+
+long rankSliders = (pieces[them][ROOK] | pieces[them][QUEEN])
+                 &amp; RANK_MASK[rankOf(kingSq)];
+
+if (rankSliders != 0 &amp;&amp; (rookAttacks(kingSq, afterEp) &amp; rankSliders) != 0) {
+    return false;   // discovered check along the rank
+}</code></pre>
+
+                <p>The line doing the work is <code>occupied ^ bit(from) ^ bit(capturedPawnSq) | bit(to)</code>: clear both departing pawns, set the arrival square, then query sliding attacks against that hypothetical occupancy using the <a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">magic lookups</a>. You never mutate the real board. The rank filter up front means the attack lookup only runs when there's genuinely an enemy rook or queen on the king's rank, which is close to never.</p>
+
+                <p>I use the blunt version. It's slower and it's incapable of being subtly wrong, and I'd rather revisit that trade when a profiler tells me to than debug this class of bug twice.</p>
+
+                <h3>Hash the file, and only when it matters</h3>
+
+                <p>Zobrist keys need the en passant state, or two positions that differ only in capture availability collapse to the same key. The standard trick is to hash the <em>file</em> rather than the square, since the rank is implied by the side to move. Eight keys instead of sixty-four.</p>
+
+                <p>The part that took me embarrassingly long: hash it only when an en passant capture actually exists.</p>
+
+                <pre><code>// After the EP square has been set for this position.
+if (epSquare != NO_SQUARE
+        &amp;&amp; (pawnAttacks(them, epSquare) &amp; pieces[us][PAWN]) != 0) {
+    key ^= ZOBRIST_EP_FILE[fileOf(epSquare)];
+}</code></pre>
+
+                <p><code>pawnAttacks(them, epSquare) &amp; pieces[us][PAWN]</code> asks whether any of my pawns could reach the target square. It's the cheap way of testing "is there a pawn positioned to make this capture" without generating a single move.</p>
+
+                <p>Skip that guard and here's what happens. You play 1.e4 and hash the e-file. Later the same position recurs by transposition with no double push behind it, and the keys differ. Threefold repetition never fires. The engine walks into repetitions it should be avoiding and misses draws it should be claiming, and nothing anywhere reports an error, because a hash that's merely <em>different</em> is indistinguishable from a position that's merely <em>new</em>. It's the quietest bug in this whole post.</p>
+
+                <h2 id="castling">Castling Rights</h2>
+
+                <h3>Four bits, one array</h3>
+
+                <p>Four booleans work. A 4-bit mask works better, and not for the memory:</p>
+
+                <pre><code>static final int WK = 1, WQ = 2, BK = 4, BQ = 8;
+int castlingRights;        // 0b1111 at startpos</code></pre>
+
+                <p>Packing means the whole thing saves and restores as one <code>int</code>, XORs into the Zobrist key as one lookup on a 16-entry table, and, the real payoff, updates with a single <code>&amp;=</code> instead of a nest of conditionals.</p>
+
+                <h3>Rights are lost, never regained</h3>
+
+                <p>There's no move in chess that restores a castling right. That sounds like a simplification and it's actually a trap, because it means you cannot recompute rights from the board. A position with rooks on a1 and h1 and a king on e1 tells you nothing about whether that king has already taken a walk and come home.</p>
+
+                <p>So rights go on the undo stack, alongside everything else that can't be derived:</p>
+
+                <pre><code>record Undo(int move, int captured, int castlingRights,
+            int epSquare, int halfmoveClock, long key) {}
+
+private final Undo[] stack = new Undo[MAX_PLY];</code></pre>
+
+                <p>The captured piece is in there for the same reason. Nothing in the resulting position tells you what used to be standing on the destination square.</p>
+
+                <h3>The rook that got captured</h3>
+
+                <p>Here was my rights update, and it's the version almost everyone writes first:</p>
+
+                <pre><code>if (movedPiece == KING) rights &amp;= ~(us == WHITE ? (WK | WQ) : (BK | BQ));
+if (movedPiece == ROOK) rights &amp;= ~rightForSquare(from);</code></pre>
+
+                <p>Both lines are correct. Together they're incomplete, because they only ever consider the piece that moved, and a rook standing on h8 can lose Black the kingside right without moving at all. It gets captured. It never moves, it stops existing. Nothing above notices, and Black castles kingside afterwards with a rook that isn't there.</p>
+
+                <p>Kiwipete found this immediately. Depth 3 came back at 97,905 against an expected 97,862: high, meaning I was generating moves that don't exist.</p>
+
+                <p>The fix is a 64-entry table:</p>
+
+                <pre><code>static final int[] CASTLE_MASK = new int[64];
+static {
+    Arrays.fill(CASTLE_MASK, 0b1111);
+    CASTLE_MASK[E1] = ~(WK | WQ) &amp; 0b1111;
+    CASTLE_MASK[A1] = ~WQ &amp; 0b1111;
+    CASTLE_MASK[H1] = ~WK &amp; 0b1111;
+    CASTLE_MASK[E8] = ~(BK | BQ) &amp; 0b1111;
+    CASTLE_MASK[A8] = ~BQ &amp; 0b1111;
+    CASTLE_MASK[H8] = ~BK &amp; 0b1111;
+}
+
+// In makeMove — one line, no branches, handles every case.
+castlingRights &amp;= CASTLE_MASK[from] &amp; CASTLE_MASK[to];</code></pre>
+
+                <p>Every square is <code>0b1111</code> except the six that matter. Applying it to <code>from</code> covers the king moving and the rook moving. Applying it to <code>to</code> covers a rook being captured on its home square, and for free it covers the case where the <em>capturing</em> piece was itself a rook leaving its own corner. One line, no conditionals, and it took me an hour of perft divides to earn.</p>
+
+                <h3>The legality conditions, precisely</h3>
+
+                <p>Getting rights right is half of it. The other half is the move itself, and this is where I overcorrected and pushed Kiwipete depth 4 down to 4,085,571 against 4,085,603. Low, meaning I'd started rejecting castles that are legal.</p>
+
+                <p>The conditions, and they are three genuinely different things:</p>
+
+                <ol>
+                    <li>The king is not currently in check.</li>
+                    <li>Every square the king <strong>passes through and lands on</strong> is unattacked. Kingside that's e1, f1, g1; queenside it's e1, d1, c1.</li>
+                    <li>Every square <strong>between</strong> the king and the rook is empty. Kingside f1 and g1; queenside b1, c1 and d1.</li>
+                </ol>
+
+                <p>The trap is b1 and b8. They must be empty, because the rook slides across them. They don't have to be safe, because the king never sets foot there. I'd merged the two square sets into one constant out of tidiness, and quietly made queenside castling illegal whenever an enemy piece happened to eye b1.</p>
+
+                <pre><code>static final long WQ_EMPTY = bit(B1) | bit(C1) | bit(D1);
+static final int[] WQ_SAFE = { E1, D1, C1 };          // no B1</code></pre>
+
+                <p>Two constants, because they answer two questions.</p>
+
+                <p>Zobrist handling is the boring correct thing. XOR the old rights key out before the update and the new one in after, rather than trying to XOR individual bits as they fall:</p>
+
+                <pre><code>key ^= ZOBRIST_CASTLE[castlingRights];       // XOR out the old rights
+castlingRights &amp;= CASTLE_MASK[from] &amp; CASTLE_MASK[to];
+key ^= ZOBRIST_CASTLE[castlingRights];       // XOR in the new ones</code></pre>
+
+                <p>All of the above assumes standard chess. Chess960 throws it out: the rook can start anywhere on the back rank, so rights are stored per-file, "between king and rook" stops being a fixed constant, and castling becomes a king-and-rook swap that can land the king on a square the rook currently occupies. My engine doesn't support it and I've made peace with that.</p>
+
+                <h2 id="fifty-move">The 50-Move Rule</h2>
+
+                <h3>100 plies, not 50 moves</h3>
+
+                <p>The halfmove clock increments on every ply and resets to zero on any pawn move or any capture. That's the entire mechanism:</p>
+
+                <pre><code>if (movedPiece == PAWN || captured != NONE) {
+    halfmoveClock = 0;
+} else {
+    halfmoveClock++;
+}</code></pre>
+
+                <p>A "move" in the rule's sense is White and Black each playing one, so 50 moves is 100 plies. I knew that and still wrote <code>&gt;= 50</code> the first time, because the field is called the halfmove clock and my fingers typed what the rule is called rather than what it counts. My engine declared draws at exactly half the right point, in endgames that were still perfectly winnable.</p>
+
+                <p>Perft did not catch this and never could. Perft counts legal moves, and the 50-move rule doesn't make any move illegal, it makes a <em>position</em> drawn. That's why this one survived long after the move generator was clean. It surfaced in self-play, when the engine kept agreeing to draws in positions it was winning.</p>
+
+                <h3>Claimable, automatic, and what to actually do</h3>
+
+                <p>FIDE makes the 50-move draw claimable: at 100 plies either player may claim it, and if nobody claims, play continues. At 75 moves, 150 plies, the arbiter ends it whether anyone asks or not.</p>
+
+                <p>An engine playing under a GUI should just treat 100 as a draw and score it accordingly. You're always willing to claim a draw you're entitled to, and if you're winning you'll have reset the clock long before you get there.</p>
+
+                <p>The exception matters, though. Checkmate delivered on the hundredth ply is checkmate. The draw only becomes claimable if the position isn't already over, so the draw test has to come after you know there's at least one legal reply:</p>
+
+                <pre><code>if (halfmoveClock &gt;= 100) {
+    if (!inCheck(us) || hasLegalMove()) return DRAW_SCORE;
+    // in check with no legal move — it's mate, fall through
+}</code></pre>
+
+                <p>The short-circuit is doing real work here. <code>hasLegalMove()</code> is expensive, and it only runs when we're in check in a position that has already hit the limit, which is somewhere between rare and never.</p>
+
+                <h3>One rule helps the other</h3>
+
+                <p>This is the part I actually enjoyed. A move that resets the halfmove clock is irreversible. Pawns don't march backwards and captured pieces don't come back. So no position from before a reset can ever repeat after it.</p>
+
+                <p>Which means repetition detection doesn't need to scan the whole game history. It needs to scan back <code>halfmoveClock</code> plies and stop:</p>
+
+                <pre><code>boolean isRepetition() {
+    int end = Math.max(0, ply - halfmoveClock);
+    for (int i = ply - 4; i &gt;= end; i -= 2) {   // same side to move only
+        if (history[i] == key) return true;
+    }
+    return false;
+}</code></pre>
+
+                <p>Stepping by 2 skips the positions with the opposite side to move, which can't be repetitions of the current one. Starting at <code>ply - 4</code> skips the two most recent, since the soonest a position can recur is four plies later. And <code>ply - halfmoveClock</code> is the hard floor, because everything older sits behind an irreversible move and provably can't match. In a middlegame with heavy trading the loop usually runs zero times.</p>
+
+                <p>Two rules that both looked like bookkeeping tax, and one of them turns out to bound the other.</p>
+
+                <h3>Draw scores and contempt</h3>
+
+                <p>In search, both draws return the same thing, and the interesting question is what that thing should be. Zero says a draw is exactly as good as an equal position. Most engines shade it, giving a draw a small negative score so the engine prefers keeping play alive over repeating against an opponent it thinks it can outplay. That offset is contempt, and it's usually a few centipawns. Mine is a small one I've never properly tuned, which I mention mainly so nobody takes it as a recommendation.</p>
+
+                <h2 id="resenting">The Rules I Stopped Resenting</h2>
+
+                <p>For a long time I thought of these three as chores, the paperwork you fill in around the interesting parts like sliding attacks and search. That was backwards. They're the only rules in chess whose state exists nowhere on the board, which makes them the only ones your make and unmake can silently corrupt, and the only ones where a bug survives contact with real games because it fires too rarely to notice.</p>
+
+                <p>Perft found two of them for me in an afternoon. It couldn't find the third, and that's the honest lesson here: perft is a complete test of legality and nothing more. Anything that changes what a position is <em>worth</em> rather than which moves are <em>legal</em> has to be tested somewhere else.</p>
+
+                <p>If you've hit one of these differently to me, especially if you've got a clean way to fold the en passant rank case into the pin mask rather than bolting it on afterwards, leave a comment. I'd like to stop making my legality check pay for the rarest move in chess.</p>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Why must the en passant square be cleared on every move?</h3>
+                <p>Because it's a property of the position, not an event flag. One kind of move sets it and every other kind has to clear it. Clearing it only inside the capture handler leaves it stale, because most of the time nobody captures there, and a pawn arriving on the fifth rank several moves later will happily capture onto a square whose pawn is long gone.</p>
+
+                <h3>Why does en passant expose the king when neither pawn is pinned?</h3>
+                <p>It's the only move that takes two pieces off the same rank at once. If both pawns were together shielding the king from a rook or queen along that rank, the capture opens the line. Pin detection asks about one piece on one square, and neither pawn was a blocker on its own, so it never sees it. Make the move and test the king square, or rebuild the post-capture occupancy and run a targeted rank query.</p>
+
+                <h3>Should I hash the en passant file when no capture is possible?</h3>
+                <p>No. Guard it on an enemy pawn actually being in position to capture. Hash it unconditionally and the same position reached by two different routes gets two different keys, threefold repetition silently stops firing, and nothing tells you, because a different hash looks exactly like a new position.</p>
+
+                <h3>Why does capturing a rook change castling rights?</h3>
+                <p>Because the rook loses the right without moving. It gets taken on its home square and simply stops existing, so update code that only inspects the moving piece misses it entirely. A 64-entry mask array applied as <code>rights &amp;= mask[from] &amp; mask[to]</code> handles king moves, rook moves and rook captures in one branchless line.</p>
+
+                <h3>Does b1 have to be unattacked for queenside castling?</h3>
+                <p>Empty, yes. Safe, no. The rook slides across b1 so it has to be vacant, but the king travels e1 to c1 and never lands there, so only e1, d1 and c1 need to be unattacked. Merge those two square sets and you'll reject legal castles, which shows up in perft as a count that's too low.</p>
+
+                <h3>Is the 50-move rule 50 or 100?</h3>
+                <p>100 plies, since a move is both sides playing one. Test against 50 and your engine calls draws at half the correct point. The FIDE rule is claimable rather than automatic at that count and automatic at 75 moves, but an engine under a GUI should just score 100 plies as a draw, with the exception that mate on the hundredth ply is still mate.</p>
+
+                <p>Next time, actually search. Minimax, alpha-beta, and the first attempt at pruning that made the engine slower than counting the nodes had been.</p>
+
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Move Generation</a>
+                <a href="javascript:void(0)" class="tag">En Passant</a>
+                <a href="javascript:void(0)" class="tag">Castling</a>
+                <a href="javascript:void(0)" class="tag">Zobrist Hashing</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">Magic Bitboards in Java: What Finally Made Them Click</a></li>
+                        <li><a href="/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">Generating Sliding Piece Moves Without Magic Bitboards</a></li>
+                        <li><a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">Bitboards Explained: Representing a Chess Board in 64 Bits</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>

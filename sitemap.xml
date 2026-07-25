@@ -73,6 +73,18 @@
 
   <!-- ===== Blog Articles ===== -->
   <url>
+    <loc>https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</loc>
     <lastmod>2026-07-25</lastmod>
     <changefreq>monthly</changefreq>

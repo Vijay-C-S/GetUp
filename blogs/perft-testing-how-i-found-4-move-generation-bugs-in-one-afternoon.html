@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Perft turns &quot;my move generator looks fine&quot; into a number that is either right or wrong. How four bugs surfaced in one afternoon in my Java chess engine.">
+    <title>Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon">
+    <meta property="og:description" content="My engine played legal-looking chess. Legal-looking is not legal. Perft told me exactly how wrong I was, and perft divide told me where.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon">
+    <meta name="twitter:description" content="43,247 where the reference said 43,238. Four move-generation bugs, real FEN strings, real Java, and the debugging technique that found all of them.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon",
+        "description": "A first-person account of using perft and perft divide to validate move generation in a Java chess engine — the en passant discovered check, castling rights that outlived a captured rook, missing underpromotions, and pawn captures wrapping around the board.",
+        "datePublished": "2026-07-25",
+        "dateModified": "2026-07-25",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Perft does not tell you your move generator is probably fine. It tells you a number, and the number is either right or wrong.",
+            "name": "Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is perft in chess programming?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Perft is a function that counts the number of leaf nodes in the game tree at a fixed depth from a given position. Starting from the initial chess position, perft(1) is 20, perft(2) is 400, perft(3) is 8,902 and perft(4) is 197,281. Its value as a test comes from the fact that these counts have been independently computed and published, so your engine's number can be compared directly against a known-correct one. Any disagreement means your move generation is wrong somewhere in that subtree."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is perft divide and how do you use it?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Perft divide prints a perft count for each individual legal move at the root instead of a single total. That converts a useless message like 'one of your four million leaf nodes is wrong' into 'the subtree under Nf3 is wrong'. You compare your divide output against a reference, find the move whose subtree count disagrees, play that move on the board, and run divide again one depth shallower. Repeating this walks you down the tree until you reach a position where the depth-1 count is wrong, at which point you can simply read your generated move list and see the illegal or missing move."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why do underpromotions matter for perft if nobody plays them?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because perft counts legal moves, not good ones. Promoting to a rook, bishop or knight is legal, so each promotion destination square contributes four moves to the node count rather than one. A generator that only produces queen promotions will be exactly three nodes short for every promotion move available, and that error multiplies through every deeper ply. Underpromotion is also occasionally genuinely correct in real play, most famously the knight promotion that gives check or forks, so a search that cannot generate it will miss real tactics."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does en passant break naive legality checking?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "En passant is the only move in chess that removes two pieces from the same rank at once: the capturing pawn leaves the rank and the captured pawn is removed from it. If both pawns were together shielding the king from an enemy rook or queen on that rank, the capture exposes the king and the move is illegal. A legality test that only checks whether the moving piece was pinned along the line from its own square to the king will never notice, because neither pawn was pinned on its own. The reliable fix is to make the move on the board, test whether the king square is attacked, then unmake it."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does passing perft mean my chess engine is good?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Perft validates legality only. It proves that your move generator produces exactly the legal moves of chess, including the awkward rules around en passant, castling rights and promotion, and that your make and unmake functions restore state correctly. It says nothing at all about how fast your search is, how well your evaluation function judges a position, or how strong the engine plays. It is a correctness foundation, not a strength measurement."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer debugging chess move generation against published perft node counts in Java" title="Perft testing a Java chess engine, one wrong number at a time" class="featured-image" width="800" height="450">
+                <p class="image-caption">Perft doesn't tell you your move generator is probably fine. It gives you a number, and the number is either right or it isn't.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">43,247.</p>
+
+                <p>The reference said 43,238. Nine nodes apart, on a position with five pieces on it, and I sat there refreshing the terminal like the number was going to change if I ran it again.</p>
+
+                <p>That was the first of four. By the time I stopped it was dark outside and I had a git log full of commits with messages like "en passant, again" and "no, THIS is why b1 was wrong."</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#looked-fine">The engine looked fine, which was the problem</a></li>
+                    <li><a href="#what-is-perft">What perft is, minus the jargon</a></li>
+                    <li><a href="#brutal">One wrong number and you stop arguing</a></li>
+                    <li><a href="#divide">Perft divide, or binary search over a game tree</a></li>
+                    <li><a href="#bugs">Four bugs, one afternoon</a></li>
+                    <li><a href="#final">119,060,324</a></li>
+                    <li><a href="#differently">What I'd do differently</a></li>
+                    <li><a href="#faq">Frequently asked questions</a></li>
+                </ul>
+
+                <h2 id="looked-fine">The Engine Looked Fine, Which Was The Problem</h2>
+
+                <p>By the end of <a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">the magic bitboards post</a> I had something that felt finished. Rooks slid, bishops slid, queens did both, and the lookup tables agreed with my slow ray generator on all 64 squares for every blocker arrangement. I set the thing playing random legal moves against itself and watched a few hundred games scroll past.</p>
+
+                <p>They looked like chess. Pieces developed, pawns traded, kings sat behind their pawns doing nothing useful. Nothing crashed.</p>
+
+                <p>And that is the trap. A move generator with a real bug in it still produces games that look like chess, because the bug fires in maybe one position in ten thousand, and when it fires the result is a slightly wrong move in a game nobody is watching closely. I had no test that could distinguish "correct" from "wrong in a way I can't see." My unit tests all passed, which meant nothing, because I had written every one of them from my own mental model of the rules. If my mental model was the thing that was broken, the tests were broken in exactly the same shape.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Key Takeaway.</strong> Unit tests only ever cover the cases you already thought of. Move generation bugs live specifically in the cases you didn't. That's not a gap you can close by writing more of the same tests.</p>
+                </div>
+
+                <h2 id="what-is-perft">What Perft Is, Minus The Jargon</h2>
+
+                <p>Pick a position. Count every legal move. For each one, play it and count every legal reply. For each of those, play it and count the replies. Keep going until you've gone N plies deep, and count how many positions you ended up at. That total is perft(N).</p>
+
+                <p>From the starting position: 20 at depth 1, because White has twenty legal first moves. 400 at depth 2. Then 8,902, then 197,281, then 4,865,609.</p>
+
+                <p>The idea is not clever. The recursion fits on a napkin:</p>
+
+                <pre><code>long perft(Board board, int depth) {
+    if (depth == 0) return 1L;
+
+    long nodes = 0L;
+    for (Move m : moveGen.generateLegal(board)) {
+        board.make(m);
+        nodes += perft(board, depth - 1);
+        board.unmake(m);
+    }
+    return nodes;
+}</code></pre>
+
+                <p>What makes it powerful is nothing to do with the code. It's that other people already computed those numbers, independently, with engines that have been checked against each other for decades. The counts for the starting position and for a set of standard test positions are shared factual data at this point. So when I run this function, I'm not testing my engine against my own understanding of chess. I'm diffing it against reality.</p>
+
+                <p>That distinction is the whole reason perft works and my unit tests didn't.</p>
+
+                <h2 id="brutal">One Wrong Number And You Stop Arguing</h2>
+
+                <p>The thing I wasn't ready for is how unforgiving it is. There is no partial credit. If depth 3 from the start position gives 8,903 instead of 8,902, there is a bug. Not a rounding issue, not a definitional disagreement, not "well it depends how you count." A bug. In your code. Right now.</p>
+
+                <p>I stared at a one-node difference for twenty minutes trying to think of a way it could be fine. There isn't one. Once you accept that, debugging gets much faster, because you stop spending energy on the possibility that you're actually correct.</p>
+
+                <p>It also cuts the other way, and this is the part I've come to appreciate more. When the number matches, it <em>matches</em>. Millions of leaf nodes, every one reached through your make and unmake, every castling right and en passant square and promotion handled the way the rules say. That's a level of confidence I have never gotten from a test suite I wrote myself.</p>
+
+                <h2 id="divide">Perft Divide, Or Binary Search Over A Game Tree</h2>
+
+                <p>"You have 4,085,603 nodes and one of them is wrong" is not actionable. Perft divide is what makes it actionable.</p>
+
+                <p>Instead of one total, you print a subtotal per root move:</p>
+
+                <pre><code>void divide(Board board, int depth) {
+    long total = 0L;
+    for (Move m : moveGen.generateLegal(board)) {
+        board.make(m);
+        long n = perft(board, depth - 1);
+        board.unmake(m);
+        System.out.println(m.uci() + ": " + n);   // e.g. "g1f3: 2812"
+        total += n;
+    }
+    System.out.println("nodes: " + total);
+}</code></pre>
+
+                <p>Now compare your list against a reference engine's divide for the same position and depth. One line disagrees. Play that move on the board, run divide again at depth minus one, and one line of <em>that</em> disagrees. Repeat.</p>
+
+                <p>Every step throws away almost the entire tree. Four or five iterations and you are staring at a position where the depth-1 count is wrong, which means you can just print your generated move list and read it. The bug is right there, in a list of thirty moves, with either an extra one or a missing one.</p>
+
+                <p>I did this four times that afternoon and it worked identically every time. It is the single most effective debugging technique I have used on any project, and it took me about ten minutes to implement.</p>
+
+                <h2 id="bugs">Four Bugs, One Afternoon</h2>
+
+                <h3>Bug #1: en passant took two pawns off the same rank</h3>
+
+                <p>The 43,247. The position is one from the standard perft suite, usually listed as "position 3", chosen precisely because it hammers pawn and rook endgame edge cases:</p>
+
+                <pre><code>8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1
+
+depth 4    expected 43,238    mine 43,247</code></pre>
+
+                <p>I was convinced the problem was the rooks. Two rooks, a lot of sliding, and I'd just rewritten sliding attacks; the magic lookup was obviously the suspect. Four divides later I was in a position where Black had just pushed a pawn two squares and White's reply list had one move in it that made me tilt my head.</p>
+
+                <p>Here's the bug boiled down to its smallest form:</p>
+
+                <pre><code>8/8/8/8/k1p4R/8/3P4/3K4 w - - 0 1
+
+White plays d2-d4.  Black now has 6 legal moves.  Mine generated 7.</code></pre>
+
+                <p>Black king on a4, black pawn on c4, white rook on h4, all on the same rank. White pushes d2-d4 and Black can answer c4xd3 en passant. Except Black can't, because that capture takes the c4 pawn off rank 4 and removes the d4 pawn from rank 4 at the same time, and now the rook on h4 has a clear run to the king on a4. It's a discovered check on yourself. Illegal.</p>
+
+                <p>My legality filter never had a chance:</p>
+
+                <pre><code>// BEFORE — the pin test only looks at the moving piece's own square.
+boolean isLegal(Move m) {
+    if (m.piece() == KING) {
+        return !isAttacked(m.to(), them);
+    }
+    return !isPinnedAlong(m.from(), kingSquare[us], m.to());
+}</code></pre>
+
+                <p>Neither pawn is pinned. The c4 pawn isn't on the king's rank-line to the rook alone, and the d4 pawn belongs to the other side entirely. Every check I had was asking about one square, and en passant is the only move in chess that vacates two squares on one line simultaneously.</p>
+
+                <p>I fixed it the blunt way and have never regretted it:</p>
+
+                <pre><code>// AFTER — make it, ask the only question that matters, unmake it.
+boolean isLegal(Move m) {
+    board.make(m);
+    int ksq = Long.numberOfTrailingZeros(kings[us]);   // same occupancy longs from the bitboards post
+    boolean ok = !isAttacked(ksq, them);
+    board.unmake(m);
+    return ok;
+}</code></pre>
+
+                <p>Yes, it's slower than a pin mask. It is also incapable of missing this class of bug, because it asks the actual question: after this move, is my king attacked. Faster engines special-case en passant inside the pin logic by testing the post-capture occupancy along the king's rank. I'll do that when profiling tells me to, and not before.</p>
+
+                <p><strong>Lesson:</strong> en passant is the rule everyone forgets exists until it costs them an afternoon. If your legality check reasons about squares rather than about the resulting position, it will be wrong here.</p>
+
+                <h3>Bug #2: castling rights that outlived the rook</h3>
+
+                <p>Next up, the Kiwipete position from the standard suite, which exists more or less to punish castling code:</p>
+
+                <pre><code>r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
+
+depth 3    expected 97,862    mine 97,905</code></pre>
+
+                <p>High, not low, which meant I was generating moves that don't exist. My first theory was the two-square king jump landing on an occupied square. Wrong. The divide walk put me in a position where a rook had been captured on h8, and Black cheerfully castled kingside anyway, conjuring a rook out of nothing.</p>
+
+                <p>My rights update only ever considered the piece that moved:</p>
+
+                <pre><code>// BEFORE — handles the rook moving, not the rook dying.
+if (m.piece() == KING) rights &amp;= ~bothRightsFor(us);
+if (m.piece() == ROOK) rights &amp;= ~rightForSquare(m.from());</code></pre>
+
+                <p>A rook that gets captured on its home square never moves. It just stops existing, and nothing in that code notices. The fix is a lookup table over squares, applied to both ends of the move:</p>
+
+                <pre><code>// AFTER — CASTLE_MASK is 0b1111 everywhere except a1,e1,h1,a8,e8,h8.
+rights &amp;= CASTLE_MASK[m.from()];
+rights &amp;= CASTLE_MASK[m.to()];   // this is the line that cost me an hour</code></pre>
+
+                <p>Two lines replacing the whole branchy mess, and they cover king moves, rook moves and rook captures at once.</p>
+
+                <p>Then I overcorrected. Feeling clever, I tightened the castling path checks and Kiwipete depth 4 came back at 4,085,571 against an expected 4,085,603. Low this time. I had started requiring b1 to be a safe square, and it doesn't have to be. The king travels e1 to c1, so e1, d1 and c1 must all be unattacked, but b1 only has to be <em>empty</em> for the rook to slide across it. The king never sets foot there.</p>
+
+                <pre><code>// Two different questions about two different square sets.
+static final long WQ_MUST_BE_EMPTY = bit(B1) | bit(C1) | bit(D1);
+static final int[] WQ_MUST_BE_SAFE = { E1, D1, C1 };   // note: no B1
+
+boolean canCastleQueenside(long occ) {
+    if ((rights &amp; WHITE_QUEENSIDE) == 0)   return false;
+    if ((occ &amp; WQ_MUST_BE_EMPTY) != 0)     return false;
+    for (int sq : WQ_MUST_BE_SAFE) {
+        if (isAttacked(sq, them)) return false;
+    }
+    return true;
+}</code></pre>
+
+                <p><strong>Lesson:</strong> occupancy and safety are separate constraints over separate square sets, and castling rights are state that other pieces can destroy without the rook ever taking a step.</p>
+
+                <h3>Bug #3: I only ever promoted to queens</h3>
+
+                <p>This one I found in about ninety seconds, and it's the one I'm least proud of. Position 5 from the suite:</p>
+
+                <pre><code>rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
+
+depth 1    expected 44    mine 41</code></pre>
+
+                <p>Depth 1. Not a subtle interaction four plies deep, just White's legal moves in a single position, off by exactly three. That exactness is the tell. Three is what you're short when one promotion move generated a queen and nothing else.</p>
+
+                <p>White has a pawn on d7 and the only promotion available is the capture on c8, so my generator produced one move where there should have been four.</p>
+
+                <pre><code>// BEFORE — with a comment I actually wrote, which makes it worse.
+if (rankOf(to) == promoRank) {
+    moves.add(new Move(from, to, PROMO_QUEEN));   // nobody underpromotes
+}</code></pre>
+
+                <p>Nobody underpromotes, except perft counts legal moves rather than sensible ones, so every promotion square is worth four nodes and my tree was permanently thin. And underpromotion isn't purely theoretical anyway; knight promotion with check is a real tactic that a search which can't generate it will never find.</p>
+
+                <pre><code>// AFTER
+private static final int[] PROMOTIONS =
+    { PROMO_QUEEN, PROMO_ROOK, PROMO_BISHOP, PROMO_KNIGHT };
+
+if (rankOf(to) == promoRank) {
+    for (int piece : PROMOTIONS) moves.add(new Move(from, to, piece));
+} else {
+    moves.add(new Move(from, to, QUIET));
+}</code></pre>
+
+                <p>And the part that bit me a second time twenty minutes later: pawn pushes and pawn captures went through two different code paths in my generator. I fixed promotions in the push path, watched the number improve, assumed I was done, and left the capture path generating a lone queen. Position 5 caught it again immediately, because every promotion in that position <em>is</em> a capture.</p>
+
+                <p><strong>Lesson:</strong> if a rule has two code paths, it has two bugs. Go and look at the other one before you commit.</p>
+
+                <h3>Bug #4: the pawn on h3 that captured on a3</h3>
+
+                <p>The last one is my favourite, because it explains why the starting position had been lying to me all along. Back to Kiwipete, now at depth 3, still slightly high after the castling fix.</p>
+
+                <p>The divide walk ended somewhere odd: White plays a2-a3, and Black's move list contains <code>h3a3</code>. A pawn on h3, capturing on a3. Across the entire board, sideways.</p>
+
+                <p>I was sure this was a square-indexing problem, because I'd had one of those before and it left the same kind of fingerprint. It wasn't. It was the pawn capture generator I'd written months earlier, on the day I first learned that a bitboard shift can do eight things at once:</p>
+
+                <pre><code>// BEFORE — looks elegant, wraps around the board.
+long capsLeft  = (whitePawns &lt;&lt; 7) &amp; blackPieces;
+long capsRight = (whitePawns &lt;&lt; 9) &amp; blackPieces;</code></pre>
+
+                <p>Shifting left by 7 means "up one rank, left one file", which is true for every square except the a-file, where left one file falls off the world and reappears on the h-file of the rank below. The bits don't know the board has edges. They're a flat run of 64.</p>
+
+                <pre><code>// AFTER — mask off the file that can't go that way.
+static final long FILE_A = 0x0101010101010101L;
+static final long FILE_H = 0x8080808080808080L;
+
+long capsLeft  = ((whitePawns &amp; ~FILE_A) &lt;&lt; 7) &amp; blackPieces;
+long capsRight = ((whitePawns &amp; ~FILE_H) &lt;&lt; 9) &amp; blackPieces;</code></pre>
+
+                <p>Here's why it survived so long. A wrapped capture only becomes a move if there's an enemy piece sitting on the wrapped destination, because of that <code>&amp; blackPieces</code> at the end. In the starting position every wrapped target is an empty square on rank 3, so the AND quietly deletes all of them and perft comes out perfect. The bug is invisible until pieces cluster near the a- and h-files, which is exactly what the suite positions are built to arrange and exactly what a fresh board never does.</p>
+
+                <p><strong>Lesson:</strong> the starting position is the worst test position in chess. Everything is symmetric, nothing is near an edge in a way that matters, and half your bugs are masked by empty squares.</p>
+
+                <h2 id="final">119,060,324</h2>
+
+                <p>Late evening, four fixes in, I kicked off depth 6 from the starting position and went to make coffee. Came back to:</p>
+
+                <pre><code>startpos depth 6
+nodes: 119060324
+time:  41.7s</code></pre>
+
+                <p>That is the published number. Exactly. A hundred and nineteen million positions, every one of them reached through my make, my unmake, my castling rights, my en passant square, my promotions, and not one node out of place.</p>
+
+                <p>I'd be lying if I said that wasn't the best moment of the whole project so far. Not because it was hard to get there once I had divide, but because for the first time I knew something about my own code instead of believing it. Six months of "I think this works" collapsed into one number that either matched or didn't.</p>
+
+                <p>Then the honest part. Perft proves legality and nothing else. It doesn't care that my node rate is embarrassing next to any serious engine, it doesn't know whether my evaluation can tell a good bishop from a bad one, and it certainly doesn't know whether the thing plays decent chess. It proved the foundation is solid. It proved nothing whatsoever about the building.</p>
+
+                <h2 id="differently">What I'd Do Differently</h2>
+
+                <p>Build perft first. Before magic bitboards, before the fancy sliding-piece lookups, before any of the parts that were fun to write. It needs a board, a move generator and make/unmake, and it is the first thing that can tell you whether those three are correct. I built it fifth, and every optimisation I wrote before it was an optimisation of code I couldn't verify.</p>
+
+                <p>Use a real suite from the start, not just the starting position. Kiwipete, position 3, position 5, and a handful of others are standard test positions that circulate in the chess programming community precisely because each one targets rules the start position can't reach. Six positions caught every bug in this post. The start position caught none of them.</p>
+
+                <p>And automate it. Mine now runs as a parameterised JUnit test over a CSV of FEN, depth and expected count, shallow depths on every push and the deep ones nightly. That took twenty minutes to set up and it means a refactor can no longer quietly break move generation while all my hand-written tests keep passing. Which, if I'm honest about it, is exactly what had been happening for months.</p>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>What is perft in chess programming?</h3>
+                <p>A function that counts leaf nodes at a fixed depth from a position. From the starting position it gives 20, 400, 8,902 and 197,281 for depths 1 to 4. Its value is that those counts have been independently computed and published, so you're comparing your engine against a known-correct answer rather than against your own understanding of the rules.</p>
+
+                <h3>How do I find the bug once perft disagrees?</h3>
+                <p>Perft divide. Print a node count per root move, compare against a reference engine's divide for the same position and depth, play the move whose subtree disagrees, and run divide again one depth shallower. Four or five iterations gets you to a position where the depth-1 count is wrong, and at that point you can read the illegal or missing move straight out of your generated list.</p>
+
+                <h3>Why bother generating underpromotions?</h3>
+                <p>Perft counts legal moves, not good ones, so each promotion square contributes four nodes instead of one. Omit them and you'll be exactly three nodes short per promotion move, compounding at every deeper ply. Knight promotion with check also shows up in real tactics, so a search that can't generate it will miss them.</p>
+
+                <h3>Should legality checking use make/unmake or pin masks?</h3>
+                <p>Pin masks are faster and are what strong engines use. Make/unmake with a single "is my king attacked" test is slower and structurally incapable of missing en passant discovered checks, pinned-piece edge cases and the rest. Start with the version that can't be subtly wrong, get perft passing, then optimise with the correct version still available as a reference.</p>
+
+                <h3>My perft matches. Is my engine finished?</h3>
+                <p>Your move generator is correct, which is a real milestone and not the same thing. Perft says nothing about search speed, evaluation quality or playing strength. It's the floor everything else stands on.</p>
+
+                <p>Next time: turning that tree walk into an actual search. Minimax, alpha-beta, and why my first attempt at pruning made the engine slower than just counting the nodes.</p>
+
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Perft</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Move Generation</a>
+                <a href="javascript:void(0)" class="tag">Debugging</a>
+                <a href="javascript:void(0)" class="tag">Testing</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</a></li>
+                        <li><a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">Magic Bitboards in Java: What Finally Made Them Click</a></li>
+                        <li><a href="/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">Generating Sliding Piece Moves Without Magic Bitboards</a></li>
+                        <li><a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">Bitboards Explained: Representing a Chess Board in 64 Bits</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
