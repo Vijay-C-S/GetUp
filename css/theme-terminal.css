@@ -890,6 +890,81 @@ label {
     background: transparent;
 }
 
+/* ===== 11b. Newsletter ==================================================== */
+
+.footer-newsletter {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 2.5rem;
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+}
+
+.footer-newsletter .newsletter-content h3 {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.footer-newsletter .newsletter-content p {
+    font-family: var(--font-sans);
+    color: var(--text-secondary);
+    max-width: 52ch;
+    margin: 0 auto;
+}
+
+.newsletter-form {
+    width: 100%;
+    max-width: 480px;
+}
+
+.newsletter-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.newsletter-input-group input {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+
+.newsletter-input-group input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.newsletter-input-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--glow);
+}
+
+.newsletter-note {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 0.75rem;
+}
+
+.newsletter-note a {
+    color: var(--primary);
+}
+
+@media (max-width: 576px) {
+    .newsletter-input-group {
+        flex-direction: column;
+    }
+}
+
 /* ===== 12. Footer ======================================================== */
 
 .footer {

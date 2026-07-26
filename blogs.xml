@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
+  <channel>
+    <title>GetUp - Practical AI News and Career Guides</title>
+    <link>https://getupdated.tech/</link>
+    <description>Practical AI updates, tool explainers, and career guidance for students and early-career builders.</description>
+    <language>en-IN</language>
+    <copyright>Copyright 2026 GetUp. All rights reserved.</copyright>
+    <managingEditor>contact.us.GetUp@gmail.com (GetUp)</managingEditor>
+    <webMaster>contact.us.GetUp@gmail.com (GetUp)</webMaster>
+    <pubDate>Sun, 26 Jul 2026 00:00:00 +0530</pubDate>
+    <lastBuildDate>Sun, 26 Jul 2026 00:00:00 +0530</lastBuildDate>
+    <atom:link href="https://getupdated.tech/blogs.xml" rel="self" type="application/rss+xml" />
+    <image>
+      <url>https://getupdated.tech/images/favicon.jpg</url>
+      <title>GetUp</title>
+      <link>https://getupdated.tech/</link>
+    </image>
+
+    <item>
+      <title>Bitboards Explained: Representing a Chess Board in 64 Bits</title>
+      <link>https://getupdated.tech/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html</guid>
+      <description>A chess board has 64 squares; a Java long has 64 bits. The explanation I wish I'd had — why engines switch from arrays to bitboards, the bitwise tricks, move generation, and the bugs that taught me how they really work.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)</title>
+      <link>https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html</guid>
+      <description>Every resource jumped straight to magic bitboards. I skipped them and wrote the plain ray-walking generator instead — the direction arrays, the blocker logic, the bugs that ate two weekends, and why correctness beats clever optimisation.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>Magic Bitboards in Java: What Finally Made Them Click</title>
+      <link>https://getupdated.tech/blogs/magic-bitboards-in-java-what-finally-made-them-click.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/magic-bitboards-in-java-what-finally-made-them-click.html</guid>
+      <description>I closed the tab the first time I read about magic bitboards. Months later the same page made sense. The intuition behind occupancy masks and blockers, concise Java code, and every bug that cost me an evening.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</title>
+      <link>https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html</guid>
+      <description>My engine played legal-looking chess, and legal-looking is not legal. Perft gave me a number that was either right or wrong, and perft divide told me exactly where the en passant, castling, promotion and file-wrapping bugs were hiding.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</title>
+      <link>https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html</guid>
+      <description>Three rules every tutorial hand-waves. They are not hard to understand, they are hard to get right, because none of them live on the board. A stale en passant square, rights that outlived a captured rook, and a clock counting the wrong thing.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>Why I Built a Chess Engine in Java Instead of Another CRUD App</title>
+      <link>https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</guid>
+      <description>After a stack of Todo apps and inventory systems, I built a chess engine in Java. The design decisions, the minimax and alpha-beta code, the brutal bugs, and what a genuinely hard project actually teaches you.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+  </channel>
+</rss>

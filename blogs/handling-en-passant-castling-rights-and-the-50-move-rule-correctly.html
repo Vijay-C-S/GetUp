@@ -26,10 +26,24 @@
     <meta name="twitter:description" content="A stale en passant square, castling rights that outlived a captured rook, and a halfmove clock counting the wrong thing. Real Java, real fixes.">
     <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
     <link rel="stylesheet" href="../blog-styles.css">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Handling En Passant, Castling Rights, and the 50-Move Rule Correctly", "item": "https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html" }
+        ]
+    }
+    </script>
 
     <!-- Schema.org Article Markup -->
     <script type="application/ld+json">
@@ -167,13 +181,14 @@
                 <h1 class="article-title">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</h1>
                 <div class="article-meta">
                     <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 9 min read</span>
                     <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
                 </div>
             </header>
 
             <!-- Featured Image -->
             <div class="featured-image-container">
-                <img src="../images/ai_coding_left.webp" alt="A developer implementing en passant, castling rights and the halfmove clock in a Java chess engine" title="The three chess rules that live outside piece placement" class="featured-image" width="800" height="450">
+                <img src="../images/ai_coding_left.webp" alt="A developer implementing en passant, castling rights and the halfmove clock in a Java chess engine" title="The three chess rules that live outside piece placement" class="featured-image" width="800" height="450" loading="lazy">
                 <p class="image-caption">Three rules that aren't hard to understand and are unreasonably hard to get right.</p>
             </div>
 

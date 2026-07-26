@@ -106,6 +106,61 @@
             .error-actions { flex-direction: column; align-items: center; }
             .error-actions .btn { width: 100%; max-width: 300px; justify-content: center; }
         }
+        .error-newsletter {
+            margin-top: 2.5rem;
+            padding: 1.75rem 2rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+        .error-newsletter h3 {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .error-newsletter p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+        }
+        .newsletter-form {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        .newsletter-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .newsletter-input-group input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+        }
+        .newsletter-input-group input::placeholder { color: var(--text-tertiary); }
+        .newsletter-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--glow);
+        }
+        .newsletter-note {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 0.75rem;
+        }
+        .newsletter-note a { color: var(--primary); }
+        @media (max-width: 576px) {
+            .newsletter-input-group { flex-direction: column; }
+            .error-newsletter { padding: 1.25rem; }
+        }
     </style>
 <link rel="stylesheet" href="/css/theme-terminal.css">
 </head>
@@ -156,6 +211,18 @@
                 <a href="/blogs.html" class="btn btn-outline">
                     <i class="fas fa-book-open"></i> Browse Blogs
                 </a>
+            </div>
+
+            <div class="error-newsletter">
+                <h3>Get the latest posts in your inbox</h3>
+                <p>Subscribe to GetUp and never miss a new article.</p>
+                <form class="newsletter-form" id="newsletter-form" novalidate>
+                    <div class="newsletter-input-group">
+                        <input type="email" placeholder="your@email.com" aria-label="Email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </div>
+                </form>
+                <p class="newsletter-note"><i class="fas fa-rss" style="color:var(--primary);margin-right:0.3rem;"></i> Or <a href="/blogs.xml">subscribe via RSS</a></p>
             </div>
 
             <div class="helpful-links">

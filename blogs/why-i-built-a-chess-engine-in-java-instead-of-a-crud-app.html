@@ -26,10 +26,24 @@
     <meta name="twitter:description" content="A chess engine is a state machine, a search problem, and a debugging nightmare all at once. Here's why that was worth more than a fifth CRUD app.">
     <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
     <link rel="stylesheet" href="../blog-styles.css">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Why I Built a Chess Engine in Java Instead of Another CRUD App", "item": "https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html" }
+        ]
+    }
+    </script>
 
     <!-- Schema.org Article Markup -->
     <script type="application/ld+json">
@@ -167,13 +181,14 @@
                 <h1 class="article-title">Why I Built a Chess Engine in Java Instead of Another CRUD App</h1>
                 <div class="article-meta">
                     <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 13 min read</span>
                     <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
                 </div>
             </header>
 
             <!-- Featured Image -->
             <div class="featured-image-container">
-                <img src="../images/ai_coding_left.webp" alt="A developer working at a laptop, representing the decision to build a technically demanding chess engine in Java instead of another CRUD application" title="Building a chess engine in Java instead of another CRUD app" class="featured-image" width="800" height="450">
+                <img src="../images/ai_coding_left.webp" alt="A developer working at a laptop, representing the decision to build a technically demanding chess engine in Java instead of another CRUD application" title="Building a chess engine in Java instead of another CRUD app" class="featured-image" width="800" height="450" loading="lazy">
                 <p class="image-caption">A chess engine is a state machine, a search problem, and a debugging nightmare all at once. That was the point.</p>
             </div>
 
@@ -240,7 +255,7 @@
 
                 <p>The core issue is that CRUD apps rarely have <em>hard logic</em>. The database does the heavy lifting. Your code is mostly a polite translator between an HTML form and a SQL row. There's no moment where you have to sit with a whiteboard and genuinely think about an algorithm, because there isn't really an algorithm — there's a query.</p>
 
-                <p>I wanted a project where the difficulty lived in <em>my</em> code, not in a library I was gluing together. I wanted something where being clever actually mattered and being sloppy actually hurt. Chess turned out to be exactly that. If you want the broader argument about which side projects actually stand out, I wrote separately about <a href="/blogs/portfolio-projects-that-got-interviews.html">the portfolio projects that got people interviews</a>.</p>
+                <p>I wanted a project where the difficulty lived in <em>my</em> code, not in a library I was gluing together. I wanted something where being clever actually mattered and being sloppy actually hurt. Chess turned out to be exactly that. If you want the broader argument about which side projects actually stand out, I wrote separately about the portfolio projects that got people interviews.</p>
 
                 <h2 id="why-chess">Why Chess Is an Unusually Rich Problem</h2>
 

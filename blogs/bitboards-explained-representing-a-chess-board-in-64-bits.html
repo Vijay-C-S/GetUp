@@ -26,10 +26,24 @@
     <meta name="twitter:description" content="How a chess board fits into a single 64-bit Java long, why engines love it, and the bugs that taught me how bitboards really work.">
     <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
     <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
     <link rel="stylesheet" href="../blog-styles.css">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Bitboards Explained: Representing a Chess Board in 64 Bits", "item": "https://getupdated.tech/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html" }
+        ]
+    }
+    </script>
 
     <!-- Schema.org Article Markup -->
     <script type="application/ld+json">
@@ -159,13 +173,14 @@
                 <h1 class="article-title">Bitboards Explained: Representing a Chess Board in 64 Bits</h1>
                 <div class="article-meta">
                     <span class="article-meta-item">Jul 25, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 12 min read</span>
                     <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
                 </div>
             </header>
 
             <!-- Featured Image -->
             <div class="featured-image-container">
-                <img src="../images/ai_coding_left.webp" alt="A developer at a laptop working through the bitwise logic of representing a chess board in 64 bits" title="Bitboards explained: representing a chess board in 64 bits" class="featured-image" width="800" height="450">
+                <img src="../images/ai_coding_left.webp" alt="A developer at a laptop working through the bitwise logic of representing a chess board in 64 bits" title="Bitboards explained: representing a chess board in 64 bits" class="featured-image" width="800" height="450" loading="lazy">
                 <p class="image-caption">A chess board has 64 squares. A Java <code>long</code> has 64 bits. Almost everything about bitboards flows from that one coincidence.</p>
             </div>
 

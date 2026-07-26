@@ -19,6 +19,7 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://getupdated.tech/">
     <link rel="sitemap" type="application/xml" title="Sitemap" href="https://getupdated.tech/sitemap.xml">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
 
     <!-- Hreflang for India English -->
     <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/">
@@ -540,12 +541,13 @@
                 <a href="blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html" class="blog-card clickable-card">
                     <div class="blog-image">
                         <img src="images/ai_coding_left.webp"
-                            alt="A developer implementing en passant, castling rights and the halfmove clock in a Java chess engine" style="object-fit: cover;" width="600" height="400">
+                            alt="A developer implementing en passant, castling rights and the halfmove clock in a Java chess engine" style="object-fit: cover;" width="600" height="400" loading="lazy">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
+                            <span><i class="far fa-clock"></i> 9 min read</span>
                         </div>
                         <h3>Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</h3>
                         <p>Three rules every tutorial hand-waves. They are not hard to understand, they are hard to get right, because none of them live on the board. A stale en passant square, rights that outlived a captured rook, and a clock counting the wrong thing.</p>
@@ -556,12 +558,13 @@
                 <a href="blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html" class="blog-card clickable-card">
                     <div class="blog-image">
                         <img src="images/ai_coding_left.webp"
-                            alt="A developer debugging chess move generation against published perft node counts in Java" style="object-fit: cover;" width="600" height="400">
+                            alt="A developer debugging chess move generation against published perft node counts in Java" style="object-fit: cover;" width="600" height="400" loading="lazy">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
+                            <span><i class="far fa-clock"></i> 11 min read</span>
                         </div>
                         <h3>Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</h3>
                         <p>My engine played legal-looking chess, and legal-looking is not legal. Perft gave me a number that was either right or wrong, and perft divide told me exactly where the en passant, castling, promotion and file-wrapping bugs were hiding.</p>
@@ -572,12 +575,13 @@
                 <a href="blogs/magic-bitboards-in-java-what-finally-made-them-click.html" class="blog-card clickable-card">
                     <div class="blog-image">
                         <img src="images/ai_coding_left.webp"
-                            alt="A developer working through magic bitboard lookup tables and occupancy masks for a Java chess engine" style="object-fit: cover;" width="600" height="400">
+                            alt="A developer working through magic bitboard lookup tables and occupancy masks for a Java chess engine" style="object-fit: cover;" width="600" height="400" loading="lazy">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
+                            <span><i class="far fa-clock"></i> 14 min read</span>
                         </div>
                         <h3>Magic Bitboards in Java: What Finally Made Them Click</h3>
                         <p>I closed the tab the first time I read about magic bitboards. Months later the same page made sense. The intuition behind occupancy masks and blockers, concise Java code, and every bug that cost me an evening.</p>
@@ -588,12 +592,13 @@
                 <a href="blogs/generating-sliding-piece-moves-without-magic-bitboards.html" class="blog-card clickable-card">
                     <div class="blog-image">
                         <img src="images/ai_coding_left.webp"
-                            alt="A developer working through rook, bishop and queen move generation for a Java chess engine" style="object-fit: cover;" width="600" height="400">
+                            alt="A developer working through rook, bishop and queen move generation for a Java chess engine" style="object-fit: cover;" width="600" height="400" loading="lazy">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
+                            <span><i class="far fa-clock"></i> 14 min read</span>
                         </div>
                         <h3>Generating Sliding Piece Moves Without Magic Bitboards (And Why I Started There)</h3>
                         <p>Every resource jumped straight to magic bitboards. I skipped them and wrote the plain ray-walking generator instead — the direction arrays, the blocker logic, the bugs that ate two weekends, and why correctness beats clever optimisation.</p>
@@ -604,12 +609,13 @@
                 <a href="blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html" class="blog-card clickable-card">
                     <div class="blog-image">
                         <img src="images/ai_coding_left.webp"
-                            alt="A developer working through the bitwise logic of representing a chess board in 64 bits" style="object-fit: cover;" width="600" height="400">
+                            alt="A developer working through the bitwise logic of representing a chess board in 64 bits" style="object-fit: cover;" width="600" height="400" loading="lazy">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
+                            <span><i class="far fa-clock"></i> 12 min read</span>
                         </div>
                         <h3>Bitboards Explained: Representing a Chess Board in 64 Bits</h3>
                         <p>A chess board has 64 squares; a Java long has 64 bits. The explanation I wish I'd had — why engines switch from arrays to bitboards, the bitwise tricks, move generation, and the bugs that taught me how they really work.</p>
@@ -620,12 +626,13 @@
                 <a href="blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html" class="blog-card clickable-card">
                     <div class="blog-image">
                         <img src="images/ai_coding_left.webp"
-                            alt="A developer at a laptop building a chess engine in Java instead of another CRUD application" style="object-fit: cover;" width="600" height="400">
+                            alt="A developer at a laptop building a chess engine in Java instead of another CRUD application" style="object-fit: cover;" width="600" height="400" loading="lazy">
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
                             <span><i class="far fa-calendar"></i> Jul 25, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
+                            <span><i class="far fa-clock"></i> 13 min read</span>
                         </div>
                         <h3>Why I Built a Chess Engine in Java Instead of Another CRUD App</h3>
                         <p>After a stack of Todo apps and inventory systems, I built a chess engine in Java. The design decisions, the minimax and alpha-beta code, the brutal bugs, and what a genuinely hard project actually teaches you.</p>
@@ -713,6 +720,19 @@
 
 <footer class="footer">
         <div class="container">
+            <div class="footer-newsletter">
+                <div class="newsletter-content">
+                    <h3><i class="fas fa-terminal" style="color:var(--primary);margin-right:0.5rem;"></i> Stay updated with GetUp</h3>
+                    <p>Practical AI insights, tool walkthroughs, and career guides delivered to your inbox. No spam, unsubscribe anytime.</p>
+                </div>
+                <form class="newsletter-form" id="newsletter-form" novalidate>
+                    <div class="newsletter-input-group">
+                        <input type="email" placeholder="your@email.com" aria-label="Email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </div>
+                    <p class="newsletter-note"><i class="fas fa-rss" style="color:var(--primary);margin-right:0.3rem;"></i> Prefer RSS? <a href="/blogs.xml">Subscribe via feed</a></p>
+                </form>
+            </div>
             <div class="footer-grid">
                 <div class="footer-brand">
                     <a href="/" class="logo">

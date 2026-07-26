@@ -22,36 +22,19 @@ export function showNotification(message) {
         border-radius: 10px;
         font-weight: 500;
         z-index: 9999;
-        animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s;
+        animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s forwards;
         box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
     `;
-    
     document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
+    setTimeout(() => notification.remove(), 3000);
 }
-
-// Add notification animations
-const notifStyle = document.createElement('style');
-notifStyle.textContent = `
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(100px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(100px); }
-    }
-`;
-document.head.appendChild(notifStyle);
 
 // Preloader
 export function initPreloader() {
     window.addEventListener('load', () => {
         setTimeout(() => {
-            document.getElementById('preloader').classList.add('hidden');
+            const preloader = document.getElementById('preloader');
+            if (preloader) preloader.classList.add('hidden');
         }, 2000);
     });
 }
@@ -59,35 +42,27 @@ export function initPreloader() {
 // Back to Top Button
 export function initBackToTop() {
     const backToTop = document.getElementById('back-to-top');
+    if (!backToTop) return;
 
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 500) {
-            backToTop.classList.add('visible');
-        } else {
-            backToTop.classList.remove('visible');
-        }
+        backToTop.classList.toggle('visible', window.scrollY > 500);
     });
 
     backToTop.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 
 // Smooth Scroll for Navigation Links
 export function initSmoothScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    document.querySelectorAll('a[href^="#"], a[href^="/#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const href = this.getAttribute('href');
+            const hash = href.includes('#') ? `#${href.split('#')[1]}` : href;
+            const target = document.querySelector(hash);
             if (target) {
-                const offsetTop = target.offsetTop - 80;
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
+                window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
             }
         });
     });
@@ -95,15 +70,26 @@ export function initSmoothScroll() {
 
 // Scroll Reveal Animation
 export function initScrollReveal() {
-    const revealElements = document.querySelectorAll('.service-card, .tech-card, .job-card, .income-card, .offer-card');
+    if (typeof IntersectionObserver !== 'function') return;
+
+    const addAnimStyle = () => {
+        if (document.getElementById('rf-scrollreveal-style')) return;
+        const s = document.createElement('style');
+        s.id = 'rf-scrollreveal-style';
+        s.textContent = '@keyframes slideIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}@keyframes slideOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100px)}}@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}@keyframes rainbow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}';
+        document.head.appendChild(s);
+    };
+    addAnimStyle();
+
+    const revealElements = document.querySelectorAll('.service-card, .tech-card, .job-card, .income-card, .offer-card, .blog-card');
+    if (revealElements.length === 0) return;
 
     const revealObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-                revealObserver.unobserve(entry.target);
-            }
+            if (!entry.isIntersecting) return;
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+            revealObserver.unobserve(entry.target);
         });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
@@ -117,23 +103,18 @@ export function initScrollReveal() {
 
 // Card Hover Effect
 export function initCardEffects() {
-    const cards = document.querySelectorAll('.service-card, .job-card, .income-card, .offer-card');
-
+    const cards = document.querySelectorAll('.service-card, .job-card, .income-card, .offer-card, .blog-card');
     cards.forEach(card => {
         card.addEventListener('mousemove', (e) => {
             const rect = card.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            
             const rotateX = (y - centerY) / 20;
             const rotateY = (centerX - x) / 20;
-            
             card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
         });
-        
         card.addEventListener('mouseleave', () => {
             card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
         });
@@ -149,7 +130,8 @@ export function initEasterEgg() {
         if (e.key === konamiCode[konamiIndex]) {
             konamiIndex++;
             if (konamiIndex === konamiCode.length) {
-                showNotification('ðŸŽ® Konami Code activated! You found the secret! ðŸŽ‰');
+                const event = new CustomEvent('showNotification', { detail: 'Konami Code activated! You found the secret!' });
+                document.dispatchEvent(event);
                 document.body.style.animation = 'rainbow 2s ease';
                 konamiIndex = 0;
             }
@@ -157,15 +139,4 @@ export function initEasterEgg() {
             konamiIndex = 0;
         }
     });
-
-    // Rainbow animation
-    const rainbowStyle = document.createElement('style');
-    rainbowStyle.textContent = `
-        @keyframes rainbow {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(rainbowStyle);
 }
-

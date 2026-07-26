@@ -1,0 +1,30 @@
+{
+  "name": "getup",
+  "version": "2.0.0",
+  "description": "GetUp - AI-focused static blog at getupdated.tech",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "build:watch": "node esbuild.config.mjs --watch",
+    "lint": "eslint js/ --ext .js",
+    "lint:fix": "eslint js/ --ext .js --fix",
+    "test": "echo \"No tests configured yet\" && exit 0",
+    "qa": "powershell -ExecutionPolicy Bypass -File seo-qa-check.ps1",
+    "prebuild": "npm run lint",
+    "ci": "npm run lint && npm run qa"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "devDependenciesMeta": {
+    "esbuild": {
+      "recommended": "latest"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "getup": "file:"
+  }
+}
