@@ -13,7 +13,7 @@
                 return data.value;
             }
             localStorage.removeItem(CONSENT_KEY);
-        } catch (e) { }
+        } catch { /* stored consent unreadable; treat as no consent */ }
         return null;
     }
 

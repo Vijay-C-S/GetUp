@@ -6,15 +6,18 @@
   "scripts": {
     "build": "node esbuild.config.mjs",
     "build:watch": "node esbuild.config.mjs --watch",
-    "lint": "eslint js/ --ext .js",
-    "lint:fix": "eslint js/ --ext .js --fix",
+    "lint": "eslint js/",
+    "lint:fix": "eslint js/ --fix",
     "test": "echo \"No tests configured yet\" && exit 0",
     "qa": "powershell -ExecutionPolicy Bypass -File seo-qa-check.ps1",
     "prebuild": "npm run lint",
     "ci": "npm run lint && npm run qa"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0"
+    "@eslint/js": "^9.39.5",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.8.0"
   },
   "devDependenciesMeta": {
     "esbuild": {
@@ -23,8 +26,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "getup": "file:"
   }
 }

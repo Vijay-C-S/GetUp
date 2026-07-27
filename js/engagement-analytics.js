@@ -4,7 +4,7 @@
     function safeParse(jsonValue) {
         try {
             return JSON.parse(jsonValue || '{}');
-        } catch (e) {
+        } catch {
             return {};
         }
     }
@@ -32,7 +32,7 @@
         writeCounts(counts);
     }
 
-    function sendToGtag(eventName, params) {
+    function sendToGtag(_eventName, _params) {
         // Google Analytics removed: no-op
     }
 

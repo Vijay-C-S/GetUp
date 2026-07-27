@@ -15,8 +15,7 @@ jobs:
 
       - name: Run SEO QA
         shell: pwsh
-        run: |
-          powershell -ExecutionPolicy Bypass -File seo-qa-check.ps1
+        run: ./seo-qa-check.ps1
 
   lint:
     name: JS Lint

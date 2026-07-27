@@ -32,7 +32,6 @@ function filterAndSearchJobs() {
     const query = getSearchQuery();
     const jobCards = qsa('.job-card');
     let visibleCount = 0;
-    const totalCount = jobCards.length;
 
     jobCards.forEach((card) => {
         const matchesFilter = filter === 'all' || card.getAttribute('data-type') === filter;

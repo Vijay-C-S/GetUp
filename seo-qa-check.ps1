@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $siteFiles = Get-ChildItem -Path $root -Recurse -Filter *.html |
-    Where-Object { $_.FullName -notmatch '\\sections\\' }
+    Where-Object { $_.FullName -notmatch '[\\/](sections|node_modules|\.git)[\\/]' }
 
 $missing = New-Object System.Collections.Generic.List[object]
 
