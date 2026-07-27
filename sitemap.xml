@@ -6,25 +6,25 @@
   <!-- ===== Main Pages ===== -->
   <url>
     <loc>https://getupdated.tech/</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/about.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/contact.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -32,43 +32,43 @@
   <!-- ===== Legal & Policy Pages ===== -->
   <url>
     <loc>https://getupdated.tech/privacy-policy.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/terms-of-service.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/disclaimer.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/editorial-policy.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/cookie-policy.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/dmca.html</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/sitemap-page.html</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -76,37 +76,37 @@
   <!-- ===== Blog Articles ===== -->
   <url>
     <loc>https://getupdated.tech/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-06-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/magic-bitboards-in-java-what-finally-made-them-click.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-06-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-06-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -118,31 +118,31 @@
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-07-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-06-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>

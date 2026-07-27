@@ -27,7 +27,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html</guid>
       <description>A chess board has 64 squares; a Java long has 64 bits. The explanation I wish I'd had — why engines switch from arrays to bitboards, the bitwise tricks, move generation, and the bugs that taught me how they really work.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Sun, 07 Jun 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -38,7 +38,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/generating-sliding-piece-moves-without-magic-bitboards.html</guid>
       <description>Every resource jumped straight to magic bitboards. I skipped them and wrote the plain ray-walking generator instead — the direction arrays, the blocker logic, the bugs that ate two weekends, and why correctness beats clever optimisation.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Fri, 12 Jun 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -49,7 +49,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/magic-bitboards-in-java-what-finally-made-them-click.html</guid>
       <description>I closed the tab the first time I read about magic bitboards. Months later the same page made sense. The intuition behind occupancy masks and blockers, concise Java code, and every bug that cost me an evening.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Wed, 17 Jun 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -60,7 +60,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html</guid>
       <description>My engine played legal-looking chess, and legal-looking is not legal. Perft gave me a number that was either right or wrong, and perft divide told me exactly where the en passant, castling, promotion and file-wrapping bugs were hiding.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Mon, 22 Jun 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -71,7 +71,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html</guid>
       <description>Three rules every tutorial hand-waves. They are not hard to understand, they are hard to get right, because none of them live on the board. A stale en passant square, rights that outlived a captured rook, and a clock counting the wrong thing.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Sat, 27 Jun 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -82,7 +82,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html</guid>
       <description>A correct move generator still plays random chess. So I wrote minimax, added alpha-beta, and counted every node instead of trusting the textbook square root. Move ordering turned out to do almost nothing from the start position and almost everything in a real midgame.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sun, 26 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Thu, 02 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -93,7 +93,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</guid>
       <description>After a stack of Todo apps and inventory systems, I built a chess engine in Java. The design decisions, the minimax and alpha-beta code, the brutal bugs, and what a genuinely hard project actually teaches you.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -104,7 +104,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html</guid>
       <description>A correct search that only counts material shuffles rooks, refuses to castle and parks knights on the rim. Piece values, 64 numbers per piece type, a midgame-to-endgame taper, a mobility term, and the symmetry test that caught three bugs in one assertion.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Tue, 07 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -115,7 +115,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html</guid>
       <description>Move generation, search and evaluation all worked, and Arena still showed the engine as not responding. The handshake, the position and go parsers, the worker thread that keeps stop readable, and the missing flush that lost a game on time.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Sun, 12 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -126,7 +126,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html</guid>
       <description>The engine played fine offline, then sat still in its first live game while the clock ran out. The irreversible BOT upgrade, two NDJSON streams, a systemd unit, and eight failures that only appear against real opponents.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Fri, 17 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -148,7 +148,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html</guid>
       <description>JEP 358 turned the emptiest stack trace in Java into a sentence. The grammar of that sentence, three production causes with the exact message each one throws, and the places it still leaves you stranded.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Wed, 22 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
     </item>
