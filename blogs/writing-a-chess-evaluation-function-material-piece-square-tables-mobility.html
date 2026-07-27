@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="My search was correct and the engine still played dreadful chess, because it only counted material. Piece-square tables, a tapered eval, mobility, and tests.">
+    <title>Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility">
+    <meta property="og:description" content="A correct alpha-beta search that only counts material shuffles rooks and parks knights on a1. Adding piece-square tables, a midgame/endgame taper and a mobility term to a Java engine — and the symmetry test that caught three bugs at once.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility">
+    <meta name="twitter:description" content="Piece values, 64 ints per piece type, the sq ^ 56 mirror, a game-phase taper, and a mobility term that cost me nodes per second. Written up from my own Java engine, failures included.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility", "item": "https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility",
+        "description": "A first-person account of replacing a material-only evaluation in a Java chess engine with piece values, piece-square tables, a midgame-to-endgame taper and a mobility term, including the sign and mirroring bugs it caused and the symmetry test that found them.",
+        "datePublished": "2026-07-27",
+        "dateModified": "2026-07-27",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Writing piece-square tables and a tapered evaluation function for a Java chess engine",
+            "name": "Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Why does an engine with a material-only evaluation still play badly?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because material is flat across the board. A knight on a1 and a knight on e5 both score 320, so the engine takes whichever equal-scoring line the generator emitted first. That looks like rook shuffling, refusing to castle, and pieces that never leave the back rank. The search is fine; the function it optimises does not care where the pieces stand."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What are piece-square tables and why does a knight on e5 score more than a knight on a1?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A piece-square table is 64 integers per piece type, added to the piece value as a bonus for standing on a given square. A knight on a1 attacks two squares; a knight on e5 attacks eight. The table encodes that as a constant, so the engine gets it free at every leaf instead of searching far enough to discover it."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you mirror piece-square tables for Black?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Tables are written once from White's point of view, and Black indexes the same table with the square number XOR 56. That flips the rank and leaves the file alone, which is correct because chess mirrors between colours across the ranks, not the files. A file flip instead passes on any file-symmetric table and fails silently on the ones that are not."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is a tapered evaluation and why do you need separate midgame and endgame tables?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A tapered evaluation keeps two sets of tables, midgame and endgame, and blends them by how much material is left. The king table that keeps you behind your pawns in the middlegame is the same one that keeps you on g1 in a king and pawn endgame, where the king needs to walk to the centre. The blend weight comes from remaining non-pawn material."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you test a chess evaluation function?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Four layers. A colour-symmetry assertion comparing each position against its rank-flipped, colour-swapped mirror, which catches mirroring bugs, sign bugs and asymmetric weights in one line. A check that the score survives a make and unmake round trip. Sanity checks on hand-built positions where equal material scores near zero. And self-play at fixed depth, the only test that says whether the engine got stronger."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is a mobility term worth the cost in a chess evaluation function?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "It is the first term that is not a table lookup, so it does real move-generation work at every leaf and it will cost you nodes per second. It also double-counts with piece-square tables, since a centralised knight already has more moves by construction. Worth having, but weight it low and confirm it with self-play, not by whether the scores look sensible."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 27, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 15 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer writing piece-square tables and a tapered evaluation function for a Java chess engine, with board diagrams on screen" title="Writing piece-square tables and a tapered evaluation function for a Java chess engine" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">Sixty-four numbers per piece, and every one of them is an opinion.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">The <a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">last post</a> ended on a promise: the evaluation was material-only on purpose, so the node counts measured alpha-beta and not my taste in chess, and a real evaluation was coming. This is that. Piece values, piece-square tables, a midgame-to-endgame taper, a mobility term, and the tests that caught more bugs than the code deserved.</p>
+
+                <p>Worth saying up front: the search was already correct. Alpha-beta returned the same move as full-width minimax at every depth and the node counter agreed with perft to the node. None of that stopped the engine playing chess that would embarrass a beginner.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#shuffling">Correct Search, Terrible Chess</a></li>
+                    <li><a href="#material">Counting Wood, Properly This Time</a></li>
+                    <li><a href="#sign">The One Line That Decides Who's Winning</a></li>
+                    <li><a href="#pst">Sixty-Four Numbers Per Piece</a></li>
+                    <li><a href="#phase">One King Table Is Always Wrong</a></li>
+                    <li><a href="#mobility">The First Term That Isn't a Lookup</a></li>
+                    <li><a href="#testing">How Do You Test an Opinion?</a></li>
+                    <li><a href="#wrong">Five Things I Got Wrong</a></li>
+                    <li><a href="#transfer">What Transfers and What's Just Mine</a></li>
+                    <li><a href="#next">What's Next</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="shuffling">Correct Search, Terrible Chess</h2>
+
+                <p>Watching the material-only engine play is funny for about four minutes. It develops a knight, then puts it back. It moves a rook a1-b1, then b1-a1. It will not castle. Leave a piece hanging and it takes it instantly, six plies deep &mdash; then goes back to shuffling.</p>
+
+                <p>None of that is a bug. Material returns the same number for a knight on a1 as for one on e5, so a whole subtree scores identically and alpha-beta keeps the first move that wasn't worse. Which move that is depends on my generator's emission order, not on chess.</p>
+
+                <p>So it wasn't playing badly. It was playing optimally against a function that had no opinion about anything but material. Every preference an engine has is either found by search or written into the evaluation. None of it appears from nowhere.</p>
+
+                <h2 id="material">Counting Wood, Properly This Time</h2>
+
+                <p>The values didn't change. Pawn 100, knight 320, bishop 330, rook 500, queen 900, and the king has no value at all.</p>
+
+                <p>The bishop sitting ten centipawns above the knight does something small and specific. Bishops keep their range as the board empties and knights don't. Ten centipawns won't make it a positional master, but it breaks bishop-for-knight trades the right way more often than not.</p>
+
+                <p>The king has no value because it can never be captured. Give it 20,000 and the term cancels &mdash; both sides always have exactly one &mdash; leaving an overflow risk for nothing. Mate is handled in the search, where the move list comes back empty.</p>
+
+                <pre><code>static final int[] PIECE_VALUES = { 100, 320, 330, 500, 900, 0 };
+//                                    P    N    B    R    Q   K
+
+int material(Board board) {
+    int score = 0;
+    for (int sq = 0; sq &lt; 64; sq++) {
+        Piece p = board.pieceAt(sq);
+        if (p == null) continue;
+        int v = PIECE_VALUES[p.type()];
+        score += (p.color() == WHITE) ? v : -v;
+    }
+    return score;   // positive means White is better, always
+}</code></pre>
+
+                <p>That loop touches 64 squares to find at most 32 pieces; the set-bit version <a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">the board representation</a> was designed for is on the list.</p>
+
+                <h2 id="sign">The One Line That Decides Who's Winning</h2>
+
+                <p>Note the comment on that return: positive means White. Negamax doesn't want a White-relative score. It wants the score from the point of view of whoever is to move, because the whole reason it collapses two functions into one is that <code>-negamax(child)</code> flips perspective on the way back up.</p>
+
+                <pre><code>int evaluate(Board board) {
+    int score = material(board) + pieceSquare(board) + mobility(board);
+    // everything above is White-relative; negamax wants mover-relative
+    return board.whiteToMove() ? score : -score;
+}</code></pre>
+
+                <p>I got this wrong first time and wrote about it in the <a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">minimax post</a>, where it cost me an evening. Worth repeating because it has no symptoms. Nothing throws, the scores stay plausible, White plays sensibly, and Black plays to lose with full conviction at full depth, because at Black's nodes the search is maximising White's material.</p>
+
+                <p>Piece-square tables make this worse: more terms carry a sign, and one inverted term rots the whole thing quietly. Keep every term White-relative and flip once, at the exit.</p>
+
+                <h2 id="pst">Sixty-Four Numbers Per Piece</h2>
+
+                <p>A piece-square table is 64 integers per piece type, added to the piece value depending on where the piece stands. A knight on a1 attacks two squares; on e5, eight. Search finds that eventually, but only by looking further than it can afford. So you pay once and read it back free at every leaf.</p>
+
+                <p>Here's my knight table, laid out the way a board is &mdash; a lightly tweaked version of the well-known simplified-evaluation tables that circulate in chess programming circles, not something I derived.</p>
+
+                <pre>        a     b     c     d     e     f     g     h
+   8   -50   -40   -30   -30   -30   -30   -40   -50
+   7   -40   -20     0     0     0     0   -20   -40
+   6   -30     0    10    15    15    10     0   -30
+   5   -30     5    15    20    20    15     5   -30
+   4   -30     0    15    20    20    15     0   -30
+   3   -30     5    10    15    15    10     5   -30
+   2   -40   -20     0     5     5     0   -20   -40
+   1   -50   -40   -30   -30   -30   -30   -40   -50</pre>
+
+                <p>You can read the chess straight off it. Rim bad, corners worse, centre worth twenty centipawns, and the bonus on d2 and e2 nudges the knight off b1 and g1 early. A knight on a1 is worth 270 to this engine; on e5, 340. That gap alone stopped most of the shuffling.</p>
+
+                <p>The pawn table is the one I fiddled with most. It rewards advancement, heavily on ranks 6 and 7, and penalises d2 and e2 so the engine pushes its central pawns. I gave f2 a small negative that c2 doesn't have: pushing the f-pawn early opens a diagonal at your own king, and the tables don't know where the king is.</p>
+
+                <p>Then the mirroring, where the bugs live. Tables are written from White's point of view, rank 8 at the top so they read like a board. Black uses the same table, rank flipped:</p>
+
+                <pre><code>// squares are a1 = 0 ... h8 = 63; tables are stored a1-indexed after a
+// one-time flip at startup, so the source layout above stays readable
+static int pstValue(int type, int sq, int color, int[] table) {
+    int index = (color == WHITE) ? sq : (sq ^ 56);
+    return table[index];
+}</code></pre>
+
+                <p><code>sq ^ 56</code> flips the rank and leaves the file alone, because the board mirrors between colours across the ranks, not the files. Black's a-file is still the a-file. Write it as a file flip and it passes on every table that happens to be left-right symmetric &mdash; most of them &mdash; and fails only on the ones that aren't, like my f2 penalty. You find that with the symmetry test below.</p>
+
+                <h2 id="phase">One King Table Is Always Wrong</h2>
+
+                <p>The king broke my one-table-per-piece assumption within a day. In the middlegame it wants to sit on g1 behind three unmoved pawns, so the table rewards g1 and c1 and penalises the centre. In an endgame that table is a disaster: mine sat on g1 while the opposing king marched to e5 and ate everything.</p>
+
+                <p>The fix is a tapered evaluation: two tables per piece, midgame and endgame, blended by how much material is left. Standard technique, and PeSTO is the well-known set of tuned tables built on it. I hand-wrote a cruder pair instead, to understand what tuning would later change.</p>
+
+                <pre><code>static final int[] PHASE_WEIGHT = { 0, 1, 1, 2, 4, 0 };
+static final int TOTAL_PHASE = 24;   // 4*1 + 4*1 + 4*2 + 2*4
+
+int phase(Board board) {
+    int p = 0;
+    for (int t = KNIGHT; t &lt;= QUEEN; t++) {
+        p += PHASE_WEIGHT[t] * (board.count(WHITE, t) + board.count(BLACK, t));
+    }
+    return Math.min(p, TOTAL_PHASE);   // promotion can push this over 24
+}
+
+int taper(int mg, int eg, int phase) {
+    return (mg * phase + eg * (TOTAL_PHASE - phase)) / TOTAL_PHASE;
+}</code></pre>
+
+                <p>Phase 24 is the opening, phase 0 bare kings, everything between a linear blend. Pawns weigh zero deliberately: sixteen pawns and no pieces is an endgame however crowded the board looks. The <code>Math.min</code> isn't decoration &mdash; promote to a second queen and the total exceeds 24, the blend weight goes above 1, and you extrapolate past values either table ever held.</p>
+
+                <p>These are the constants the whole evaluation runs on:</p>
+
+                <table>
+                    <thead>
+                        <tr><th>Piece</th><th>Value (cp)</th><th>Phase weight</th><th>Counted for mobility</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Pawn</td><td>100</td><td>0</td><td>No</td></tr>
+                        <tr><td>Knight</td><td>320</td><td>1</td><td>Yes</td></tr>
+                        <tr><td>Bishop</td><td>330</td><td>1</td><td>Yes</td></tr>
+                        <tr><td>Rook</td><td>500</td><td>2</td><td>Yes</td></tr>
+                        <tr><td>Queen</td><td>900</td><td>4</td><td>Yes</td></tr>
+                        <tr><td>King</td><td>&mdash;</td><td>0</td><td>No</td></tr>
+                    </tbody>
+                </table>
+
+                <p>Mobility is weighted at 2 centipawns per available move, and that number has a history.</p>
+
+                <h2 id="mobility">The First Term That Isn't a Lookup</h2>
+
+                <p>Material and piece-square tables are array reads. Mobility isn't. It's the first term that does real work, at every leaf, millions of times per search. I count pseudo-legal destination squares per side, skipping pawns and the king, reusing the lookups from <a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">the magic bitboard work</a>:</p>
+
+                <pre><code>int mobility(Board board, int side) {
+    long own = board.occupancy(side);
+    long occ = board.occupancy();
+    int moves = 0;
+    for (int t = KNIGHT; t &lt;= QUEEN; t++) {
+        long bb = board.bitboard(side, t);
+        while (bb != 0) {
+            int sq = Long.numberOfTrailingZeros(bb);
+            bb &amp;= bb - 1;
+            moves += Long.bitCount(attacks(t, sq, occ) &amp; ~own);
+        }
+    }
+    return moves * MOBILITY_WEIGHT;
+}</code></pre>
+
+                <p>Pseudo-legal, not legal, on purpose: filtering for pins means a make/unmake per candidate at every leaf, which an evaluation cannot carry. A pinned rook counting its moves is a small inaccuracy; legality checking at the leaves would be a catastrophe.</p>
+
+                <p>It still cost me. Adding the term visibly slowed the search &mdash; nodes per second dropped, and the same fixed-time search reached shallower depths than the day before. <!-- TODO: fill in measured nodes per second before and after the mobility term from a real instrumented run --> I haven't re-run the instrumented benchmark from the last post, so I won't put a number on it.</p>
+
+                <p>That trade is the real question for any evaluation term. Not whether it encodes true chess knowledge, but whether the knowledge is worth more than the depth it costs. An evaluation twice as smart and half as fast can be a downgrade: the ply you gave up was seeing tactics no positional term will find.</p>
+
+                <p>There's a second problem, and it's the one I find genuinely awkward. Mobility double-counts with the tables: a knight on e5 already collects +20 from the table, and it also has eight destinations instead of two, so it gets paid twice for one fact. I'd need to isolate each term in self-play to know how much of the gain belongs to which. I don't have a clean explanation and would rather say so than pretend it's tidy.</p>
+
+                <h2 id="testing">How Do You Test an Opinion?</h2>
+
+                <p>This is the part almost nobody writes about, and it took longest. An evaluation function has no correct answer. <a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft</a> works because the legal move count in a position is a published, independently verified fact. Nobody publishes a table saying this position is worth +37 centipawns. So you don't test the output. You test the properties.</p>
+
+                <p><strong>Colour symmetry.</strong> This one assertion is worth more than the rest combined. Take a position, flip it vertically, swap every piece's colour, swap the side to move. That's the same position with the players exchanged, so the White-relative score must be exactly negated.</p>
+
+                <pre><code>@Test
+void evaluationIsColourSymmetric() {
+    for (String fen : TEST_FENS) {
+        Board a = Board.fromFen(fen);
+        Board b = Board.fromFen(mirrorFen(fen));   // flip ranks, swap colours and stm
+
+        assertEquals(whiteRelative(a), -whiteRelative(b), fen);
+        // the negamax wrapper is mover-relative, so these must be EQUAL, not negated
+        assertEquals(evaluate(a), evaluate(b), fen);
+    }
+}</code></pre>
+
+                <p>Read those two assertions carefully, because I didn't. I wrote the second with a minus sign in front, on autopilot, and it failed everywhere. Half an hour convinced my tables were mirrored wrong, and the test was the broken thing: <code>evaluate()</code> is already relative to the side to move, so with the mover flipped too, the mover is in an identical situation. Same number.</p>
+
+                <p>Once it was right it caught three bugs: table mirroring, an asymmetric weight I'd typo'd into the bishop table, and the sign of the endgame king term. Fifteen lines including the FEN mirror helper.</p>
+
+                <p><strong>Stability across make/unmake.</strong> Evaluate, play a move, unplay it, evaluate again. The numbers must be identical. Once I keep incremental state &mdash; and I will, when the naive loop becomes the bottleneck &mdash; this catches an update that doesn't undo itself perfectly.</p>
+
+                <p><strong>Hand-built sanity positions.</strong> Symmetric material with symmetric structure scores near zero. The same position plus a White knight scores about +320, not +290 and not +400. These catch the coarse mistakes symmetry lets through, because a bug applied evenly to both colours is still symmetric.</p>
+
+                <p><strong>Self-play, the only verdict that counts.</strong> New evaluation against old, fixed depth, a few hundred games from varied openings so they don't all follow one line. Everything above proves the function is self-consistent. None of it proves the engine got stronger.</p>
+
+                <p>And the number that matters is how many games. A 55% score over 100 games is nothing &mdash; the error bars swallow it whole, and I've twice been briefly delighted by noise. Hundreds minimum, and for a small tweak, more than you're willing to run.</p>
+
+                <h2 id="wrong">Five Things I Got Wrong</h2>
+
+                <p><strong>Black's pawns wanted to march backwards.</strong> The first mirroring applied the flip to White instead of Black. White played normally. Black's pawn table rewarded rank 2 and punished rank 7, so Black mostly just refused to push anything. It took me longer than I'd like to admit to connect that with an upside-down table.</p>
+
+                <p><strong>Divide by zero on bare kings.</strong> My first taper normalised by a phase total computed from the pieces actually on the board rather than the constant 24. Clever, briefly. Then the search hit K vs K at a leaf, the total was zero, and an <code>ArithmeticException</code> came out of the middle of a depth-6 search. Wrong for exactly one position type, which is exactly the type deep search finds.</p>
+
+                <p><strong>The bishop retreat phase.</strong> I first set the mobility weight at 10 centipawns per move, which felt modest. It is not modest. The engine started playing pointless bishop retreats to long diagonals purely to maximise its move count, hanging pawns on the way. Dropping it to 2 stopped that, and I have no justification for 2 beyond exactly that.</p>
+
+                <p><strong>The h-pawn thing.</strong> Early on the engine kept pushing h-pawns for no reason I could see. The cause was embarrassing: I'd typed the pawn table in from a forum post I only half read, and the row I copied rewarded flank pawns over central ones. I never read the numbers I pasted. Now every table goes in as a board and gets read as one.</p>
+
+                <p><strong>The evaluation got slow enough to be a net loss.</strong> At one point I had mobility, a first pass at pawn structure and a king-safety term all running per leaf, and the search reached a full ply shallower in the same time. <!-- TODO: fill in fixed-depth self-play result and nodes-per-second comparison for the heavy-eval version vs the trimmed one --> The knowledge didn't pay for the lost ply. Pawn structure and king safety came back out.</p>
+
+                <h2 id="transfer">What Transfers and What's Just Mine</h2>
+
+                <p>The piece values and the general shape of the tables transfer to any engine. Centre good, rim bad, advanced pawns good, castled king good in the midgame and central king good in the endgame &mdash; that's chess, not my code, which is why the same shapes turn up everywhere.</p>
+
+                <p>The exact weights don't. A mobility weight of 2 is tuned against my search depth, my move ordering and my current bugs. Anyone with a transposition table and a quiescence search is searching a different tree, so the right weight for them is a different number. That's why engines retune after every significant search change. And the timing observations are one laptop, one JVM, single-threaded. If you're building your own, though, piece-square tables are the highest return-per-line change available: six arrays and one XOR, and the engine stops shuffling.</p>
+
+
+                <h2 id="next">What's Next</h2>
+
+                <p>Refining the taper first, since both table sets were hand-written and the endgame one is thin. Then pawn structure &mdash; isolated, doubled and passed pawns, which need a pawn hash table to be affordable &mdash; and king safety, where most of the remaining strength hides. After that, texel tuning: fit the weights to real game results instead of guessing.</p>
+
+                <p>I also still owe the previous post two things. A transposition table, so the search stops re-deriving positions it has already seen. And quiescence search, so the evaluation stops being called mid-capture-sequence and reporting a number one recapture destroys. That matters more now: a better evaluation applied at a bad moment is still a bad number, arguably worse, since it's wrong with more precision.</p>
+
+                <p>If you've written your own tables and landed on a different shape, or my mobility weight looks wrong to you, say so in the comments. I'm still working out which terms earn their cost and which I've kept because they felt like chess.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> Everything here is from my own Java engine, bugs included. One honest gap: this post contains no nodes-per-second figures and no self-play percentages, because I changed the evaluation after the benchmark run in the previous post and haven't re-instrumented since. The two places a measurement belongs &mdash; the cost of the mobility term, and the fixed-depth self-play result for the heavy evaluation &mdash; are marked TODO in the page source and will be filled from a real run. The piece values, tables and weights above are the actual constants in my code.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Why does an engine with a material-only evaluation still play badly?</h3>
+                <p>Because material is flat across the board. A knight on a1 and a knight on e5 both score 320, so the engine takes whichever equal-scoring line the generator emitted first. That looks like rook shuffling, refusing to castle, and pieces that never leave the back rank. The search is fine; the function it optimises does not care where the pieces stand.</p>
+
+                <h3>What are piece-square tables and why does a knight on e5 score more than a knight on a1?</h3>
+                <p>A piece-square table is 64 integers per piece type, added to the piece value as a bonus for standing on a given square. A knight on a1 attacks two squares; a knight on e5 attacks eight. The table encodes that as a constant, so the engine gets it free at every leaf instead of searching far enough to discover it.</p>
+
+                <h3>How do you mirror piece-square tables for Black?</h3>
+                <p>Tables are written once from White's point of view, and Black indexes the same table with the square number XOR 56. That flips the rank and leaves the file alone, which is correct because chess mirrors between colours across the ranks, not the files. A file flip instead passes on any file-symmetric table and fails silently on the ones that are not.</p>
+
+                <h3>What is a tapered evaluation and why do you need separate midgame and endgame tables?</h3>
+                <p>A tapered evaluation keeps two sets of tables, midgame and endgame, and blends them by how much material is left. The king table that keeps you behind your pawns in the middlegame is the same one that keeps you on g1 in a king and pawn endgame, where the king needs to walk to the centre. The blend weight comes from remaining non-pawn material.</p>
+
+                <h3>How do you test a chess evaluation function?</h3>
+                <p>Four layers. A colour-symmetry assertion comparing each position against its rank-flipped, colour-swapped mirror, which catches mirroring bugs, sign bugs and asymmetric weights in one line. A check that the score survives a make and unmake round trip. Sanity checks on hand-built positions where equal material scores near zero. And self-play at fixed depth, the only test that says whether the engine got stronger.</p>
+
+                <h3>Is a mobility term worth the cost in a chess evaluation function?</h3>
+                <p>It is the first term that is not a table lookup, so it does real move-generation work at every leaf and it will cost you nodes per second. It also double-counts with piece-square tables, since a centralised knight already has more moves by construction. Worth having, but weight it low and confirm it with self-play, not by whether the scores look sensible.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Evaluation Function</a>
+                <a href="javascript:void(0)" class="tag">Piece-Square Tables</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Tapered Eval</a>
+                <a href="javascript:void(0)" class="tag">Mobility</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+                <a href="javascript:void(0)" class="tag">Testing</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">Magic Bitboards in Java: What Finally Made Them Click</a></li>
+                        <li><a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</a></li>
+                        <li><a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">Bitboards Explained: Representing a Chess Board in 64 Bits</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>

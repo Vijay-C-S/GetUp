@@ -12,8 +12,8 @@
     <copyright>Copyright 2026 GetUp. All rights reserved.</copyright>
     <managingEditor>contact.us.GetUp@gmail.com (GetUp)</managingEditor>
     <webMaster>contact.us.GetUp@gmail.com (GetUp)</webMaster>
-    <pubDate>Sun, 26 Jul 2026 00:00:00 +0530</pubDate>
-    <lastBuildDate>Sun, 26 Jul 2026 00:00:00 +0530</lastBuildDate>
+    <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+    <lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0530</lastBuildDate>
     <atom:link href="https://getupdated.tech/blogs.xml" rel="self" type="application/rss+xml" />
     <image>
       <url>https://getupdated.tech/images/favicon.jpg</url>
@@ -94,6 +94,17 @@
       <description>After a stack of Todo apps and inventory systems, I built a chess engine in Java. The design decisions, the minimax and alpha-beta code, the brutal bugs, and what a genuinely hard project actually teaches you.</description>
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility</title>
+      <link>https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html</guid>
+      <description>A correct search that only counts material shuffles rooks, refuses to castle and parks knights on the rim. Piece values, 64 numbers per piece type, a midgame-to-endgame taper, a mobility term, and the symmetry test that caught three bugs in one assertion.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
     </item>
