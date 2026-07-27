@@ -1,6 +1,17 @@
 # GetUp robots.txt
 # https://getupdated.tech/
 
+# AdSense crawlers need unrestricted access to serve relevant ads.
+# These are separate groups so they are not subject to the Crawl-delay below.
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: AdsBot-Google-Mobile
+Allow: /
+
 User-agent: *
 Allow: /
 Allow: /css/
@@ -17,7 +28,7 @@ Disallow: /.agent/
 Disallow: /.github/
 Disallow: /sections/
 Disallow: /743644fe6b8f4526a9a8.txt
-Disallow: /fix-adsense.ps1
+Disallow: /seo-qa-check.ps1
 
 # Crawl-delay for well-behaved bots (seconds)
 Crawl-delay: 10

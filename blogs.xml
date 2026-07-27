@@ -5,9 +5,9 @@
   xmlns:dc="http://purl.org/dc/elements/1.1/"
   xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
   <channel>
-    <title>GetUp - Practical AI News and Career Guides</title>
+    <title>GetUp - In-Depth Java Engineering Writing</title>
     <link>https://getupdated.tech/</link>
-    <description>Practical AI updates, tool explainers, and career guidance for students and early-career builders.</description>
+    <description>Long-form Java engineering writing from real implementation work: chess engine internals, move generation, search algorithms, and JVM exception debugging.</description>
     <language>en-IN</language>
     <copyright>Copyright 2026 GetUp. All rights reserved.</copyright>
     <managingEditor>contact.us.GetUp@gmail.com (GetUp)</managingEditor>
@@ -126,7 +126,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html</guid>
       <description>The engine played fine offline, then sat still in its first live game while the clock ran out. The irreversible BOT upgrade, two NDJSON streams, a systemd unit, and eight failures that only appear against real opponents.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Tue, 28 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
@@ -137,7 +137,7 @@
       <guid isPermaLink="true">https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html</guid>
       <description>It has nothing to do with threads, and removing the second-to-last element does not throw at all - it silently skips the last one. The modCount machinery, three real causes, and four fixes with their actual costs.</description>
       <dc:creator>Vijay</dc:creator>
-      <pubDate>Wed, 29 Jul 2026 00:00:00 +0530</pubDate>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
     </item>

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
         <!-- Google Analytics (gtag) removed -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GetUp Editorial Policy - Learn how we research, write, review, and publish content on AI tools, tech news, and career guides. Our commitment to accuracy and transparency.">
+    <meta name="description" content="GetUp Editorial Policy - Learn how we research, write, test, and publish our Java engineering articles. Our commitment to accuracy and transparency.">
     <meta name="robots" content="index, follow">
     <title>Editorial Policy - GetUp Standards & Content Guidelines</title>
     <link rel="icon" type="image/jpeg" href="images/favicon.jpg">
@@ -16,7 +16,7 @@
 
     <!-- Open Graph -->
     <meta property="og:title" content="Editorial Policy - GetUp Standards & Content Guidelines">
-    <meta property="og:description" content="GetUp Editorial Policy - Learn how we research, write, review, and publish content on AI tools, tech news, and career guides.">
+    <meta property="og:description" content="GetUp Editorial Policy - Learn how we research, write, test, and publish our Java engineering articles.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getupdated.tech/editorial-policy.html">
     <meta property="og:site_name" content="GetUp">
@@ -26,7 +26,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Editorial Policy - GetUp Standards & Content Guidelines">
-    <meta name="twitter:description" content="GetUp Editorial Policy - Learn how we research, write, review, and publish content on AI tools, tech news, and career guides.">
+    <meta name="twitter:description" content="GetUp Editorial Policy - Learn how we research, write, test, and publish our Java engineering articles.">
     <meta name="twitter:image" content="https://getupdated.tech/images/favicon.jpg">
 
     <!-- Schema.org -->
@@ -53,7 +53,7 @@
     <link rel="stylesheet" href="css/cookie-consent.css">
 
     <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
 
     <style>
         .legal-page {
@@ -225,15 +225,15 @@
             <div class="legal-content">
 
                 <div class="info-box">
-                    <p><strong>Our Commitment:</strong> Every article, review, and guide published on GetUp is created to genuinely help our readers � not to game search engines, push affiliate sales, or generate clicks. We hold ourselves to the same standard we'd want from a trusted colleague.</p>
+                    <p><strong>Our Commitment:</strong> Every article, review, and guide published on GetUp is created to genuinely help our readers — not to game search engines, push affiliate sales, or generate clicks. We hold ourselves to the same standard we'd want from a trusted colleague.</p>
                 </div>
 
                 <h2>1. Who We Are</h2>
                 <p>
-                    GetUp is an independent technology and AI content platform based in Bangalore, India. We cover AI model updates, tool reviews, developer career guides, and internship opportunities � primarily for students, developers, and early-career professionals in India and beyond.
+                    GetUp is an independent Java engineering blog based in Bangalore, India. We publish long-form technical articles on chess engine internals — board representation, move generation, search, and evaluation — and on Java and JVM behaviour, particularly the exceptions that commonly catch developers out.
                 </p>
                 <p>
-                    Our editorial work is carried out by writers and researchers who actively use the tools and follow the industry they write about. We do not publish content from writers who have no real-world experience with the topic.
+                    Every article is written by a developer who implemented the code it describes. We do not publish articles on topics the author has not worked through in practice.
                 </p>
 
                 <h2>2. Content Standards</h2>
@@ -241,9 +241,9 @@
                 <h3>Accuracy First</h3>
                 <p>We publish only information we can verify. This means:</p>
                 <ul>
-                    <li>Claims about AI model capabilities are drawn from official documentation, hands-on testing, or reputable benchmarks</li>
-                    <li>Salary ranges and hiring details come from official job postings, not speculation</li>
-                    <li>We clearly distinguish between what we have personally tested and what we report from third-party sources</li>
+                    <li>Claims about Java or JVM behaviour are checked against the language specification, the official javadoc, or the OpenJDK source</li>
+                    <li>Performance figures — node counts, perft results, timings — come from runs we performed ourselves, with the conditions stated</li>
+                    <li>We clearly distinguish between what we have personally implemented and tested and what we report from third-party sources</li>
                 </ul>
 
                 <h3>Original Reporting</h3>
@@ -253,27 +253,28 @@
 
                 <h3>Timeliness and Updates</h3>
                 <p>
-                    The AI industry changes fast. When information we've published becomes outdated, we update the article and note the revision date at the top. We do not silently delete or rewrite articles in ways that misrepresent what was originally said.
+                    Java releases change behaviour, and APIs are deprecated. When information we've published becomes outdated, we update the article and note the revision date at the top. We do not silently delete or rewrite articles in ways that misrepresent what was originally said.
                 </p>
 
                 <h2>3. Our Content Creation Process</h2>
                 <ol class="process-steps">
-                    <li><strong>Topic Selection</strong> � We choose topics based on genuine reader interest, industry relevance, and our team's expertise. We do not create content purely for SEO volume if the topic has no real reader value.</li>
-                    <li><strong>Research</strong> � We consult primary sources: official product pages, release notes, developer documentation, benchmark reports, and public data. For hiring guides, we review the actual job postings.</li>
-                    <li><strong>Writing</strong> � Content is written by team members with relevant knowledge. We avoid filler, keyword-stuffing, and padded content that wastes the reader's time.</li>
-                    <li><strong>Internal Review</strong> � Before publishing, articles are reviewed for factual accuracy, clarity, and completeness.</li>
-                    <li><strong>Publishing</strong> � We include publish dates, and update dates when articles are revised, so readers know how current the content is.</li>
-                    <li><strong>Post-publish Monitoring</strong> � We monitor articles for reader feedback and update them when the underlying information changes.</li>
+                    <li><strong>Topic Selection</strong> — Topics come from problems encountered while building. If a problem was hard to solve because no clear explanation existed, that is a strong signal it is worth writing up. We do not create content purely for SEO volume.</li>
+                    <li><strong>Implementation</strong> — The code is written and made to work first. Articles describe working implementations, not hypothetical ones.</li>
+                    <li><strong>Research</strong> — We consult primary sources: the Java Language Specification, official javadoc, the OpenJDK source, and established chess programming references. Where a technique is standard, we credit its origin.</li>
+                    <li><strong>Writing</strong> — Articles are written by the developer who implemented the code. We avoid filler, keyword-stuffing, and padding that wastes the reader's time.</li>
+                    <li><strong>Verification</strong> — Before publishing, code samples are re-run and figures re-checked. Move generation claims are validated against known perft counts.</li>
+                    <li><strong>Publishing</strong> — We include publish dates, and update dates when articles are revised, so readers know how current the content is.</li>
+                    <li><strong>Post-publish Monitoring</strong> — We monitor articles for reader feedback and update them when the underlying information changes.</li>
                 </ol>
 
-                <h2>4. Reviews and Recommendations</h2>
+                <h2>4. Techniques and Recommendations</h2>
                 <p>
-                    When we review an AI tool, writing assistant, or developer product, we aim to give readers a complete, honest picture � including what works well and what doesn't. Our reviews are based on actual use, not marketing materials.
+                    When we recommend an approach, a data structure, or a library, we aim to give a complete picture — including its costs and the cases where it is the wrong choice. Recommendations come from having used the technique, not from its documentation alone.
                 </p>
                 <ul>
-                    <li>We do not accept payment in exchange for positive reviews</li>
+                    <li>We do not accept payment in exchange for favourable coverage</li>
                     <li>Sponsored content, if any, is clearly labeled as such at the top of the article</li>
-                    <li>Affiliate relationships do not change how we evaluate or describe a product � we only recommend things we genuinely consider useful</li>
+                    <li>Trade-offs are stated explicitly — where an approach is slower, more complex, or only suitable in narrow cases, we say so rather than presenting it as a general fix</li>
                 </ul>
 
                 <h2>5. Corrections and Retractions</h2>
@@ -292,14 +293,14 @@
                     We disclose any relationship that could reasonably influence how we cover a topic. This includes:
                 </p>
                 <ul>
-                    <li><strong>Affiliate Links:</strong> Some links on our site may earn us a commission if you make a purchase. These are disclosed in the relevant articles and in our <a href="/disclaimer.html" style="color:var(--primary);">Disclaimer</a>.</li>
-                    <li><strong>Sponsored Content:</strong> Any article written with sponsorship or compensation is labeled "Sponsored" at the top. Editorial conclusions are our own.</li>
-                    <li><strong>Free Access:</strong> We sometimes receive free access to tools for review purposes. This does not guarantee a positive review.</li>
+                    <li><strong>Advertising:</strong> This site displays ads served by Google AdSense. Advertising is handled entirely by Google and has no influence on what we publish or what we conclude. See our <a href="/privacy-policy.html" style="color:var(--primary);">Privacy Policy</a> for how ad cookies are used.</li>
+                    <li><strong>Affiliate Links:</strong> We currently have no affiliate relationships and earn no commission from links in our articles. If that changes, affected links will be disclosed in the article itself.</li>
+                    <li><strong>Sponsored Content:</strong> We have not published any sponsored content to date. Any article written with sponsorship or compensation would be labeled "Sponsored" at the top, with editorial conclusions remaining our own.</li>
                 </ul>
 
                 <h2>7. Privacy and Sensitive Content</h2>
                 <p>
-                    We follow responsible reporting practices when covering topics related to personal data, security vulnerabilities, or sensitive hiring situations. We do not publish personal information about private individuals without their consent.
+                    We follow responsible disclosure practices when covering topics related to personal data or security vulnerabilities. We do not publish personal information about private individuals without their consent.
                 </p>
 
                 <h2>8. User-Generated Content</h2>
@@ -309,7 +310,7 @@
 
                 <h2>9. AI-Assisted Writing Disclosure</h2>
                 <p>
-                    We may use AI writing tools as research or drafting aids. However, all published content is reviewed, edited, and verified by human team members who take responsibility for its accuracy. We do not publish raw AI output without significant human oversight and editing.
+                    We may use AI writing tools as research or drafting aids. However, all published content is reviewed, edited, and verified by the author, who takes responsibility for its accuracy — including re-running the code and confirming the figures. We do not publish raw AI output without significant human oversight and editing.
                 </p>
 
                 <h2>10. Contact Our Editorial Team</h2>
@@ -336,7 +337,7 @@
                     <a href="/" class="logo">
                         <span class="logo-text">Get<span class="highlight">Up</span></span>
                     </a>
-                    <p>Your go-to blog for AI news, tech insights, and career guides.</p>
+                    <p>In-depth Java writing on chess engine internals, search algorithms, and JVM debugging.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Quick Links</h4>

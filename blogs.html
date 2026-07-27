@@ -4,16 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Read practical AI blog posts, real tool reviews, and clear career guides written for students and early builders.">
-    <meta name="keywords" content="AI blogs, AI tools, model updates, fresher tech guides, GetUp">
+    <meta name="description" content="In-depth Java articles on chess engine internals - bitboards, move generation, search and evaluation - plus practical JVM exception debugging.">
+    <meta name="keywords" content="Java articles, chess engine, bitboards, move generation, alpha-beta search, UCI protocol, Java exceptions, JVM debugging, GetUp">
     <meta name="author" content="GetUp">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://getupdated.tech/blogs.html">
     <link rel="sitemap" type="application/xml" title="Sitemap" href="https://getupdated.tech/sitemap.xml">
     <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
 
-    <meta property="og:title" content="GetUp Blogs - Practical AI Guides and Reviews">
-    <meta property="og:description" content="Practical AI explainers, tool reviews, and hiring-focused blog posts from GetUp.">
+    <meta property="og:title" content="GetUp Blogs - Java Deep-Dives and Chess Engine Internals">
+    <meta property="og:description" content="Java deep-dives from GetUp: chess engine internals, search algorithms, and JVM exception debugging.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getupdated.tech/blogs.html">
     <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
@@ -21,8 +21,8 @@
     <meta property="og:locale" content="en_IN">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="GetUp Blogs - Practical AI Guides and Reviews">
-    <meta name="twitter:description" content="Practical AI explainers, tool reviews, and hiring-focused blog posts from GetUp.">
+    <meta name="twitter:title" content="GetUp Blogs - Java Deep-Dives and Chess Engine Internals">
+    <meta name="twitter:description" content="Java deep-dives from GetUp: chess engine internals, search algorithms, and JVM exception debugging.">
     <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
     <meta name="twitter:site" content="@getup">
 
@@ -36,8 +36,8 @@
     {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        "name": "GetUp Blogs - Practical AI Guides and Reviews",
-        "description": "Practical AI explainers, tool reviews, career guides, and internship breakdowns from GetUp.",
+        "name": "GetUp Blogs - Java Deep-Dives and Chess Engine Internals",
+        "description": "Java deep-dives from GetUp: chess engine internals, search algorithms, and JVM exception debugging.",
         "url": "https://getupdated.tech/blogs.html",
         "inLanguage": "en-IN",
         "isPartOf": {
@@ -56,7 +56,7 @@
     <meta name="google-site-verification" content="T63TAvKNobnLc4tD4ZKaTuDczvknzQ0W7-ilWBhDKx0" />
     <meta name="google-site-verification" content="p9rDl3o5vhct6EMQvYTCFaz6Dw6GcdxXPKtbmdCOJcc" />
 
-    <title>GetUp Blogs - Practical AI Guides and Reviews</title>
+    <title>GetUp Blogs - Java Deep-Dives and Chess Engine Internals</title>
     <link rel="icon" type="image/jpeg" href="images/favicon.jpg">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -70,7 +70,7 @@
 
     <!-- Google Analytics (gtag) removed -->
     <!-- Google AdSense verification -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="css/theme-terminal.css">
 </head>
 
@@ -108,12 +108,12 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-badge">GetUp Library</span>
-                <h1 class="section-title">AI <span class="gradient-text">Blogs</span></h1>
-                <p class="section-subtitle">Fresh model updates, honest tool breakdowns, and career-focused explainers.</p>
+                <h1 class="section-title">Java <span class="gradient-text">Deep-Dives</span></h1>
+                <p class="section-subtitle">Chess engine internals, search algorithms, and JVM exception debugging &mdash; written from code that actually runs.</p>
             </div>
 
             <form id="blog-search-form" class="main-search-form" role="search" aria-label="Search blogs">
-                <input id="search-input" class="main-search-input" type="search" placeholder="Search blogs by topic, tool, or company..." aria-label="Search blogs">
+                <input id="search-input" class="main-search-input" type="search" placeholder="Search by topic, algorithm, or Java class..." aria-label="Search blogs">
                 <button type="submit" class="main-search-btn">Search</button>
             </form>
             <p id="search-results-text" style="display: none; margin: 1rem 0;"></p>
@@ -127,7 +127,7 @@
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
-                            <span><i class="far fa-calendar"></i> Jul 29, 2026</span>
+                            <span><i class="far fa-calendar"></i> Jul 27, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
                         </div>
                         <h3>ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</h3>
@@ -159,7 +159,7 @@
                     </div>
                     <div class="blog-content">
                         <div class="blog-meta">
-                            <span><i class="far fa-calendar"></i> Jul 28, 2026</span>
+                            <span><i class="far fa-calendar"></i> Jul 27, 2026</span>
                             <span><i class="fas fa-code"></i> Engineering</span>
                         </div>
                         <h3>Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</h3>
@@ -337,7 +337,7 @@
                     <a href="/" class="logo">
                         <span class="logo-text">Get<span class="highlight">Up</span></span>
                     </a>
-                    <p>Your go-to blog for AI news, tech insights, and career guides.</p>
+                    <p>In-depth Java writing on chess engine internals, search algorithms, and JVM debugging.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Quick Links</h4>

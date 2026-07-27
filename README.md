@@ -1,6 +1,6 @@
 # GetUp
 
-AI-focused static website for GetUp (getupdated.tech), with curated AI blogs, legal pages, SEO files, and homepage UI custom styling.
+Static website for GetUp (getupdated.tech) — an independent Java engineering blog covering chess engine internals and JVM debugging, with legal pages, SEO files, and homepage UI custom styling.
 
 ## Project Overview
 
