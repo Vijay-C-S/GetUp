@@ -77,6 +77,17 @@
     </item>
 
     <item>
+      <title>Minimax to Alpha-Beta: Measuring the Actual Node Reduction</title>
+      <link>https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html</guid>
+      <description>A correct move generator still plays random chess. So I wrote minimax, added alpha-beta, and counted every node instead of trusting the textbook square root. Move ordering turned out to do almost nothing from the start position and almost everything in a real midgame.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sun, 26 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
       <title>Why I Built a Chess Engine in Java Instead of Another CRUD App</title>
       <link>https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</link>
       <guid isPermaLink="true">https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</guid>

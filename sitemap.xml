@@ -105,6 +105,12 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://getupdated.tech/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html</loc>
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>

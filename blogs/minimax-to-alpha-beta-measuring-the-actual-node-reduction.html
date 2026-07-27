@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Move generation is done and verified by perft. Now the engine has to choose a move. Minimax, negamax and alpha-beta with node counts measured on two positions, including the case where capture ordering saves nothing at all.">
+    <title>Minimax to Alpha-Beta: Measuring the Actual Node Reduction</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Minimax to Alpha-Beta: Measuring the Actual Node Reduction">
+    <meta property="og:description" content="Start from plain minimax, add alpha-beta, then count every node each one visits. 124 million down to 470 thousand at depth 6 — and a move-ordering result that only shows up if you test more than the start position.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Minimax to Alpha-Beta: Measuring the Actual Node Reduction">
+    <meta name="twitter:description" content="Depth 6, start position: 124,132,537 nodes with minimax. 469,620 with alpha-beta. 225,982 with capture ordering. Measured in my Java engine, not quoted from a textbook.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Minimax to Alpha-Beta: Measuring the Actual Node Reduction", "item": "https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Minimax to Alpha-Beta: Measuring the Actual Node Reduction",
+        "description": "A first-person account of implementing minimax, negamax and alpha-beta pruning in a Java chess engine with magic bitboards, and measuring the node reduction at each step with an instrumented node counter, on both the start position and a balanced middlegame position.",
+        "datePublished": "2026-07-26",
+        "dateModified": "2026-07-26",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Measuring minimax vs alpha-beta node counts in a Java chess engine",
+            "name": "Minimax to Alpha-Beta: Measuring the Actual Node Reduction"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How much does alpha-beta pruning actually reduce node counts?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Measured with a material-only evaluation: from the start position, 16x at depth 3, 136x at depth 4 and 264x at depth 6, against a full-width minimax that visits 124,132,537 nodes at depth 6. From a balanced middlegame position, 154x with unordered alpha-beta and 693x with capture ordering at depth 5, against a minimax that visits 35,911,467 nodes. The reduction compounds with depth because a cutoff near the root discards an entire subtree."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why did capture ordering save almost nothing from the start position?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because there are no captures in the opening. The earliest capture from the start position takes three plies to arrange, so in a depth-3 search every node that gets sorted sits at ply 1 or 2 where no capture exists, and the ordered and unordered searches visited an identical 581 nodes. At depth 4 ordering saved 21 nodes out of 1,516. Benchmarking move ordering on the start position will tell you the heuristic is worthless; the same comparator was worth 11x at depth 4 in a middlegame position."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the difference between fail-soft and fail-hard alpha-beta?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Fail-hard clamps the returned value into the [alpha, beta] window when a cutoff happens. Fail-soft returns the actual best score it found, even when that value lies outside the window. Node counts are the same at shallow depths, so the choice is about what you do later: fail-soft hands back a tighter bound, which is more useful for aspiration windows and for storing accurate transposition table entries."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is MVV-LVA move ordering?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Most Valuable Victim, Least Valuable Attacker. Sort captures by the value of the captured piece descending, breaking ties by the value of the capturing piece ascending, so a pawn taking a queen is searched before a queen taking a queen. One implementation trap: the move must be scored before it is played, and for an en passant capture the victim is not standing on the destination square, so a naive lookup finds an empty square and scores the capture as a quiet move."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Do minimax and alpha-beta return different moves?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Alpha-beta visits fewer nodes to reach exactly the same score and the same best move, because it only discards branches that provably cannot change the result. Asserting that the two searches agree at every depth is the first test to write, and it should pass before you take any node count seriously."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I know my search node counter is correct?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A full-width search to depth d visits exactly perft(0) + perft(1) + ... + perft(d) nodes. From the start position a depth-4 minimax must report 206,604, not a number near it. If your total disagrees, the counter is in the wrong place, the recursion is skipping a terminal case, or make/unmake is corrupting state."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 26, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 13 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer measuring minimax vs alpha-beta node counts in a Java chess engine with a terminal showing search statistics" title="Measuring minimax vs alpha-beta node counts in a Java chess engine" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">Perft proved the move generator. Now I needed to prove the search.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">Move generation was done and perft said it was correct, and the engine still played like it had been dropped on its head. A legal move generator has no opinion about which legal move is any good. This post is what happened when I wrote minimax, bolted alpha-beta onto it, and counted every node instead of repeating the textbook line about searching the square root of the tree.</p>
+
+                <p>The headline, measured rather than quoted: from the start position a depth-6 search goes from 124,132,537 nodes to 469,620 with alpha-beta, a 264x cut. Capture ordering takes it to 225,982. But at depth 4 that same ordering saved twenty-one nodes out of fifteen hundred, while in a middlegame position it was worth 44x. The position everyone benchmarks on is the one position where move ordering has almost nothing to show you.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#brain">A Rulebook With No Opinions</a></li>
+                    <li><a href="#minimax">Minimax First, Negamax Because the Duplication Annoyed Me</a></li>
+                    <li><a href="#eval">Counting Wood, On Purpose</a></li>
+                    <li><a href="#counting">The Node Counter, and the Check That Proves It Works</a></li>
+                    <li><a href="#baseline">Where Full-Width Minimax Falls Over</a></li>
+                    <li><a href="#alpha-beta">Alpha-Beta: "I Already Have Better, Stop Looking"</a></li>
+                    <li><a href="#comparison">The Measured Comparison</a></li>
+                    <li><a href="#ordering">The Part Most Posts Skip</a></li>
+                    <li><a href="#gap">How Close Is This to the Best Case?</a></li>
+                    <li><a href="#surprised">What I Got Wrong First</a></li>
+                    <li><a href="#context">What These Numbers Do and Don't Transfer</a></li>
+                    <li><a href="#next">What's Next</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="brain">A Rulebook With No Opinions</h2>
+
+                <p>By the end of <a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">the perft post</a> I had a move generator that produced exactly the right moves and a make/unmake pair that put the board back the way it found it. What I didn't have was any way to choose between the moves. The engine picked at random. It was a dice roller with a rulebook.</p>
+
+                <p>That gap is bigger than it sounds. Everything up to this point &mdash; <a href="/blogs/bitboards-explained-representing-a-chess-board-in-64-bits.html">the bitboard representation</a>, <a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">the magic bitboard lookups</a>, the fiddly <a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">en passant and castling bookkeeping</a> &mdash; exists to make one operation fast: generate the moves in this position. Search is what finally spends that speed. I'd put it off because minimax felt like homework I'd already done at university, then wrote it in an evening.</p>
+
+                <h2 id="minimax">Minimax First, Negamax Because the Duplication Annoyed Me</h2>
+
+                <p>The textbook version. Two players, one maximising, one minimising, a depth limit, evaluate at the leaves.</p>
+
+                <pre><code>int minimax(Board board, int depth, boolean maximizing) {
+    nodes++;
+    List&lt;Move&gt; moves = board.generateLegalMoves();
+    if (moves.isEmpty()) {
+        return board.isInCheck() ? (maximizing ? -MATE : MATE) : DRAW;
+    }
+    if (depth == 0) return evaluate(board);
+
+    int best = maximizing ? -INF : INF;
+    for (Move m : moves) {
+        board.makeMove(m);
+        int score = minimax(board, depth - 1, !maximizing);
+        board.unmakeMove(m);
+        best = maximizing ? Math.max(best, score) : Math.min(best, score);
+    }
+    return best;
+}</code></pre>
+
+                <p>Two details there cost me time. The empty-move-list check has to come <em>before</em> the depth check, or a position that's already mate at the horizon gets scored as ordinary material and the engine walks into it. And the mate score flips with <code>maximizing</code>: being checkmated is catastrophic for whoever is to move, not for White specifically.</p>
+
+                <p>Negamax collapses the duplicated branches. One player, one sign flip per ply.</p>
+
+                <pre><code>int negamax(Board board, int depth) {
+    nodes++;
+    List&lt;Move&gt; moves = board.generateLegalMoves();
+    if (moves.isEmpty()) return board.isInCheck() ? -MATE : DRAW;
+    if (depth == 0) return evaluate(board);
+
+    int best = -INF;
+    for (Move m : moves) {
+        board.makeMove(m);
+        int score = -negamax(board, depth - 1);
+        board.unmakeMove(m);
+        if (score &gt; best) best = score;
+    }
+    return best;
+}</code></pre>
+
+                <p>Same tree, same answers, half the code. The trick that makes it work lives in the evaluation function.</p>
+
+                <h2 id="eval">Counting Wood, On Purpose</h2>
+
+                <p>For every measurement in this post the evaluation is pure material. Pawn 100, knight 320, bishop 330, rook 500, queen 900. No piece-square tables, no mobility, no king safety, no pawn structure.</p>
+
+                <pre><code>int evaluate(Board board) {
+    int score = 0;
+    for (int sq = 0; sq &lt; 64; sq++) {
+        Piece p = board.pieceAt(sq);
+        if (p == null) continue;
+        int value = PIECE_VALUES[p.type()];
+        score += (p.color() == WHITE) ? value : -value;
+    }
+    // negamax wants the score from the mover's point of view, not White's
+    return board.whiteToMove() ? score : -score;
+}</code></pre>
+
+                <p>That last line is the whole negamax contract, and it's where I lost an evening. More on that below.</p>
+
+                <p>Keeping the eval this dumb is deliberate. Every node does roughly the same work, so node counts and wall-clock time stay proportional. It also keeps the pruning honest: a smarter eval produces more distinct scores, which changes how often cutoffs fire. I wanted to measure alpha-beta, not my evaluation function.</p>
+
+                <h2 id="counting">The Node Counter, and the Check That Proves It Works</h2>
+
+                <p>A <code>long</code> field, incremented at the very top of the search function, before any return can escape. That's the entire instrument.</p>
+
+                <pre><code>class Search {
+    long nodes;
+
+    int negamax(Board board, int depth) {
+        nodes++;   // first statement, so every entry is counted exactly once
+        // ...
+    }
+}</code></pre>
+
+                <p>Here's the part that turned out to be the most useful thing in the exercise. A full-width search to depth <em>d</em> visits every node down to <em>d</em>, so its node count is not approximately anything. It is exactly the sum of perft(0) through perft(d).</p>
+
+                <pre><code>long expected = 0;
+for (int i = 0; i &lt;= depth; i++) expected += perft(board, i);
+assertEquals(expected, search.nodes);   // must match to the node</code></pre>
+
+                <p>From the start position that's 1 + 20 + 400 + 8,902 + 197,281 = 206,604 for a depth-4 search. My counter said 206,604. Not close to it, exactly it. If the counter is misplaced, the recursion skips a terminal case, or make/unmake leaks state, the identity breaks immediately &mdash; using perft numbers you already have. A free correctness test before you trust a single benchmark the harness produces.</p>
+
+                <h2 id="baseline">Where Full-Width Minimax Falls Over</h2>
+
+                <p>Two positions throughout. The start position, and a balanced Semi-Slav middlegame, <code>r1bq1rk1/pp1nbppp/2p1pn2/3p4/2PP4/2N1PN2/PP2BPPP/R1BQ1RK1 w - - 0 9</code>, which has 32 legal moves and dead-level material. Plain minimax, no pruning:</p>
+
+                <table>
+                    <thead>
+                        <tr><th>Depth</th><th>Start position</th><th>Middlegame</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>21</td><td>33</td></tr>
+                        <tr><td>2</td><td>421</td><td>992</td></tr>
+                        <tr><td>3</td><td>9,323</td><td>32,924</td></tr>
+                        <tr><td>4</td><td>206,604</td><td>1,045,110</td></tr>
+                        <tr><td>5</td><td>5,072,213</td><td>35,911,467</td></tr>
+                        <tr><td>6</td><td>124,132,537</td><td>&mdash;</td></tr>
+                    </tbody>
+                </table>
+
+                <p>Growth sits around 22 per ply from the start position and closer to 32 in the middlegame, exactly the branching factors perft reported. Minimax has no mechanism for skipping anything, so tree size <em>is</em> search cost. At the two to three million nodes per second my engine manages with this eval, depth 6 from the start is about a minute of staring at the terminal. The middlegame depth 6 I never bothered to finish.</p>
+
+                <h2 id="alpha-beta">Alpha-Beta: "I Already Have Better, Stop Looking"</h2>
+
+                <p>The intuition before the code, because the code is short and the idea is what matters.</p>
+
+                <p>You're looking at your candidate moves. The first, after a full search, is worth +50. You start on the second and partway through you find a reply that holds you to +30. Stop searching it. Not because you know what it's really worth, but because you know it's worth at most +30 and you already have +50 in your pocket. You're never playing it.</p>
+
+                <p>That's the whole algorithm. Alpha is what the side to move has already guaranteed itself elsewhere, beta is what the opponent has. When a node's best score reaches beta, the opponent would just avoid the line, so finishing the node is pointless.</p>
+
+                <p>Fail-hard clamps the return value into the <code>[alpha, beta]</code> window on a cutoff; fail-soft returns the actual best score even when it lands outside. Node counts are identical either way at these depths, but fail-soft preserves a tighter bound, useful later for aspiration windows and transposition entries. I went fail-soft: it costs nothing now and saves a rewrite.</p>
+
+                <pre><code>int alphaBeta(Board board, int depth, int alpha, int beta) {
+    nodes++;
+    List&lt;Move&gt; moves = board.generateLegalMoves();
+    if (moves.isEmpty()) return board.isInCheck() ? -MATE : DRAW;
+    if (depth == 0) return evaluate(board);
+
+    int best = -INF;
+    for (Move m : moves) {
+        board.makeMove(m);
+        int score = -alphaBeta(board, depth - 1, -beta, -alpha);
+        board.unmakeMove(m);
+        if (score &gt; best) best = score;
+        if (best &gt; alpha) alpha = best;
+        if (alpha &gt;= beta) break;   // opponent won't let us reach this node
+    }
+    return best;
+}</code></pre>
+
+                <p>Root call is <code>alphaBeta(board, depth, -INF, INF)</code>. The window swaps and negates on the way down for the same reason the score does, which is the one line I'd stare at if the counts look wrong.</p>
+
+                <p>Before benchmarking anything I asserted that alpha-beta returns the identical score to minimax at every depth on both positions. It has to. Alpha-beta is not an approximation; it prunes only branches that provably cannot change the answer. If the two disagree by a centipawn you have a bug, and no amount of impressive node reduction counts until they agree.</p>
+
+                <h2 id="comparison">The Measured Comparison</h2>
+
+                <p>Alpha-beta with moves in whatever order the generator emits them:</p>
+
+                <h3>Start position</h3>
+
+                <table>
+                    <thead>
+                        <tr><th>Depth</th><th>Minimax</th><th>Alpha-beta</th><th>Reduction</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>21</td><td>21</td><td>1.0x</td></tr>
+                        <tr><td>2</td><td>421</td><td>60</td><td>7.0x</td></tr>
+                        <tr><td>3</td><td>9,323</td><td>581</td><td>16.0x</td></tr>
+                        <tr><td>4</td><td>206,604</td><td>1,516</td><td>136x</td></tr>
+                        <tr><td>5</td><td>5,072,213</td><td>22,463</td><td>226x</td></tr>
+                        <tr><td>6</td><td>124,132,537</td><td>469,620</td><td>264x</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Middlegame position</h3>
+
+                <table>
+                    <thead>
+                        <tr><th>Depth</th><th>Minimax</th><th>Alpha-beta</th><th>Reduction</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>33</td><td>33</td><td>1.0x</td></tr>
+                        <tr><td>2</td><td>992</td><td>495</td><td>2.0x</td></tr>
+                        <tr><td>3</td><td>32,924</td><td>4,698</td><td>7.0x</td></tr>
+                        <tr><td>4</td><td>1,045,110</td><td>39,278</td><td>26.6x</td></tr>
+                        <tr><td>5</td><td>35,911,467</td><td>233,305</td><td>154x</td></tr>
+                    </tbody>
+                </table>
+
+                <p>The reduction compounds with depth, which is the expected shape: a cutoff near the root discards a whole subtree, and subtrees grow exponentially.</p>
+
+                <h2 id="ordering">The Part Most Posts Skip</h2>
+
+                <p>Every article about alpha-beta ends with "and of course this depends on move ordering." Few show by how much, and those that do tend to use the start position, which is the worst possible place to measure it.</p>
+
+                <p>The standard first heuristic is MVV-LVA: most valuable victim, least valuable attacker. Captures first, biggest prize first, cheapest attacker among equal prizes.</p>
+
+                <pre><code>int mvvLva(Board board, Move m) {
+    if (!m.isCapture()) return 0;
+    // en passant is the exception: the victim isn't on the destination square
+    int victim = m.isEnPassant() ? PAWN : board.pieceTypeAt(m.to());
+    int attacker = board.pieceTypeAt(m.from());
+    return 10 * PIECE_VALUES[victim] - PIECE_VALUES[attacker];
+}
+
+void orderMoves(Board board, List&lt;Move&gt; moves) {
+    moves.sort((a, b) -&gt; Integer.compare(mvvLva(board, b), mvvLva(board, a)));
+}</code></pre>
+
+                <p>Scoring has to happen before <code>makeMove</code>, while the victim is still on the board. Obvious in hindsight. Not obvious at 1am.</p>
+
+                <p>Here is what that ordering actually bought, unordered alpha-beta against ordered alpha-beta on both positions:</p>
+
+                <table>
+                    <thead>
+                        <tr><th>Depth</th><th colspan="3">Start position</th><th colspan="3">Middlegame</th></tr>
+                        <tr><th></th><th>Unordered</th><th>Ordered</th><th>Gain</th><th>Unordered</th><th>Ordered</th><th>Gain</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2</td><td>60</td><td>60</td><td>1.00x</td><td>495</td><td>96</td><td>5.16x</td></tr>
+                        <tr><td>3</td><td>581</td><td>581</td><td>1.00x</td><td>4,698</td><td>1,211</td><td>3.88x</td></tr>
+                        <tr><td>4</td><td>1,516</td><td>1,495</td><td>1.01x</td><td>39,278</td><td>3,527</td><td>11.14x</td></tr>
+                        <tr><td>5</td><td>22,463</td><td>21,086</td><td>1.07x</td><td>233,305</td><td>51,834</td><td>4.50x</td></tr>
+                        <tr><td>6</td><td>469,620</td><td>225,982</td><td>2.08x</td><td>5,515,631</td><td>123,865</td><td>44.53x</td></tr>
+                    </tbody>
+                </table>
+
+                <p>At depth 3 from the start position, capture ordering changed nothing at all. Not "barely anything" &mdash; the two searches visited the same 581 nodes. At depth 4 it saved 21 nodes out of 1,516.</p>
+
+                <p>The reason is simple once you look at the tree instead of the algorithm. The earliest capture from the start position is on the third ply (1.e4 d5 2.exd5). In a depth-3 search every node that gets sorted sits at ply 1 or 2, where there is not a single capture on the board. The comparator runs, scores every move zero, and hands the list back untouched.</p>
+
+                <p>The middlegame position tells a different story, and it's the one that matters, because engines spend approximately none of their life on move one. Capture ordering cut the middlegame search by 11.1x at depth 4 and 44.5x at depth 6. Stacked on alpha-beta itself, depth 5 went from 35,911,467 nodes to 51,834 &mdash; a 693x reduction, where unordered alpha-beta on the identical position managed 154x. Same code, same comparator, same two dozen lines. The only thing I changed was the FEN.</p>
+
+                <p>The gain doesn't climb smoothly either: 5.2x, 3.9x, 11.1x, 4.5x, 44.5x for depths 2 through 6. Even depths beat odd ones in every run. My guess is it's about which side gets the last word before the horizon, but two positions isn't enough to state that as fact.</p>
+
+                <p>Had I only benchmarked the start position I'd have written MVV-LVA off as a rounding error. That's the trap. Pruning heuristics are only ever measured against the positions you feed them, and the start position is pathological: no captures, no imbalance, and a flat-zero eval that triggers cutoffs almost immediately regardless of sort order. That flat-eval effect is doing much of the 136x at depth 4, and almost none of it is skill.</p>
+
+                <h2 id="gap">How Close Is This to the Best Case?</h2>
+
+                <p>The number everyone quotes is b<sup>d/2</sup>, the square root of the tree. The sharper version is the Knuth-Moore result for a perfectly ordered tree: b<sup>&lceil;d/2&rceil;</sup> + b<sup>&lfloor;d/2&rfloor;</sup> &minus; 1 nodes.</p>
+
+                <p>The start position has an effective branching factor of about 22 across six plies. That puts the minimal depth-6 tree at roughly 21,300 nodes. My ordered search visited 225,982. So I'm about 10x above optimal, which sounds bad until you remember minimax visited 124 million.</p>
+
+                <p>Depth 5 tells a better story. With b around 22 the minimal depth-5 tree is about 11,100 nodes against my measured 21,086, so 1.9x above optimal; the middlegame is closer still at roughly 33,800 against 51,834, or 1.5x. Then depth 6 jumps back out to 10x. I don't have a clean explanation for that step and would rather say so than invent one. The obvious suspect is the same even-depth effect from the ordering table.</p>
+
+                <p>Four causes I can name. Material-only eval produces vast numbers of exactly-equal scores, and equal isn't better, so bounds tighten slowly. MVV-LVA sorts only captures, and most nodes at depth 6 are quiet moves in generator order. There's no transposition table, so positions reachable by more than one move order get searched again from scratch. And there's no quiescence search, so leaf scores are noise whenever a capture hangs at the horizon.</p>
+
+                <h2 id="surprised">What I Got Wrong First</h2>
+
+                <p><strong>The counter was in the wrong place.</strong> I put <code>nodes++</code> after the depth check, so leaves never got counted and depth 4 reported 9,323 instead of 206,604. The perft identity made it obvious: 9,323 isn't a wrong-ish number, it's exactly the depth-3 total, which points straight at the missing bottom ply.</p>
+
+                <p><strong>The evaluation sign.</strong> I wrote <code>evaluate()</code> to return material from White's perspective and dropped it into negamax without the flip on the last line. White's moves were fine. Black played like it was trying to lose, because from Black's nodes the search was maximising White's material. Nothing crashed and the scores looked plausible, which is why it took so long to spot.</p>
+
+                <p><strong>My first test position was rigged.</strong> The middlegame FEN I first used was missing Black's light-squared bishop &mdash; I'd typed it by hand and dropped a piece. White was up 330 centipawns before the search even started, so one side had a trivially winning line at every depth and every pruning number was inflated. I caught it only after adding a material-balance assertion to the harness on a hunch.</p>
+
+                <p><strong>Ordering quiet moves made things worse.</strong> I extended the comparator to sort quiet moves by a crude piece-square score and node counts went <em>up</em> at depths 3 and 4. My guess is the ordering was actively wrong given a material-only eval, so it reliably searched the least useful move first, but I'm not confident that's the explanation. Took it out; I'll revisit it when there's a real evaluation to sort against.</p>
+
+                <h2 id="context">What These Numbers Do and Don't Transfer</h2>
+
+                <p>The minimax and ordered alpha-beta counts should reproduce almost exactly in any engine with the same piece values and MVV-LVA rule, because they're fixed by the algorithm and the position, not the implementation. The <em>unordered</em> column won't transfer: it means whatever sequence your generator happens to emit, and mine emits knights before pawns and quiets before captures. If your unordered numbers beat mine, your generator is accidentally ordering for you.</p>
+
+                <p>Wall-clock times are mine alone: single-threaded, one laptop, one JVM, and JIT warmup matters more than you'd expect at the shallow end.</p>
+
+                <p>If you're partway through your own engine: alpha-beta plus captures-first is the largest single win available, and it's about forty lines. Get it measured and working before you go near multithreading or a faster language.</p>
+
+                <h2 id="next">What's Next</h2>
+
+                <p>Iterative deepening next, mostly so the best move from depth N gets searched first at depth N+1 &mdash; a far better ordering signal than MVV-LVA alone. Then a transposition table, then quiescence search so the leaf evaluation stops being blind to a hanging queen. Each measured the same way against the same two positions, so the numbers stack up across the series.</p>
+
+                <p>If you've run this in your own engine and got a meaningfully different curve, I'd like to see it. And if my MVV-LVA is missing something obvious, or you have a real explanation for the quiet-move ordering result, tell me in the comments. I'm still working out which of these heuristics pay for themselves and which are folklore.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> Every node count here came out of my own instrumented search on the two positions given, not from a paper or another blog. I've kept the runs that embarrassed me &mdash; the rigged test position, the ordering experiment that backfired &mdash; because the tidy version of this comparison, where alpha-beta neatly hits the square root and every heuristic helps, is not what my terminal printed.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>How much does alpha-beta pruning actually reduce node counts?</h3>
+                <p>Measured in my engine with a material-only evaluation: from the start position, 16x at depth 3, 136x at depth 4 and 264x at depth 6, against a full-width minimax that visits 124,132,537 nodes at depth 6. From a balanced middlegame position the reduction was 154x with unordered alpha-beta and 693x with capture ordering at depth 5, against a full-width minimax that visits 35,911,467 nodes. The reduction compounds with depth because a cutoff near the root discards an entire subtree.</p>
+
+                <h3>Why did capture ordering save almost nothing from the start position?</h3>
+                <p>Because there are no captures in the opening. The earliest capture from the start position takes three plies to arrange, so a captures-first comparator is sorting a list in which every move scores zero. At depth 3 the ordered and unordered searches visited an identical 581 nodes; at depth 4 ordering saved 21 nodes out of 1,516. It only starts paying at depth 6, and it pays properly in a middlegame position. Benchmarking move ordering on the start position will tell you the heuristic is worthless.</p>
+
+                <h3>What is the difference between fail-soft and fail-hard alpha-beta?</h3>
+                <p>Fail-hard clamps the returned value into the [alpha, beta] window when a cutoff happens. Fail-soft returns the actual best score it found, even when that value lies outside the window. Node counts are the same at these depths, so the choice is about what you do later: fail-soft hands back a tighter bound, which is more useful for aspiration windows and for storing accurate transposition table entries.</p>
+
+                <h3>What is MVV-LVA move ordering?</h3>
+                <p>Most Valuable Victim, Least Valuable Attacker. Sort captures by the value of the captured piece descending, breaking ties by the value of the capturing piece ascending, so a pawn taking a queen is searched before a queen taking a queen. One implementation trap: the move has to be scored before it is played, and for an en passant capture the victim is not standing on the destination square, so a naive lookup finds an empty square and scores the capture as a quiet move.</p>
+
+                <h3>Do minimax and alpha-beta return different moves?</h3>
+                <p>No. Alpha-beta visits fewer nodes to reach exactly the same score and the same best move, because it only discards branches that provably cannot change the result. Asserting that the two searches agree at every depth is the first test to write, and it should pass before you take any node count seriously.</p>
+
+                <h3>How do I know my node counter is correct?</h3>
+                <p>A full-width search to depth d visits exactly perft(0) + perft(1) + ... + perft(d) nodes. From the start position a depth-4 minimax must report 206,604, not a number near it. If your total disagrees, the counter is in the wrong place, the recursion is skipping a terminal case, or make/unmake is corrupting state, and you can find out in seconds using perft numbers you already have.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Minimax</a>
+                <a href="javascript:void(0)" class="tag">Alpha-Beta Pruning</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Search Algorithms</a>
+                <a href="javascript:void(0)" class="tag">Move Ordering</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+                <a href="javascript:void(0)" class="tag">Performance</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</a></li>
+                        <li><a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">Magic Bitboards in Java: What Finally Made Them Click</a></li>
+                        <li><a href="/blogs/generating-sliding-piece-moves-without-magic-bitboards.html">Generating Sliding Piece Moves Without Magic Bitboards</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
