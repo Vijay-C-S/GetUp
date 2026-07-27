@@ -111,6 +111,12 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://getupdated.tech/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html</loc>
     <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>

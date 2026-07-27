@@ -109,5 +109,16 @@
       <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
     </item>
 
+    <item>
+      <title>Implementing the UCI Protocol in Plain Java (No Frameworks)</title>
+      <link>https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html</guid>
+      <description>Move generation, search and evaluation all worked, and Arena still showed the engine as not responding. The handshake, the position and go parsers, the worker thread that keeps stop readable, and the missing flush that lost a game on time.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
   </channel>
 </rss>
