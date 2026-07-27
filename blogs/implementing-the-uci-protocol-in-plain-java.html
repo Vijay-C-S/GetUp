@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Making a finished Java chess engine talk to Arena and CuteChess over stdin and stdout: the handshake, position parsing, go, the stop flag, and why my engine looked dead.">
+    <title>Implementing the UCI Protocol in Plain Java (No Frameworks)</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Implementing the UCI Protocol in Plain Java (No Frameworks)">
+    <meta property="og:description" content="Move generation, search and evaluation were all working, and Arena still showed the engine as not responding. Line-based ASCII, one worker thread, one volatile flag, and a flush I forgot.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Implementing the UCI Protocol in Plain Java (No Frameworks)">
+    <meta name="twitter:description" content="java.io, java.util, java.util.concurrent and nothing else. The UCI handshake, the position parser, the search thread, the stop flag, and the failure modes that cost me a weekend.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Implementing the UCI Protocol in Plain Java (No Frameworks)", "item": "https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Implementing the UCI Protocol in Plain Java (No Frameworks)",
+        "description": "A first-person account of implementing the Universal Chess Interface protocol in a Java 21 chess engine using only java.io, java.util and java.util.concurrent: the handshake, the position and go parsers, long algebraic move notation, the search worker thread and stop flag, info line output, and the failure modes that caused timeout losses.",
+        "datePublished": "2026-07-27",
+        "dateModified": "2026-07-27",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Implementing the UCI protocol in a Java chess engine over stdin and stdout",
+            "name": "Implementing the UCI Protocol in Plain Java (No Frameworks)"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Why does my chess engine show as not responding in Arena?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Almost always output buffering. A PrintStream wrapped around System.out without autoflush holds your uciok or bestmove line in a buffer until it fills, so the GUI sees silence and gives up. Construct the writer with autoflush enabled, or call flush after every line you send. The second most common cause is a search running on the reader thread, which means the engine never reads the next command until the search finishes."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What should a UCI engine do with a command it does not recognise?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Ignore it and keep reading. The specification requires this explicitly, for both unknown commands and unknown tokens inside a command it does know. A GUI may prefix a go command with tokens your engine has never heard of, and the correct behaviour is to skip past them and parse the rest rather than throwing or refusing the command."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How does a UCI engine encode castling moves?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Under standard UCI, castling is sent as the king's start and end square, so White castling kingside is e1g1 and queenside is e1c1. Under UCI_Chess960 the convention changes to king-takes-own-rook, making the same move e1h1. Parsing e1g1 as a plain two-square king move is the trap: the engine must recognise that a king moving two files from its start square is a castle and produce the internal move that also relocates the rook."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does a UCI search need to run on a separate thread?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because stop, quit and isready arrive on the same input stream while the search is running. If the search runs on the reader thread, nothing reads that input until the search returns, and go infinite never returns. The GUI waits for a bestmove that will never come and eventually kills the process. Run the search on a worker thread and poll a volatile stop flag inside the node loop."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you allocate time from wtime, btime and movestogo?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A workable first pass is to divide the remaining clock by movestogo, add most of the increment, and cap the result at a fraction of the clock so a bad estimate cannot flag the engine. When movestogo is absent the game is sudden death, and the correct default is a conservative divisor around 30, not zero. Subtract a small overhead of roughly 50 milliseconds for process and GUI latency."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What does score cp mean in a UCI info line?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "It is the evaluation in centipawns from the point of view of the side to move, not from White's point of view. A positive score means the side about to move is better. Mate scores use score mate followed by the number of moves, not plies, and a negative number means the engine is getting mated."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you test a UCI engine without a chess GUI?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Pipe a text file of commands into the engine on the command line and read the output. That catches handshake and parsing bugs in seconds. Then write JUnit tests that call the command handler directly with a string and a captured output sink, which avoids stdin entirely, and finally run cutechess-cli self-play matches to catch the timing and threading problems that only appear under a real clock."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Implementing the UCI Protocol in Plain Java (No Frameworks)</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 27, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 14 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer implementing the UCI protocol for a Java chess engine, with a terminal showing engine commands and a chess GUI alongside" title="Implementing the UCI protocol in a Java chess engine over stdin and stdout" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">Everything worked. Nothing was talking.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">The engine was finished, in the sense that mattered to me. Perft agreed with the published numbers, alpha-beta returned the right move, the evaluation had piece-square tables and a taper. In my own harness it happily searched to depth 8 and printed a move. Then I pointed Arena 3.5.1 at the jar and Arena greyed the engine out and told me it was not responding.</p>
+
+                <p>No exception. No stack trace. The Java process was alive, sitting at 0% CPU, waiting. It took me longer than I want to admit to work out that the engine had done its job perfectly and just never said anything out loud.</p>
+
+                <p>Eight posts in, this was the first one where the thing I was building wasn't chess. It was a text protocol. And <a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">the reason I started this project</a> was to work on problems where correctness is checkable, so it's fitting that the layer with no algorithms in it produced the most failures per line of anything I'd written so far.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#protocol">The Protocol Is Smaller Than You Think</a></li>
+                    <li><a href="#loop">The Read Loop and the Dispatch Switch</a></li>
+                    <li><a href="#position">position, and Why I Rebuild the Board Every Time</a></li>
+                    <li><a href="#moves">Four Characters, and the Castling Trap</a></li>
+                    <li><a href="#go">go, and a Time Budget That Isn't Embarrassing</a></li>
+                    <li><a href="#threads">The Thread That Has to Stay Free</a></li>
+                    <li><a href="#output">Output Discipline</a></li>
+                    <li><a href="#options">Options, ucinewgame, and quit</a></li>
+                    <li><a href="#broke">What Broke</a></li>
+                    <li><a href="#testing">Testing It Without a GUI</a></li>
+                    <li><a href="#next">What's Next</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="protocol">The Protocol Is Smaller Than You Think</h2>
+
+                <p>UCI is lines of ASCII in on stdin, lines of ASCII out on stdout. That's the whole transport. No handshake bytes, no framing, no length prefixes, no binary. If you can write a <code>while</code> loop over <code>readLine()</code> you already have the networking layer.</p>
+
+                <p>The design decision that makes it pleasant is that the GUI owns the game. Your engine does not track whose turn it is across moves, does not run a clock, does not know the move history unless it's told. Every time the GUI wants a move it hands you the position from scratch and the clock readings as arguments. That means a whole class of state-desync bugs cannot happen to you.</p>
+
+                <p>CECP, the older WinBoard protocol, works the other way. The engine keeps the game state, ticks its own clock, negotiates capabilities with <code>feature</code> lines, and gets moves fed one at a time. It's more conversational and there's more to keep in sync. Having implemented one of the two, I'd start with UCI every time.</p>
+
+                <p>The startup exchange is four lines of thinking. The GUI writes <code>uci</code>. You reply with <code>id name</code>, <code>id author</code>, one <code>option</code> line per setting you support, and finally <code>uciok</code>. Nothing before <code>uciok</code> is optional in practice, because Arena parses the options block to build its config dialog, and an engine that sends <code>uciok</code> with no options is simply an engine with no settings.</p>
+
+                <pre><code>void handleUci() {
+    out.println("id name Kestrel 0.9");
+    out.println("id author Vijay");
+    out.println("option name Hash type spin default 64 min 1 max 1024");
+    out.println("option name Threads type spin default 1 min 1 max 1");
+    out.println("option name Ponder type check default false");
+    out.println("option name UCI_Chess960 type check default false");
+    out.println("uciok");
+}</code></pre>
+
+                <p>Then there's <code>isready</code>, which is where people's mental model goes wrong. It is not a startup-only handshake. It's a barrier the GUI can throw at you at literally any moment: after <code>setoption</code>, before <code>go</code>, in the middle of a search, while you're pondering. The contract is that you answer <code>readyok</code> as soon as you can, and critically, you answer it <em>even while searching</em>. If the only place you handle <code>isready</code> is inside your startup code, you will deadlock the first time a GUI probes you mid-game.</p>
+
+                <h2 id="loop">The Read Loop and the Dispatch Switch</h2>
+
+                <p>A <code>BufferedReader</code> over <code>System.in</code>, split on whitespace, dispatch on token zero. Java 21's switch on strings keeps this readable.</p>
+
+                <pre><code>import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+void run() throws IOException {
+    var in = new BufferedReader(new InputStreamReader(System.in));
+    String line;
+    while ((line = in.readLine()) != null) {
+        String[] t = line.trim().split("\\s+");
+        switch (t[0]) {
+            case "uci"        -> handleUci();
+            case "isready"    -> out.println("readyok");
+            case "setoption"  -> setOption(t);
+            case "ucinewgame" -> newGame();
+            case "position"   -> setPosition(t);
+            case "go"         -> startSearch(t);
+            case "stop"       -> stopFlag.set(true);
+            case "ponderhit"  -> ponderHit();
+            case "quit"       -> { shutdown(); return; }
+            default           -> { /* unknown command: ignore, keep reading */ }
+        }
+    }
+}</code></pre>
+
+                <p>That <code>default</code> branch is the single most important line in the file. The specification is explicit that an engine receiving something it doesn't understand should just ignore it and carry on, and in Stefan Meyer-Kahlen's original document the rule extends to tokens inside commands you <em>do</em> know: "if the engine or the GUI receives an unknown command or token it should just ignore it and try to parse the rest of the string."</p>
+
+                <p>This is not politeness. Real GUIs send things you haven't implemented. BanksiaGUI probes with <code>debug on</code>. Some tools send <code>go</code> with a <code>searchmoves</code> list. If you throw on an unrecognised token, or worse, exit, the engine dies during setup for reasons that look like nothing. So every parser I wrote walks the token array with an index and skips what it doesn't recognise, rather than asserting positions.</p>
+
+                <h2 id="position">position, and Why I Rebuild the Board Every Time</h2>
+
+                <p>Two forms. <code>position startpos moves e2e4 e7e5</code>, or <code>position fen &lt;six fields&gt; moves ...</code>, with the <code>moves</code> section optional in both. The FEN is six space-separated fields, which means you cannot naively grab token 2 and call it the FEN.</p>
+
+                <pre><code>void setPosition(String[] t) {
+    int i = 1;
+    if (t[i].equals("startpos")) {
+        board = Board.startPosition();
+        i++;
+    } else if (t[i].equals("fen")) {
+        // FEN is six whitespace-separated fields, not one token
+        StringBuilder fen = new StringBuilder();
+        for (int f = 0; f &lt; 6 &amp;&amp; i + 1 + f &lt; t.length; f++) {
+            fen.append(f == 0 ? "" : " ").append(t[i + 1 + f]);
+        }
+        board = Board.fromFen(fen.toString());
+        i += 7;
+    }
+    if (i &lt; t.length &amp;&amp; t[i].equals("moves")) {
+        for (int m = i + 1; m &lt; t.length; m++) {
+            board.makeMove(parseUciMove(board, t[m]));
+        }
+    }
+}</code></pre>
+
+                <p>Note that both branches feed the same FEN reader and the same make/unmake path built back when I was <a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">getting en passant and castling rights right</a>. The castling-rights field and the en passant square in that FEN are not decoration; a GUI resuming an analysis position will hand you a FEN where the en passant capture is the only good move, and if your parser ignores field four you will produce a move that isn't legal.</p>
+
+                <p>The move list grows by one on every ply, so by move 40 you're replaying eighty moves to set up a position you were already sitting on. My instinct was to detect that the incoming line extends the previous one and just apply the new move. I didn't, and I'm glad. Rebuilding costs about 90 microseconds on move 40, which is nothing against a search budget measured in seconds, and it makes every <code>position</code> command independent of every command before it. Incremental application means one missed edge case, a takeback in analysis mode, a GUI that resends the game after a setoption, and your board silently diverges from the GUI's. Cheap, dumb and stateless beat clever here.</p>
+
+                <p>The replay is also, quietly, a make/unmake stress test. If your engine survives thousands of <code>position startpos moves ...</code> commands without ever producing an illegal move, the state restoration you proved with <a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">perft</a> is still holding.</p>
+
+                <h2 id="moves">Four Characters, and the Castling Trap</h2>
+
+                <p>Long algebraic notation: source square, destination square, and an optional promotion piece. <code>e2e4</code>. <code>e7e8q</code>. The promotion letter is lowercase in the protocol, always, for both colours.</p>
+
+                <pre><code>Move parseUciMove(Board board, String s) {
+    int from = square(s.charAt(0), s.charAt(1));   // 'e','2' -> 12
+    int to   = square(s.charAt(2), s.charAt(3));
+    int promo = (s.length() &gt; 4) ? promoType(s.charAt(4)) : NONE;
+
+    // the GUI sends castling as a king move of two files: e1g1, e8c8
+    if (board.pieceTypeAt(from) == KING &amp;&amp; Math.abs((to &amp; 7) - (from &amp; 7)) == 2) {
+        return Move.castle(from, to);
+    }
+    if (board.pieceTypeAt(from) == PAWN &amp;&amp; to == board.enPassantSquare()) {
+        return Move.enPassant(from, to);
+    }
+    return (promo == NONE) ? Move.quiet(from, to) : Move.promotion(from, to, promo);
+}
+
+static int promoType(char c) {
+    return switch (Character.toLowerCase(c)) {
+        case 'n' -&gt; KNIGHT; case 'b' -&gt; BISHOP;
+        case 'r' -&gt; ROOK;   default  -&gt; QUEEN;
+    };
+}</code></pre>
+
+                <p>Castling is the trap. Standard UCI encodes it as the king's real start and end squares, so kingside is <code>e1g1</code> and queenside <code>e1c1</code>. If you decode that as an ordinary king move you get a board with a king on g1 and a rook still sitting on h1, which is not a position and will produce garbage two plies later. Under <code>UCI_Chess960</code> the convention changes completely: castling becomes king-takes-own-rook, so the same move arrives as <code>e1h1</code>. Both are correct, in their own mode, and the only thing distinguishing them is a flag you were told about at setup time. Even if you never support Chess960, handle the flag so that a GUI which turns it on doesn't quietly feed you moves you decode as king captures its own rook.</p>
+
+                <p>Going the other way is the mirror image, and it needs the same awareness:</p>
+
+                <pre><code>String toUci(Move m, boolean chess960) {
+    int to = m.to();
+    if (m.isCastle() &amp;&amp; !chess960) to = m.kingDestination();  // g1/c1 form
+    if (m.isCastle() &amp;&amp; chess960)  to = m.rookSquare();       // e1h1 form
+    String s = name(m.from()) + name(to);
+    return m.isPromotion() ? s + "pnbrqk".charAt(m.promotionType()) : s;
+}</code></pre>
+
+                <h2 id="go">go, and a Time Budget That Isn't Embarrassing</h2>
+
+                <p><code>go</code> carries the interesting arguments: <code>wtime</code>, <code>btime</code>, <code>winc</code>, <code>binc</code>, <code>movestogo</code>, <code>depth</code>, <code>nodes</code>, <code>movetime</code>, <code>infinite</code>, <code>ponder</code>. All milliseconds where they're times. All optional. Any combination.</p>
+
+                <p>The precedence I settled on: <code>infinite</code> means search until told to stop, <code>movetime</code> means exactly that many milliseconds, <code>depth</code> and <code>nodes</code> mean a hard limit with no clock at all, and if none of those appear you're in a real game and have to budget from the clock yourself.</p>
+
+                <pre><code>long budgetMillis(GoParams p, boolean whiteToMove) {
+    if (p.movetime &gt; 0) return p.movetime - OVERHEAD;
+
+    long left = whiteToMove ? p.wtime : p.btime;
+    long inc  = whiteToMove ? p.winc  : p.binc;
+    // no movestogo means sudden death; assume the game has ~30 moves to go
+    int togo = (p.movestogo &gt; 0) ? p.movestogo : 30;
+
+    long budget = left / togo + (inc * 3) / 4;
+    long ceiling = left / 4;                    // never bet a quarter of the clock
+    return Math.max(10, Math.min(budget, ceiling) - OVERHEAD);
+}</code></pre>
+
+                <p><code>OVERHEAD</code> is 50 milliseconds in my engine, covering the write, the pipe, and the GUI's own bookkeeping before it stops your clock. That formula is a first pass and I want to be plain about it: it has no concept of position complexity, it doesn't extend when the best move is unstable, and it can't stop early when there's only one legal reply. A real time manager does all three. This one just avoids losing on time, which at this stage is the entire requirement.</p>
+
+                <p>The depth and node limits feed straight into the <a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">alpha-beta search</a>, and the score it reports comes from the <a href="/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">tapered evaluation</a>, so the protocol layer adds no chess knowledge at all. It's a translator.</p>
+
+                <h2 id="threads">The Thread That Has to Stay Free</h2>
+
+                <p>Here is the part that actually decides whether your engine works, and it's the part that took me two evenings.</p>
+
+                <p>My first version called the search directly from the dispatch switch. Which is fine, obviously, because the search returns and then you print the move. Except that while the search is running, nothing is calling <code>readLine()</code>. The GUI's <code>stop</code> is sitting in the pipe buffer, unread. Under a fixed depth you get away with it, because the search ends on its own. Under <code>go infinite</code> — which is what every GUI sends the moment a human clicks Analyse — the search never ends, the <code>stop</code> is never read, and the engine is gone. Arena waits, greys it out, and eventually kills the process. That is exactly the "not responding" I opened with.</p>
+
+                <p>The fix is one worker thread and one flag.</p>
+
+                <pre><code>import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+private final ExecutorService worker =
+        Executors.newSingleThreadExecutor(r -&gt; {
+            Thread t = new Thread(r, "search");
+            t.setDaemon(true);          // never block JVM exit on quit
+            return t;
+        });
+private final AtomicBoolean stopFlag = new AtomicBoolean();
+
+void startSearch(String[] tokens) {
+    GoParams p = GoParams.parse(tokens);
+    stopFlag.set(false);
+    Board snapshot = board.copy();     // reader thread keeps mutating `board`
+    worker.submit(() -&gt; {
+        SearchResult r = search.iterate(snapshot, p, stopFlag);
+        out.println("bestmove " + toUci(r.best(), chess960)
+                + (r.ponder() != null ? " ponder " + toUci(r.ponder(), chess960) : ""));
+    });
+}</code></pre>
+
+                <p>Single-threaded executor, not a fresh <code>Thread</code> per <code>go</code>, so two searches can never overlap. Daemon thread, so <code>quit</code> doesn't hang the JVM. And the board is copied, because the reader thread will happily process the next <code>position</code> command while the search is still walking the old one.</p>
+
+                <p>The flag has to be polled somewhere the search passes constantly. Every node is too often: a volatile read plus a clock check on the hot path measurably costs nodes per second. I check every 2048 nodes, using the node counter that's already there.</p>
+
+                <pre><code>int alphaBeta(Board board, int depth, int alpha, int beta) {
+    if ((++nodes &amp; 2047) == 0) {
+        if (stopFlag.get() || System.currentTimeMillis() &gt;= deadline) {
+            aborted = true;            // unwind; do not trust this subtree's score
+        }
+    }
+    if (aborted) return 0;
+    // ... normal alpha-beta from here
+}</code></pre>
+
+                <p>The <code>aborted</code> flag matters as much as the stop flag. A search cut off mid-node has a garbage score, so the iterative deepening driver must discard the incomplete iteration and report the best move from the last <em>finished</em> depth. Report the half-searched one and the engine will occasionally blunder a queen under time pressure, which is a bug that only shows up in real games and is horrible to diagnose after the fact.</p>
+
+                <h2 id="output">Output Discipline</h2>
+
+                <p><code>System.out</code> is a <code>PrintStream</code> with autoflush on, but it only flushes on a newline when autoflush is set, and the moment you wrap it in something faster you lose that. My cause of death, on day one, was exactly this:</p>
+
+                <pre><code>// dead engine: nothing reaches the GUI until the 8 KB buffer fills
+var out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+
+// alive: the second argument is autoFlush
+var out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)), true);</code></pre>
+
+                <p>Note that <code>PrintWriter</code>'s autoflush only triggers on <code>println</code>, not on <code>print</code>. Build an info line with <code>print</code> calls and terminate it with a bare <code>print("\n")</code> and you are back to a silent engine.</p>
+
+                <p>Then there's <code>info</code>, which is how the engine talks while it thinks. One line per completed depth, at minimum:</p>
+
+                <pre><code>void reportIteration(int depth, int seldepth, int score, long nodes,
+                     long elapsedMs, List&lt;Move&gt; pv) {
+    long nps = elapsedMs &gt; 0 ? nodes * 1000 / elapsedMs : 0;
+    StringBuilder sb = new StringBuilder("info");
+    sb.append(" depth ").append(depth).append(" seldepth ").append(seldepth);
+    // score is ALWAYS from the side-to-move's point of view
+    sb.append(isMate(score) ? " score mate " + matePlyToMoves(score)
+                            : " score cp " + score);
+    sb.append(" nodes ").append(nodes).append(" nps ").append(nps);
+    sb.append(" time ").append(elapsedMs);
+    sb.append(" hashfull ").append(tt.permill());
+    sb.append(" pv");
+    for (Move m : pv) sb.append(' ').append(toUci(m, chess960));
+    out.println(sb);            // println, so autoflush fires
+}</code></pre>
+
+                <p>The perspective rule catches everyone once. <code>score cp 40</code> means the side to move is 40 centipawns better, not White. Since negamax already hands back mover-relative scores, that's free if you don't "helpfully" convert it. Mate scores are in moves, not plies, and negative when you're the one being mated. For long-running searches I also emit <code>info currmove &lt;move&gt; currmovenumber &lt;n&gt;</code> from the root, but only after the first second, since flooding the pipe at depth 3 is pure noise.</p>
+
+                <p>And the hard rule: exactly one <code>bestmove</code> per <code>go</code>. Not zero, not two. It must be sent when the search finishes naturally, when the clock expires, and when <code>stop</code> arrives. A <code>stop</code> is not a cancellation; it's an instruction to answer now with whatever you have.</p>
+
+                <h2 id="options">Options, ucinewgame, and quit</h2>
+
+                <p>Options arrive as <code>setoption name Hash value 128</code>. The name can contain spaces (<code>UCI_Opponent</code> aside, <code>Clear Hash</code> is a common one), so parse by finding the <code>value</code> token and treating everything between <code>name</code> and it as the identifier. Types are <code>spin</code> for bounded integers, <code>check</code> for booleans, <code>combo</code> for a fixed set, <code>string</code> for free text, and <code>button</code> for an action with no value at all.</p>
+
+                <p><code>ucinewgame</code> is a hint that the next position is unrelated to the last, and what it should clear is narrower than it looks. Clear the transposition table and the history and killer heuristics, because they're now describing a different game. Do <em>not</em> clear the options the user set, or reallocate the hash to its default size, or reset the Chess960 flag. I have seen engines drop a user's 512 MB hash setting back to 16 on every new game, and it's always this.</p>
+
+                <p>Also: <code>ucinewgame</code> can be expensive, since zeroing a large table takes real time. That's precisely why the GUI follows it with <code>isready</code> and waits. Do the clearing synchronously before you answer <code>readyok</code> and the handshake works exactly as designed.</p>
+
+                <p><code>quit</code> means stop everything and exit, and it can arrive mid-search. Set the stop flag, shut the executor down, return from the read loop. Daemon threads mean a stuck search can't keep the JVM alive, but I still call <code>worker.shutdownNow()</code> so a clean exit is actually clean.</p>
+
+                <h2 id="broke">What Broke</h2>
+
+                <p><strong>The engine that never flushed.</strong> Day one, the whole reason this post opens where it does. The buffered writer with no autoflush held <code>uciok</code> until the buffer filled, which never happened. Arena showed "not responding" and I spent an hour reading my handshake logic, which was fine. Worse, once I fixed the handshake but not the <code>bestmove</code> path, I lost a cutechess game on time with the engine sitting at 0% CPU holding a perfectly good move in a buffer.</p>
+
+                <p><strong>stop was never read.</strong> Searching on the reader thread. Fixed depth worked in every test I wrote, so I shipped it to a real GUI and the first analysis click hung the engine permanently. This is the failure mode I'd warn a friend about before any other, because your unit tests will never see it.</p>
+
+                <p><strong>position startpos moves parsed as a FEN.</strong> My first parser checked for <code>fen</code> and treated everything else as a FEN string. So <code>startpos</code> went into the FEN reader, which threw, and I caught the exception and ignored it — because the spec says be tolerant, right? The board stayed on whatever position was there before, the moves replayed on top of it, and the engine played moves from a completely different game. Being tolerant of malformed input is not the same as swallowing your own parse failures.</p>
+
+                <p><strong>Promotion parsed as uppercase.</strong> I wrote <code>case 'Q'</code>. UCI sends lowercase, always, for both colours, so every promotion fell through my switch to the default. The default was queen, which is right about 95% of the time, so this survived hundreds of test games before an underpromotion to a knight came out as a queen and lost a won endgame.</p>
+
+                <p><strong>bestmove sent twice.</strong> When <code>stop</code> arrived just as the search was finishing naturally, both the stop handler and the search completion printed a move. The GUI took the first as the move and the second as a protocol error mid-game. The fix is that only the search task ever prints <code>bestmove</code>; <code>stop</code> sets the flag and nothing else.</p>
+
+                <p><strong>movestogo absent, treated as zero.</strong> Sudden-death time control, no <code>movestogo</code> token, my parser left the field at its default of 0, and <code>left / togo</code> threw <code>ArithmeticException</code> inside the worker thread. The exception went to a thread with no handler, the task died silently, no <code>bestmove</code> was ever sent, and the GUI recorded a loss on time. Any uncaught exception on the search thread looks identical to a hang from outside. Wrap the whole task body in a try/catch and, at minimum, emit <code>info string</code> with the message.</p>
+
+                <h2 id="testing">Testing It Without a GUI</h2>
+
+                <p>Three layers, cheapest first. A text file of commands piped straight in catches every parsing and handshake bug in about a second:</p>
+
+                <pre><code>$ cat smoke.txt
+uci
+isready
+position startpos moves e2e4 e7e5 g1f3
+go depth 6
+quit
+
+$ java -jar kestrel.jar &lt; smoke.txt</code></pre>
+
+                <p>If <code>uciok</code>, <code>readyok</code> and exactly one <code>bestmove</code> come back, the plumbing works. This one file caught the flush bug, the <code>startpos</code> bug and the double <code>bestmove</code>, and it runs faster than opening a GUI.</p>
+
+                <p>Then JUnit, driving the handler directly with no stdin involved. The trick is that the command handler takes a writer rather than reaching for <code>System.out</code>, which makes the whole protocol layer testable in memory:</p>
+
+                <pre><code>@Test
+void positionWithMovesReplaysFromStartpos() {
+    var sink = new StringWriter();
+    var uci = new UciEngine(new PrintWriter(sink, true));
+
+    uci.handle("position startpos moves e2e4 e7e5 g1f3 b8c6");
+    assertEquals("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+                 uci.currentBoard().toFen());
+
+    uci.handle("go depth 4");
+    uci.awaitSearch();
+    assertTrue(sink.toString().lines()
+                   .filter(l -&gt; l.startsWith("bestmove")).count() == 1);
+}</code></pre>
+
+                <p>That FEN assertion is doing real work. It proves the replay landed on the position the GUI thinks you're on, including the halfmove clock and the castling rights, which is the same property <a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">perft</a> was protecting all along, checked through the protocol layer this time.</p>
+
+                <p>Finally, <code>cutechess-cli</code> 1.3.1 for a self-play match against the previous build, which is the only thing that exercises a real clock:</p>
+
+                <pre><code>cutechess-cli -engine cmd="java -jar new.jar" -engine cmd="java -jar old.jar" \
+  -each proto=uci tc=10+0.1 -rounds 200 -concurrency 4 -pgnout match.pgn</code></pre>
+
+                <p>Ten seconds plus a 0.1 second increment is deliberately brutal. If your time management is off by 200 milliseconds you'll flag within thirty games, and cutechess will tell you plainly which engine lost on time rather than leaving you to guess. It's also the only test that ever found my double-<code>bestmove</code> race, because that needs a <code>stop</code> arriving in a window a few milliseconds wide.</p>
+
+                <h2 id="next">What's Next</h2>
+
+                <p>The protocol work exposed something the harness had been hiding. With a real clock the engine now has to decide when to stop, which means iterative deepening isn't optional any more, and iterative deepening only pays for itself if the previous iteration's best move is searched first at the next depth. That needs somewhere to store it. Which means a transposition table, which means Zobrist hashing, which means an incrementally updated 64-bit key that has to survive make, unmake, en passant and castling without drifting by a single bit.</p>
+
+                <p>That's the next post, and I already know how it starts: the hash key doesn't match after unmake, and figuring out which of the four update sites is wrong is going to be an evening I won't enjoy.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> The failures listed above are ones I actually hit, in roughly the order given, against Arena 3.5.1 and cutechess-cli 1.3.1 on Java 21. The protocol behaviour described here is my reading of the UCI specification and of how those two programs behave in practice; where a GUI does something the spec doesn't require, I've tried to say so rather than present it as the rule.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Why does my chess engine show as not responding in Arena?</h3>
+                <p>Almost always output buffering. A <code>PrintWriter</code> wrapped around <code>System.out</code> without autoflush holds your <code>uciok</code> or <code>bestmove</code> line in a buffer until it fills, so the GUI sees silence and gives up. Construct the writer with autoflush enabled and terminate every line with <code>println</code>. The second most common cause is a search running on the reader thread, which means the engine never reads the next command until the search finishes.</p>
+
+                <h3>What should a UCI engine do with a command it does not recognise?</h3>
+                <p>Ignore it and keep reading. The specification requires this explicitly, for both unknown commands and unknown tokens inside a command it does know. A GUI may prefix a <code>go</code> with tokens your engine has never heard of, and the correct behaviour is to skip past them and parse the rest rather than throwing or refusing the command. This does not mean swallowing exceptions from your own parser when the input was actually valid.</p>
+
+                <h3>How does a UCI engine encode castling moves?</h3>
+                <p>Under standard UCI, castling is sent as the king's start and end square, so White castling kingside is <code>e1g1</code> and queenside is <code>e1c1</code>. Under <code>UCI_Chess960</code> the convention changes to king-takes-own-rook, making the same move <code>e1h1</code>. Parsing <code>e1g1</code> as a plain two-square king move is the trap: the engine must recognise that a king moving two files from its start square is a castle and produce the internal move that also relocates the rook.</p>
+
+                <h3>Why does a UCI search need to run on a separate thread?</h3>
+                <p>Because <code>stop</code>, <code>quit</code> and <code>isready</code> arrive on the same input stream while the search is running. If the search runs on the reader thread, nothing reads that input until the search returns, and <code>go infinite</code> never returns. The GUI waits for a <code>bestmove</code> that will never come and eventually kills the process. Run the search on a worker thread and poll a volatile or atomic stop flag inside the node loop, every couple of thousand nodes rather than every node.</p>
+
+                <h3>How do you allocate time from wtime, btime and movestogo?</h3>
+                <p>A workable first pass is to divide the remaining clock by <code>movestogo</code>, add most of the increment, and cap the result at a quarter of the clock so a bad estimate cannot flag the engine. When <code>movestogo</code> is absent the game is sudden death, and the correct default is a conservative divisor around 30, not zero. Subtract a small overhead, around 50 milliseconds, for process and GUI latency.</p>
+
+                <h3>What does score cp mean in a UCI info line?</h3>
+                <p>It is the evaluation in centipawns from the point of view of the side to move, not from White's point of view. A positive score means the side about to move is better. Mate scores use <code>score mate</code> followed by the number of moves, not plies, and a negative number means the engine is the one getting mated.</p>
+
+                <h3>How do you test a UCI engine without a chess GUI?</h3>
+                <p>Pipe a text file of commands into the engine and read the output, which catches handshake and parsing bugs in seconds. Then write JUnit tests that call the command handler directly with a command string and a captured writer, avoiding stdin entirely. Finally run <code>cutechess-cli</code> self-play matches at a short time control, which is the only test that exercises a real clock and finds the timing and threading problems.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">UCI Protocol</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">Concurrency</a>
+                <a href="javascript:void(0)" class="tag">Stdin Stdout</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+                <a href="javascript:void(0)" class="tag">Testing</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility</a></li>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">Magic Bitboards in Java: What Finally Made Them Click</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
