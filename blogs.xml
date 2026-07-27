@@ -120,5 +120,16 @@
       <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
     </item>
 
+    <item>
+      <title>Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</title>
+      <link>https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html</guid>
+      <description>The engine played fine offline, then sat still in its first live game while the clock ran out. The irreversible BOT upgrade, two NDJSON streams, a systemd unit, and eight failures that only appear against real opponents.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Tue, 28 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+    </item>
+
   </channel>
 </rss>

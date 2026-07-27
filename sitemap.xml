@@ -111,6 +111,12 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://getupdated.tech/blogs/implementing-the-uci-protocol-in-plain-java.html</loc>
     <lastmod>2026-07-27</lastmod>
     <changefreq>monthly</changefreq>
