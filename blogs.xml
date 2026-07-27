@@ -29,7 +29,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -40,7 +40,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -51,7 +51,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -62,7 +62,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -73,7 +73,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -84,7 +84,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sun, 26 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -95,7 +95,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 25 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -106,7 +106,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -117,7 +117,7 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
     </item>
 
     <item>
@@ -128,7 +128,29 @@
       <dc:creator>Vijay</dc:creator>
       <pubDate>Tue, 28 Jul 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
-      <enclosure url="https://getupdated.tech/images/ai_coding_left.webp" type="image/webp" length="0" />
+      <enclosure url="https://getupdated.tech/images/chess.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</title>
+      <link>https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html</guid>
+      <description>It has nothing to do with threads, and removing the second-to-last element does not throw at all - it silently skips the last one. The modCount machinery, three real causes, and four fixes with their actual costs.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Wed, 29 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>NullPointerException in Java 21: Reading the Helpful Message</title>
+      <link>https://getupdated.tech/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html</guid>
+      <description>JEP 358 turned the emptiest stack trace in Java into a sentence. The grammar of that sentence, three production causes with the exact message each one throws, and the places it still leaves you stranded.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
     </item>
 
   </channel>
