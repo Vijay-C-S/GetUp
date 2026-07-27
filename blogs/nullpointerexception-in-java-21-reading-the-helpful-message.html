@@ -202,7 +202,7 @@
 
                 <p>A <code>NullPointerException</code> means your program tried to do something to an object and there was no object there. Not "a variable was null" &mdash; nulls sit in variables quite happily forever. The exception fires at the moment you <em>use</em> one: calling a method on it, reading or writing a field, indexing into it as an array, asking for its length, unboxing it, throwing it, or synchronizing on it.</p>
 
-                <p>It's unchecked, which means the compiler never asks you about it, and it's an exception rather than an error, so it's catchable &mdash; though catching one is almost always a mistake, because the thing you'd be catching is a bug in your own code rather than a condition in the world. That distinction is worth keeping straight; I've written about it in more detail in <a href="/blogs/checked-vs-unchecked-exceptions-in-java-when-to-use-each.html">checked versus unchecked exceptions</a>.</p>
+                <p>It's unchecked, which means the compiler never asks you about it, and it's an exception rather than an error, so it's catchable &mdash; though catching one is almost always a mistake, because the thing you'd be catching is a bug in your own code rather than a condition in the world. That distinction between a bug and a condition is the line that separates unchecked exceptions from checked ones, and it's worth keeping straight.<!-- TODO: link "unchecked exceptions" to the checked-vs-unchecked post once it is published --></p>
 
                 <p>What Java 21 adds is not a new failure mode. It's a description of the failure you already had.</p>
 
@@ -401,7 +401,7 @@ public class PricingService {
 
                 <p>Static analysis catches what testing doesn't. Error Prone with the NullAway plugin runs as a compiler plugin and fails the build on a dereference it can't prove safe, which turns most of this class of bug into a compile error. It needs annotations to work from, and JSpecify is the one to standardise on now &mdash; it exists specifically because <code>@Nullable</code> came in a dozen incompatible flavours. Annotate the package as null-marked by default, mark the genuine exceptions, and let the tool do the reasoning.</p>
 
-                <p>And write the null path as a test. Not a test that a null throws NPE &mdash; a test that a missing config key produces the error you intended, that a JSON payload without <code>quantity</code> is rejected at the boundary with a message someone can act on. The reason bugs like cause 1 reach production is that the happy path was the only path anyone exercised. Related reading in this series: <a href="/blogs/classcastexception-in-java-reading-the-message.html">how to read a ClassCastException</a>, which has its own message format worth knowing, and <a href="/blogs/optional-in-java-when-to-use-it-and-when-not-to.html">when Optional is the right tool and when it isn't</a>.</p>
+                <p>And write the null path as a test. Not a test that a null throws NPE &mdash; a test that a missing config key produces the error you intended, that a JSON payload without <code>quantity</code> is rejected at the boundary with a message someone can act on. The reason bugs like cause 1 reach production is that the happy path was the only path anyone exercised.<!-- TODO: add sibling links to the ClassCastException and Optional posts once they are published --></p>
 
                 <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
                     <p style="margin:0;"><strong>Author's note:</strong> The message shapes described here are from JEP 358 as implemented in current HotSpot builds, and the code above is written to produce exactly the messages shown. Exact formatting of a class name or an argument list can vary slightly between JDK releases and between HotSpot and other VMs, so treat the clause structure as the thing to learn rather than the punctuation.</p>
@@ -451,13 +451,13 @@ public class PricingService {
                 </div>
                 <div class="sidebar-widget">
                     <h3>Related Reading</h3>
-                    <!-- TODO: confirm these sibling slugs match the published exceptions-cluster URLs -->
+                    <!-- TODO: add the exceptions-cluster siblings here as they are published; CI fails the build on links to pages that do not exist yet -->
                     <ul>
-                        <li><a href="/blogs/checked-vs-unchecked-exceptions-in-java-when-to-use-each.html">Checked vs Unchecked Exceptions in Java: When to Use Each</a></li>
-                        <li><a href="/blogs/classcastexception-in-java-reading-the-message.html">ClassCastException in Java: Reading the Message</a></li>
-                        <li><a href="/blogs/optional-in-java-when-to-use-it-and-when-not-to.html">Optional in Java: When to Use It and When Not To</a></li>
-                        <li><a href="/blogs/arrayindexoutofboundsexception-in-java-off-by-one-errors.html">ArrayIndexOutOfBoundsException: Finding the Off-by-One</a></li>
                         <li><a href="/blogs/implementing-the-uci-protocol-in-plain-java.html">Implementing the UCI Protocol in Plain Java (No Frameworks)</a></li>
+                        <li><a href="/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/magic-bitboards-in-java-what-finally-made-them-click.html">Magic Bitboards in Java: What Finally Made Them Click</a></li>
                         <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
                     </ul>
                 </div>
