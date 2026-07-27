@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="ConcurrentModificationException is not about threads. The modCount mechanism that throws it, the three ways real code trips it, and four fixes with their actual costs.">
+    <title>ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It">
+    <meta property="og:description" content="The exception has nothing to do with threads. It means a collection changed shape while an iterator was live. Here is the modCount machinery, three real causes, and four fixes ranked by what they cost.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It">
+    <meta name="twitter:description" content="Removing the second-to-last element of an ArrayList inside a for-loop does not throw. It silently skips the last one. Here is exactly why, and what to write instead.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It", "item": "https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It",
+        "description": "A practical guide to ConcurrentModificationException in Java: what fail-fast iterators actually detect, how modCount and expectedModCount work, three production causes including the silent second-to-last element bug, four fixes with their real costs, and where the failure still hides.",
+        "datePublished": "2026-07-29",
+        "dateModified": "2026-07-29",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Tracing a ConcurrentModificationException back to a list that was modified while an iterator over it was still live",
+            "name": "ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Is ConcurrentModificationException only about threads?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, and the name is the single biggest reason this exception confuses people. The overwhelming majority of them are thrown by one thread on one collection with no concurrency anywhere in the program. The word concurrent here means concurrent with an iteration, not concurrent across threads. A single-threaded loop that calls list.remove inside a for-each over that same list is the canonical case. Threads are only one of several ways to structurally modify a collection while an iterator over it is still live."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does removing the second-to-last element of an ArrayList not throw?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because ArrayList's hasNext is implemented as cursor != size and performs no comodification check at all. After next returns the second-to-last element the cursor sits at size minus one. Removing that element drops size to exactly the cursor value, so hasNext returns false, the loop exits normally and next is never called again. The comodification check lives in next, so it never runs. The result is silent: the last element is never visited, and no exception is thrown. Removing the last element does throw, because there the cursor ends up greater than size and hasNext stays true."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I just catch ConcurrentModificationException?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. It reports a bug in your code, not a condition in the world, and catching it leaves the collection in whatever half-processed state the loop abandoned. The Iterator javadoc is explicit that fail-fast behaviour cannot be guaranteed and that it would be wrong to write a program that depended on this exception for its correctness. Catching it means depending on it. Retrying the loop is worse, because the same code will either throw again or hit the silent variant where nothing is thrown and elements are skipped."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is CopyOnWriteArrayList the right general fix for ConcurrentModificationException?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Only for genuinely shared, read-dominated collections such as listener registries. Every mutating operation on a CopyOnWriteArrayList allocates and copies the entire backing array, so a list that is written often turns O(1) appends into O(n) ones and building it from empty costs O(n squared). Its iterators work on a snapshot, so they never throw but also never see writes that happened after the iterator was created. Using it to silence a single-threaded remove-inside-a-loop bug hides the bug rather than fixing it."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 29, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 12 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer stepping through a Java loop in a debugger, watching a list shrink underneath an iterator that is still pointing into it" title="Tracing a ConcurrentModificationException back to a list that was modified while an iterator over it was still live" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">The loop is fine. The list moved.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">A billing sweep I wrote spent three weeks leaving exactly one voided line on roughly one invoice in forty. No exception. No log line. Just totals that were a few hundred paise too high and a reconciliation report nobody read until the quarter closed. When I finally reproduced it on my laptop the loop threw <code>ConcurrentModificationException</code> on the first attempt, and that was the good outcome &mdash; because at least the throw pointed at a line number.</p>
+
+                <p>That is the whole shape of this exception. When it fires it is one of the most honest failures in Java, stopping you at the exact statement that broke the rule. When it doesn't fire, the bug is still there &mdash; now as a wrong number in a database rather than a stack trace in a log.</p>
+
+                <p>The name is also a lie, or near enough. There was one thread in that sweep. There always is.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#means">What the Error Actually Means</a></li>
+                    <li><a href="#why">Why It Happens: modCount and expectedModCount</a></li>
+                    <li><a href="#cause1">Cause 1: Removing From a List Inside an Enhanced For-Loop</a></li>
+                    <li><a href="#cause2">Cause 2: Mutating a Map While Iterating Its Views</a></li>
+                    <li><a href="#cause3">Cause 3: One Thread Iterating While Another Writes</a></li>
+                    <li><a href="#fixes">Four Ways to Fix It</a></li>
+                    <li><a href="#limits">Where This Still Bites You</a></li>
+                    <li><a href="#prevent">How to Prevent It</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="means">What the Error Actually Means</h2>
+
+                <p><code>ConcurrentModificationException</code> means a collection was <em>structurally modified</em> while an iterator over it was still live. Structural modification is a precise term: it means the number of elements changed. Adding, removing, clearing. Replacing the value at a key you already have is not structural. Neither is calling a setter on an object that happens to be sitting in the list.</p>
+
+                <p>"Concurrent" in the class name means concurrent with the iteration, not concurrent across threads. That single word has probably cost the Java community more debugging hours than any other identifier in <code>java.util</code>, because it sends people looking for a race condition in code that has one thread.</p>
+
+                <p>The other thing worth knowing up front: it is thrown with no message. Ever. You get <code>java.util.ConcurrentModificationException</code> and a stack trace, and the trace is the entire diagnostic. That is a strange contrast with the rest of modern Java &mdash; a <a href="/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html">NullPointerException on Java 21</a> tells you which link in a chained call was null in a full English sentence, while a CME will not name the element you removed. Top two frames, JDK internals. Third frame, your bug.</p>
+
+                <h2 id="why">Why It Happens: modCount and expectedModCount</h2>
+
+                <p><code>AbstractList</code> has had a field called <code>modCount</code> since Java 1.2. A plain <code>int</code>, incremented by every operation that changes the size of the collection. <code>HashMap</code> keeps its own copy of the same idea. When you ask a collection for an iterator, the iterator snapshots that number and re-checks it every time you advance. Here is <code>ArrayList</code>'s, abridged to the parts that matter:</p>
+
+                <pre><code>// java.util.ArrayList, inner class Itr (abridged)
+private class Itr implements Iterator&lt;E&gt; {
+    int cursor;                        // index of the next element to return
+    int lastRet = -1;                  // index of the last element returned
+    int expectedModCount = modCount;   // the snapshot, taken at iterator() time
+
+    public boolean hasNext() {
+        return cursor != size;         // note: no comodification check here
+    }
+
+    public E next() {
+        checkForComodification();
+        // ... return elementData[cursor++] ...
+    }
+
+    final void checkForComodification() {
+        if (modCount != expectedModCount)
+            throw new ConcurrentModificationException();
+    }
+}</code></pre>
+
+                <p>Read <code>hasNext()</code> again. It compares the cursor to the size and nothing else. The comodification check lives only in <code>next()</code>. Hold that thought &mdash; it is the entire explanation for the silent variant of this bug.</p>
+
+                <p>Now the enhanced for-loop, which looks like a language feature for iterating a collection and is really syntax sugar over an explicit iterator:</p>
+
+                <pre><code>// what you write
+for (Line line : lines) {
+    total += line.amountMinor();
+}
+
+// what javac compiles it to
+for (Iterator&lt;Line&gt; it = lines.iterator(); it.hasNext(); ) {
+    Line line = it.next();
+    total += line.amountMinor();
+}</code></pre>
+
+                <p>There is an iterator in your for-each loop whether you wrote one or not, and it snapshotted <code>modCount</code> before the first element. Any <code>lines.remove(...)</code> or <code>lines.add(...)</code> in the body bumps the collection's counter without touching the iterator's copy. The next <code>next()</code> notices the gap and throws.</p>
+
+                <p>One thing must be said plainly. This mechanism is <strong>best-effort</strong>, and the JDK documents it as best-effort: the <code>Iterator</code> and <code>ArrayList</code> javadocs both say fail-fast behaviour cannot be guaranteed under unsynchronised concurrent modification, and that it would be wrong to write a program depending on the exception for its correctness. <code>modCount</code> is a non-volatile <code>int</code>, so across threads there is no happens-before edge making the read reliable. Treat CME as a bug detector that sometimes works, never as a control-flow signal.</p>
+
+                <h2 id="cause1">Cause 1: Removing From a List Inside an Enhanced For-Loop</h2>
+
+                <p>The canonical case, and the one that produced my three-week billing bug. A sweep that drops voided lines before the invoice is totalled:</p>
+
+                <pre><code>package com.acme.billing;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public final class InvoiceSweeper {
+
+    record Line(String sku, long amountMinor, boolean voided) {}
+
+    static void dropVoided(List&lt;Line&gt; lines) {
+        for (Line line : lines) {
+            if (line.voided()) {
+                lines.remove(line);      // structural modification, mid-iteration
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        List&lt;Line&gt; lines = new ArrayList&lt;&gt;(List.of(
+                new Line("SEAT-STD", 1299L, false),
+                new Line("SEAT-PRO", 2499L, true),
+                new Line("SUPPORT",  9900L, false),
+                new Line("OVERAGE",   450L, false)));
+        dropVoided(lines);
+        System.out.println(lines);
+    }
+}</code></pre>
+
+                <pre><code>Exception in thread "main" java.util.ConcurrentModificationException
+	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1013)
+	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
+	at com.acme.billing.InvoiceSweeper.dropVoided(InvoiceSweeper.java:11)
+	at com.acme.billing.InvoiceSweeper.main(InvoiceSweeper.java:24)</code></pre>
+
+                <p>Two JDK frames, then <code>dropVoided</code> at line 11 &mdash; the <code>for</code> statement, not the <code>remove</code> call, because the throw happens on the next advance rather than at the mutation. The line the trace blames is the line that <em>noticed</em>, not the line that did it.</p>
+
+                <p>So far so ordinary. Here is the part that makes this genuinely nasty. Move the voided flag to the second-to-last element and void the last one too:</p>
+
+                <pre><code>List&lt;Line&gt; lines = new ArrayList&lt;&gt;(List.of(
+        new Line("SEAT-STD", 1299L, false),
+        new Line("SEAT-PRO", 2499L, false),
+        new Line("SUPPORT",  9900L, true),     // index 2 of 4: second-to-last
+        new Line("OVERAGE",   450L, true)));   // also voided
+dropVoided(lines);
+System.out.println(lines);</code></pre>
+
+                <pre><code>[Line[sku=SEAT-STD, amountMinor=1299, voided=false], Line[sku=SEAT-PRO, amountMinor=2499, voided=false], Line[sku=OVERAGE, amountMinor=450, voided=true]]</code></pre>
+
+                <p>No exception. Exit code zero. And a voided line still sitting in the invoice.</p>
+
+                <p>Trace it against the iterator code above. Size is 4. The third <code>next()</code> returns <code>SUPPORT</code> and leaves the cursor at 3. <code>remove</code> drops size to 3 and bumps <code>modCount</code>. The loop evaluates <code>hasNext()</code>, which is <code>cursor != size</code>, which is <code>3 != 3</code>, which is <code>false</code>. The loop exits normally. <code>next()</code> is never called again, so <code>checkForComodification()</code> is never called again, so nothing throws. <code>OVERAGE</code> is never even inspected.</p>
+
+                <p>Compare removing the <em>last</em> element. There <code>next()</code> leaves the cursor at 4, the removal drops size to 3, <code>hasNext()</code> asks <code>4 != 3</code>, gets <code>true</code>, calls <code>next()</code>, and you get your CME. Removing the final element throws; removing the one before it does not. That asymmetry is not a rule anyone would guess, and it is exactly why the bug survives review: the reviewer knows the pattern is wrong, tries it, sees an exception, and concludes the failure is always loud.</p>
+
+                <p>It is loud for every element except one. That one is the one that ships.</p>
+
+                <h2 id="cause2">Cause 2: Mutating a Map While Iterating Its Views</h2>
+
+                <p><code>keySet()</code>, <code>entrySet()</code> and <code>values()</code> are <strong>views</strong>, not copies. They allocate nothing meaningful, they hold a reference back to the map, and their iterators check the map's <code>modCount</code>. Iterating a key set is iterating the map.</p>
+
+                <p>Which matters because <code>put</code> is two different operations wearing one name. Adding a key the map does not have is structural &mdash; it creates a node and bumps <code>modCount</code>. Putting to a key the map already has overwrites a value field and does not touch <code>modCount</code> at all. One of those throws and one is documented as safe.</p>
+
+                <pre><code>package com.acme.billing;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public final class LedgerRollup {
+
+    /** Rounds every balance to the paisa and attaches GST rows for Indian accounts. */
+    static void normalise(Map&lt;String, Long&gt; balances) {
+        for (String account : balances.keySet()) {
+            long minor = balances.get(account);
+            balances.put(account, roundToPaisa(minor));          // existing key: safe
+            if (account.startsWith("IN-")) {
+                balances.put(account + "-GST", gstOn(minor));    // NEW key: structural
+            }
+        }
+    }
+
+    static long roundToPaisa(long minor) { return (minor / 100L) * 100L; }
+    static long gstOn(long minor)        { return Math.round(minor * 0.18); }
+
+    public static void main(String[] args) {
+        Map&lt;String, Long&gt; balances = new HashMap&lt;&gt;(Map.of(
+                "SG-4417", 120_450L,
+                "IN-9021",  88_300L,
+                "DE-1180", 402_000L));
+        normalise(balances);
+        System.out.println(balances);
+    }
+}</code></pre>
+
+                <pre><code>Exception in thread "main" java.util.ConcurrentModificationException
+	at java.base/java.util.HashMap$HashIterator.nextNode(HashMap.java:1597)
+	at java.base/java.util.HashMap$KeyIterator.next(HashMap.java:1620)
+	at com.acme.billing.LedgerRollup.normalise(LedgerRollup.java:10)
+	at com.acme.billing.LedgerRollup.main(LedgerRollup.java:27)</code></pre>
+
+                <p>Now think about the test suite. The fixture almost certainly uses accounts called <code>ACC-1</code> and <code>ACC-2</code>. No key starts with <code>IN-</code>, the branch never runs, the only <code>put</code> that executes is the safe one, and the test is green forever. The method is correct for every input the test exercises and broken for the first Indian customer. Every CME I have seen escape into production had that shape: a structural modification behind a conditional the fixture data never satisfied.</p>
+
+                <p>Two safe operations cover most of what people actually want here. <code>entry.setValue(v)</code> while iterating <code>entrySet()</code> is explicitly permitted &mdash; it writes through without a structural change. And <code>iterator.remove()</code> on any of the three views removes the mapping and keeps the counters in sync, exactly as it does on a list.</p>
+
+                <p>One detail, implementation-specific rather than guaranteed: <code>HashMap</code>'s iterator computes its <code>next</code> node before returning the current one, and <code>hasNext()</code> is just <code>next != null</code>. So an insertion during the final iteration may go entirely undetected, and whether the new key gets visited or skipped depends on which bucket it hashes into relative to where the iterator has already been. Same silent exit as the list, different mechanism &mdash; and a concrete demonstration of what "best-effort" means in that javadoc sentence.</p>
+
+                <h2 id="cause3">Cause 3: One Thread Iterating While Another Writes</h2>
+
+                <p>This is the case the class name was actually named for, and it is the rarest of the three. It is also the only one where a CME is a symptom rather than the disease.</p>
+
+                <pre><code>package com.acme.billing;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public final class SettlementQueue {
+
+    private final List&lt;String&gt; pending =
+            Collections.synchronizedList(new ArrayList&lt;&gt;());
+
+    void enqueue(String invoiceId) {
+        pending.add(invoiceId);          // synchronized internally
+    }
+
+    int totalPendingChars() {
+        int n = 0;
+        for (String id : pending) {      // iteration is NOT covered by that lock
+            n += id.length();
+        }
+        return n;
+    }
+}</code></pre>
+
+                <pre><code>Exception in thread "reporter-0" java.util.ConcurrentModificationException
+	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1013)
+	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
+	at com.acme.billing.SettlementQueue.totalPendingChars(SettlementQueue.java:18)
+	at com.acme.billing.SettlementQueue.lambda$main$0(SettlementQueue.java:31)
+	at java.base/java.lang.Thread.run(Thread.java:1583)</code></pre>
+
+                <p><code>Collections.synchronizedList</code> makes each individual method call atomic. It does not make a <em>sequence</em> of calls atomic, and an iteration is a sequence. The javadoc says so directly: you must manually synchronise on the returned list when traversing it. The lock is the wrapper object itself &mdash; an odd API, but a documented one:</p>
+
+                <pre><code>int totalPendingChars() {
+    synchronized (pending) {          // the wrapper is the documented monitor
+        int n = 0;
+        for (String id : pending) {
+            n += id.length();
+        }
+        return n;
+    }
+}</code></pre>
+
+                <p>Here is the part that should worry you more than the exception. Across threads the CME genuinely may not fire at all. <code>modCount</code> is a non-volatile field read without synchronisation, so the reader may never observe the writer's increment and will happily return a total computed from a half-updated array. That is the outcome to be afraid of: not a crash, a wrong number. If you are hitting CME across threads, the fix is not to silence it &mdash; it is that you have no synchronisation strategy, and the exception was kind enough to say so before the numbers went wrong.</p>
+
+                <p>An unsynchronised plain <code>HashMap</code> written by two threads is worse still: lost entries, a <code>size()</code> that disagrees with the contents, a <code>get()</code> returning null for a key that was definitely put. No exception for any of it.</p>
+
+                <h2 id="fixes">Four Ways to Fix It</h2>
+
+                <h3>1. Iterator.remove()</h3>
+
+                <p>The direct answer. Get the iterator explicitly and let it do the removal, so it can update both the list and its own <code>expectedModCount</code>:</p>
+
+                <pre><code>static void dropVoided(List&lt;Line&gt; lines) {
+    for (Iterator&lt;Line&gt; it = lines.iterator(); it.hasNext(); ) {
+        if (it.next().voided()) {
+            it.remove();
+        }
+    }
+}</code></pre>
+
+                <p><code>Itr.remove()</code> deletes the last element returned, pulls the cursor back to fill the hole, and re-snapshots <code>expectedModCount</code>. Nothing is skipped and nothing throws. Two rules: call <code>next()</code> before every <code>remove()</code>, and never <code>remove()</code> twice for one <code>next()</code> &mdash; both give you an <code>IllegalStateException</code>, not a CME.</p>
+
+                <p>Traversal is one pass, but on an <code>ArrayList</code> each removal shifts the tail with an <code>arraycopy</code>, so deleting <em>k</em> elements from a list of <em>n</em> costs O(n&middot;k) &mdash; quadratic when you are deleting most of the list. On a <code>LinkedList</code> each removal is O(1), because the iterator already holds the node. To replace or insert rather than delete, <code>ListIterator</code> adds <code>set()</code> and <code>add()</code>; an element added through the iterator goes in before the cursor and will not be returned by the following <code>next()</code>.</p>
+
+                <h3>2. removeIf()</h3>
+
+                <pre><code>lines.removeIf(Line::voided);</code></pre>
+
+                <p>One line, no iterator to get wrong, and it returns a <code>boolean</code> telling you whether anything changed. For a plain predicate filter this is the right default and I reach for it without thinking.</p>
+
+                <p>It is also faster than the loop above, which surprises people. The <code>Collection</code> default implementation is just an iterator loop, but <code>ArrayList</code> overrides it: one pass evaluates the predicate and records the doomed indices in a <code>long[]</code> bitset, then a second pass compacts the survivors in a single sweep. That collapses the O(n&middot;k) shifting to O(n). The override is an OpenJDK implementation detail rather than a spec guarantee, but it has been there since Java 8, and it is why "just use removeIf" is performance advice and not only style advice.</p>
+
+                <p>The catch: the predicate must be side-effect free. <code>ArrayList.removeIf</code> re-checks <code>modCount</code> after the predicate pass and throws a CME if your lambda touched the list. It removes the trap, not the rule.</p>
+
+                <h3>3. Iterate a copy, or collect then mutate</h3>
+
+                <pre><code>List&lt;Line&gt; toRefund = new ArrayList&lt;&gt;();
+for (Line line : lines) {
+    if (refundPolicy.isRefundable(line.sku())) {   // network call
+        toRefund.add(line);
+    }
+}
+lines.removeAll(toRefund);
+ledger.recordRefunds(toRefund);</code></pre>
+
+                <p>Two phases: decide while reading, mutate afterwards. Use this when the predicate does I/O, when you need the removed elements for something else, or when you are removing from list A while reading list B. Iterating <code>new ArrayList&lt;&gt;(lines)</code> or <code>List.copyOf(lines)</code> and mutating the original works too, and is sometimes clearer.</p>
+
+                <p>The cost is worth stating honestly: an extra array of <em>n</em> references. Nothing for a few hundred invoice lines, something to think about for a few million. And <code>removeAll</code> on an <code>ArrayList</code> is O(n&middot;m) in the general case because it calls <code>contains</code> on its argument, so if the removal set is large, make it a <code>HashSet</code> first.</p>
+
+                <h3>4. Concurrent collections</h3>
+
+                <pre><code>private final List&lt;InvoiceListener&gt; listeners = new CopyOnWriteArrayList&lt;&gt;();
+
+void publish(InvoiceEvent event) {
+    for (InvoiceListener listener : listeners) {   // snapshot; never throws CME
+        listener.onInvoice(event);                 // a handler may unregister itself
+    }
+}</code></pre>
+
+                <p><code>CopyOnWriteArrayList</code> and <code>ConcurrentHashMap</code> have iterators that are <em>weakly consistent</em> rather than fail-fast. They never throw <code>ConcurrentModificationException</code>. A COW iterator walks the array as it existed when the iterator was created, so later writes are invisible to it, and its <code>remove()</code>, <code>set()</code> and <code>add()</code> throw <code>UnsupportedOperationException</code>. A <code>ConcurrentHashMap</code> iterator reflects some but not necessarily all modifications made since its creation, and <code>size()</code> is an estimate.</p>
+
+                <p>The cost of copy-on-write is not subtle: every mutating call allocates a new array and copies the whole thing. Appending <em>n</em> elements to an empty COW list is O(n&sup2;). It pays off in exactly one shape &mdash; read constantly, write almost never &mdash; which is why listener registries are the textbook example and very nearly the only good one.</p>
+
+                <p>Do not reach for this to fix cause 1 or cause 2. Swapping an <code>ArrayList</code> for a <code>CopyOnWriteArrayList</code> to stop a single-threaded remove-inside-a-loop from throwing does make the exception go away, and leaves you with a loop reading a stale snapshot while mutating a live list. The bug is still there, and now nothing reports it.</p>
+
+                <p>My own ordering: <code>removeIf</code> first, always, when the condition is a pure function of the element. <code>Iterator.remove()</code> when the body has to do more than decide &mdash; log each removal, count, hand the element to something. Copy-then-mutate the moment the predicate touches the network or a database, because a slow predicate inside a live iteration holds a lock too long even when it is correct. Concurrent collections only when the collection is genuinely shared, chosen for the sharing and not because something threw.</p>
+
+                <h2 id="limits">Where This Still Bites You</h2>
+
+                <p>Streams move the failure away from the code that caused it. Intermediate operations are lazy, so a side-effecting lambda inside <code>.filter()</code> does not throw when the <code>filter</code> line runs &mdash; nothing runs there. The <code>ArrayList</code> spliterator binds to <code>modCount</code> late and checks it as it traverses, so the CME surfaces during the <em>terminal</em> operation and the trace points at the <code>.collect()</code> or <code>.forEach()</code> several lines below the lambda that broke the rule. Non-interference is a documented requirement of the streams API, not a suggestion.</p>
+
+                <p><code>subList()</code> fails in the opposite direction to everything else here, and it catches me every time. The sublist is a view holding its own copy of the parent's <code>modCount</code>. Structurally modify the <em>parent</em> and the child is invalidated: any subsequent operation on the sublist throws a CME, including <code>size()</code>, which is a surprising place to receive one. Mutating through the sublist is fine and propagates upward. Mutating the parent poisons the sublist.</p>
+
+                <p><code>Arrays.asList()</code> and <code>List.of()</code> throw something else entirely, and the two get conflated constantly. <code>remove()</code> on either gives you <code>UnsupportedOperationException</code>, not <code>ConcurrentModificationException</code>. <code>Arrays.asList()</code> is a fixed-size view over the array, so <code>set()</code> works and <code>add</code>/<code>remove</code> do not; <code>List.of()</code> is fully immutable and rejects all three. If your loop threw UOE rather than CME, none of the four fixes above apply &mdash; you needed <code>new ArrayList&lt;&gt;(...)</code> around the source in the first place.</p>
+
+                <p>And <code>forEach()</code> is not an escape hatch. <code>ArrayList.forEach</code> snapshots <code>modCount</code>, tests it in the loop condition on every element, and throws a CME after the loop if it changed. So does <code>HashMap.forEach</code>. Rewriting a broken for-each as <code>list.forEach(x -&gt; ...)</code> changes the syntax and nothing else.</p>
+
+                <h2 id="prevent">How to Prevent It</h2>
+
+                <p>Stop mutating during iteration as a habit, not as a fix applied after a stack trace. The pattern that never fails is building a new collection instead of editing the old one: <code>lines.stream().filter(l -&gt; !l.voided()).toList()</code> reads better than any removal loop, produces an unmodifiable list, and cannot express the bug. A method that takes a collection and returns a collection has nothing to get wrong.</p>
+
+                <p>When you must mutate in place, keep the decision and the mutation in different loops. That is the discipline behind fix 3, and it generalises past this exception: a loop that reads and a loop that writes are each easy to reason about, and one loop doing both is where the interesting bugs live.</p>
+
+                <p>Make collection fields <code>final</code> and copy at the boundary. A getter that hands out the live internal list invites a caller to iterate it while you mutate it, and no amount of care inside your class prevents that. Return <code>List.copyOf(lines)</code> and they cannot break you. The copy is cheap; the alternative is a CME thrown from a frame in someone else's module.</p>
+
+                <p>And pick the collection for its concurrency contract where you declare the field, not after the first incident. Shared and written often is <code>ConcurrentHashMap</code> or a queue from <code>java.util.concurrent</code>. Shared, read constantly, written rarely is <code>CopyOnWriteArrayList</code>. Confined to one thread is a plain <code>ArrayList</code>, and it should stay confined. Getting that decision wrong usually does not produce an exception at all, which is exactly why it deserves the thought up front.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> The behaviour here reflects the OpenJDK implementations of <code>ArrayList</code> and <code>HashMap</code> in current LTS releases, and the samples are written to produce exactly what is shown. Line numbers inside <code>java.base</code> frames shift between builds, so match on frame names rather than numbers. Where something is an implementation detail rather than a specification guarantee &mdash; the <code>removeIf</code> bitset, the second-to-last quirk, the map iterator's lookahead &mdash; I have said so in the sentence. Do not depend on any of it.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Is ConcurrentModificationException only about threads?</h3>
+                <p>No, and the name is the single biggest reason this exception confuses people. The overwhelming majority of them are thrown by one thread, on one collection, in a program with no concurrency anywhere. "Concurrent" here means concurrent with an <em>iteration</em>, not concurrent across threads. A single-threaded loop that calls <code>list.remove(...)</code> inside a for-each over that same list is the canonical case. Threads are only one of several ways to structurally modify a collection while an iterator over it is still live.</p>
+
+                <h3>Why does removing the second-to-last element of an ArrayList not throw?</h3>
+                <p>Because <code>hasNext()</code> is implemented as <code>cursor != size</code> and performs no comodification check. After <code>next()</code> returns the second-to-last element the cursor sits at <code>size - 1</code>. Removing that element drops <code>size</code> to exactly the cursor value, so <code>hasNext()</code> returns false, the loop exits normally, and <code>next()</code> &mdash; where the check actually lives &mdash; is never called again. The result is silent: the last element is never visited and nothing is thrown. Removing the <em>last</em> element does throw, because there the cursor ends up greater than <code>size</code> and <code>hasNext()</code> stays true.</p>
+
+                <h3>Can I just catch ConcurrentModificationException?</h3>
+                <p>No. It reports a bug in your code, not a condition in the world, and catching it leaves the collection in whatever half-processed state the loop abandoned. The javadoc is explicit that fail-fast behaviour cannot be guaranteed and that it would be wrong to write a program depending on this exception for its correctness &mdash; and catching it is depending on it. Retrying the loop is worse, because the same code will either throw again or land on the silent variant where elements are skipped and nothing is reported.</p>
+
+                <h3>Is CopyOnWriteArrayList the right general fix for ConcurrentModificationException?</h3>
+                <p>Only for genuinely shared, read-dominated collections such as listener registries. Every mutating operation copies the entire backing array, so a frequently written list turns O(1) appends into O(n) ones and building one from empty costs O(n&sup2;). Its iterators work on a snapshot, so they never throw but also never see writes made after the iterator was created. Using it to silence a single-threaded remove-inside-a-loop bug hides the bug instead of fixing it.</p>
+
+                <h3>Can removeIf() itself throw ConcurrentModificationException?</h3>
+                <p>Yes, if the predicate has side effects. <code>ArrayList.removeIf</code> evaluates the predicate across the whole range first, then re-checks <code>modCount</code> before it compacts the array, and throws if your lambda modified the list along the way. The same applies to <code>Map.replaceAll</code> and to <code>forEach</code> on both lists and maps. The safe rule is unchanged by any of these methods: the lambda you hand to a collection must not structurally modify that collection.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">ConcurrentModificationException</a>
+                <a href="javascript:void(0)" class="tag">Java Collections</a>
+                <a href="javascript:void(0)" class="tag">Java Exceptions</a>
+                <a href="javascript:void(0)" class="tag">ArrayList</a>
+                <a href="javascript:void(0)" class="tag">HashMap</a>
+                <a href="javascript:void(0)" class="tag">Debugging</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <!-- TODO: add the remaining exceptions-cluster siblings here as they are published; CI fails the build on links to pages that do not exist yet -->
+                    <ul>
+                        <li><a href="/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html">NullPointerException in Java 21: Reading the Helpful Message</a></li>
+                        <li><a href="/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</a></li>
+                        <li><a href="/blogs/implementing-the-uci-protocol-in-plain-java.html">Implementing the UCI Protocol in Plain Java (No Frameworks)</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
