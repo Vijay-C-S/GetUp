@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Putting a Java chess engine on lichess.org: the irreversible BOT upgrade, NDJSON event streams, the move endpoint, systemd, and the failures that cost me games.">
+    <title>Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke">
+    <meta property="og:description" content="The engine played fine offline. Live on Lichess it sat still while its clock ran out. Two NDJSON streams, one irreversible account upgrade, a systemd unit, and eight failures.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke">
+    <meta name="twitter:description" content="A thin java.net.http client over the Lichess Bot API: bot:play, /api/stream/event, gameFull and gameState, 429s, backoff with jitter, and an Oracle Cloud ARM box that kept restarting.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/ai_coding_left.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke", "item": "https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke",
+        "description": "A first-person account of deploying a Java 21 chess engine as a Lichess bot: the irreversible BOT account upgrade and the bot:play scope, a thin java.net.http client over the NDJSON event and game streams, colour and turn detection, time budgeting from wtime and btime, challenge policy, 429 backoff with jitter, a systemd unit on an Oracle Cloud ARM box, and the eight failures that showed up only in live games.",
+        "datePublished": "2026-07-28",
+        "dateModified": "2026-07-28",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/ai_coding_left.webp",
+            "caption": "Deploying a Java chess engine as a Lichess bot over the streaming HTTP API",
+            "name": "Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Can you undo a Lichess BOT account upgrade?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. The documentation states plainly that the upgrade is irreversible and that the account will only be able to play as a bot from then on. It also requires that the account has not played any game before the upgrade, casual games included. The practical consequence is that you should register a brand new account for the bot rather than upgrading one you already use, and you should confirm the account is clean before sending the request."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does my Lichess API token return 401 on the bot endpoints?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Almost always a missing scope. Bot endpoints require a token carrying bot:play, and a token created without that box ticked will authenticate fine against public read endpoints while returning 401 on anything under /api/bot. The other common cause is the header itself: the value must be the word Bearer, a space, then the token, and a token pasted with a trailing newline from a file will fail in a way that looks like an invalid token rather than a malformed header."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What are the blank lines in the Lichess event stream?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "They are keep-alive lines. The event stream documentation says an empty line is sent every seven seconds so that proxies and clients do not treat an idle connection as dead. They are not JSON and they are not events. A reader that hands every line straight to a JSON parser will throw on the first quiet stretch of the stream, which in my case happened at three in the morning rather than during testing. Skip any line that is blank after trimming."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you tell whose turn it is in a Lichess bot game?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Count the moves. The gameState event carries the whole game as a single space-separated string of moves rather than a delta, so an even number of tokens means White is to move and an odd number means Black is to move, assuming the game started from the normal position. Your own colour comes from comparing your bot account id against the white and black player ids in the opening gameFull event. Combine the two and act only when they agree."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What move format does the Lichess bot move endpoint accept?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "UCI long algebraic notation, meaning the from square followed by the to square, with a lowercase promotion letter appended when relevant. So e2e4 and e7e8q. Standard algebraic notation such as Nf3 or exd5 is rejected. Castling in standard chess is sent as the king moving two files, e1g1 or e1c1, and the schema for the incoming move list documents a Chess960 compatible king to rook form as well, so it is worth accepting both when reading and being explicit about which one you send."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How should a bot handle a 429 from the Lichess API?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Stop sending for at least a minute, which is the guidance in the API introduction, and then resume at a lower rate rather than retrying immediately. Make one request at a time rather than firing concurrent calls per game. Read and close every response body even when you do not care about its contents, because an HTTP client that leaks connections will start queuing requests and make your effective rate look far worse than your code suggests."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do you keep a Lichess bot running on a server?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A systemd service unit with Restart=always and a RestartSec of a few seconds is enough for a single bot process, with the token supplied through an EnvironmentFile that is readable only by the service user rather than baked into the unit. Logs go to journald automatically, so a single journalctl follow command is your whole observability stack. Add StartLimitBurst and StartLimitIntervalSec so that a genuinely broken build stops restarting instead of looping forever."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4371693143508188" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Jul 28, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 15 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/ai_coding_left.webp" alt="A developer deploying a Java chess engine as a Lichess bot, with a terminal of streaming API output beside a live game board" title="Deploying a Java chess engine as a Lichess bot over the streaming HTTP API" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">The engine was thinking. The clock did not care.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">I ended the last post saying the next one was Zobrist hashing and the transposition table. Then I gave the engine a Lichess account, watched it lose to a 1400 on time without moving once, and the deployment layer turned out to be the more interesting problem. So the table is post 11. This is what happened in between.</p>
+
+                <p>The first live game is a very specific kind of humbling. The board loads, my bot's name is on the black side, White plays d4, and nothing happens. The clock runs. Ten minutes of it. On my laptop the same engine answers d4 in under two seconds, and I could see the process on the server sitting at 0% CPU, exactly as calm as it had been all night.</p>
+
+                <p>It had received the move. It had parsed the move. It had decided, on the basis of a field I had misread, that it was White.</p>
+
+                <p>Nothing about that is a chess problem. It is the same category of failure as <a href="/blogs/implementing-the-uci-protocol-in-plain-java.html">the UCI post</a>, where a finished engine looked dead to Arena because of a missing flush, and it's a reminder that <a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">the reason I started this project</a> — problems where correctness is checkable — stops applying the moment there's a network and another human on the other end of it.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#upgrade">The Account Is a One-Way Door</a></li>
+                    <li><a href="#client">lichess-bot, berserk, or Write the Client</a></li>
+                    <li><a href="#events">The Event Stream</a></li>
+                    <li><a href="#gamestream">The Game Stream</a></li>
+                    <li><a href="#turn">Whose Turn Is It, and Which Colour Am I</a></li>
+                    <li><a href="#engine">Feeding the Engine</a></li>
+                    <li><a href="#move">Sending the Move</a></li>
+                    <li><a href="#challenges">Challenge Policy</a></li>
+                    <li><a href="#limits">Rate Limits and Backoff</a></li>
+                    <li><a href="#deploy">Deployment</a></li>
+                    <li><a href="#broke">What Broke</a></li>
+                    <li><a href="#testing">How I Tested It Before Pointing It at Humans</a></li>
+                    <li><a href="#next">What's Next</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="upgrade">The Account Is a One-Way Door</h2>
+
+                <p>Before any code, an account decision you cannot walk back.</p>
+
+                <p>The Bot API only works for accounts that carry the BOT title, and you get that title by calling <code>POST /api/bot/account/upgrade</code> with a token that has the <code>bot:play</code> scope. Two conditions attach to it. The account must not have played a game — the docs say <em>any</em> game, and that includes casual ones. And the upgrade is irreversible: after it, the account can only ever play as a bot.</p>
+
+                <p>I made a fresh account for this, which I recommend without qualification, and then I nearly ruined it in the most ordinary way possible. While waiting for the confirmation email I played one casual 3+2 game against a stranger, because there was a board on the screen and I have no self-control. The upgrade call came back 400. I read the error, read the docs again, understood, and made a second account, which I then did not touch.</p>
+
+                <p>The upgrade itself is two lines, and I still hovered over the second one for a moment longer than it deserved.</p>
+
+                <pre><code># scopes: bot:play  (create at lichess.org/account/oauth/token/create)
+export LICHESS_TOKEN=lip_YOUR_TOKEN_HERE
+
+# irreversible. the account must never have played a game.
+curl -d '' https://lichess.org/api/bot/account/upgrade \
+  -H "Authorization: Bearer $LICHESS_TOKEN"
+
+# confirm: the title field should now read BOT
+curl https://lichess.org/api/account \
+  -H "Authorization: Bearer $LICHESS_TOKEN" | jq .title</code></pre>
+
+                <p>That <code>-d ''</code> matters, incidentally. It is what makes curl issue a POST with an empty body rather than a GET, and the first time I typed the command without it I got a response that looked like a permissions problem and was actually a verb problem.</p>
+
+                <p>The <code>jq .title</code> check is worth keeping in your notes, because "did the upgrade actually happen" is otherwise annoying to answer later. Mine printed <code>"BOT"</code> and that was that. There is no undo, no support ticket, no grace period. It's a satisfying kind of commitment, in the way that deleting the branch you've just merged is satisfying.</p>
+
+                <h2 id="client">lichess-bot, berserk, or Write the Client</h2>
+
+                <p>There is an official Python bridge, <code>lichess-bot</code>, which has been maintained for years and already handles everything this post is about. Point it at a UCI engine binary, edit a YAML config, and you have a working bot in about fifteen minutes. There's also <code>berserk</code>, the Python API client it builds on, and <code>chariot</code> if you want a Java library that already wraps the endpoints.</p>
+
+                <p>I wrote my own thin client over <code>java.net.http.HttpClient</code> instead, and I want to be honest about the trade rather than dress it up.</p>
+
+                <p>What I gave up: a battle-tested challenge policy, working reconnection logic, matchmaking, opening books, correspondence support, and several years of other people's bug reports. Every single failure in the "What Broke" section below is a failure that <code>lichess-bot</code> would have handled for me. If your goal is to have a bot playing on Lichess this weekend, use the bridge, and don't feel bad about it.</p>
+
+                <p>What I got: no Python process in the middle, no subprocess boundary between my engine and the network, and a client that speaks the same object model as the engine. The whole series has been about <a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">building the thing rather than assembling it</a>, and post 9 was explicitly about writing a protocol layer with no frameworks. Adding a Python bridge one post later would have been a strange place to stop.</p>
+
+                <p>The client is one <code>HttpClient</code>, shared, built once. The important detail is what is <em>not</em> on it.</p>
+
+                <pre><code>import java.net.http.HttpClient;
+import java.time.Duration;
+
+private final HttpClient http = HttpClient.newBuilder()
+        .version(HttpClient.Version.HTTP_1_1)   // see the stream note below
+        .connectTimeout(Duration.ofSeconds(10))
+        .followRedirects(HttpClient.Redirect.NORMAL)
+        .build();</code></pre>
+
+                <p>A connect timeout, yes. No request timeout — that's set per request, and setting one globally is how I killed my own long-lived streams for two days. I also pinned HTTP/1.1 after seeing slower and less predictable stream opens over HTTP/2 on this box; that's an observation from my runs rather than a rule, and if HTTP/2 behaves for you there's no reason to change it.</p>
+
+                <h2 id="events">The Event Stream</h2>
+
+                <p><code>GET /api/stream/event</code> is the bot's front door. It's an HTTP response that never ends, delivering NDJSON: one JSON object per line, newline separated, written as things happen. Events are <code>challenge</code>, <code>challengeCanceled</code>, <code>challengeDeclined</code>, <code>gameStart</code> and <code>gameFinish</code>. When the stream opens, Lichess replays your current challenges and games into it, which is exactly the behaviour you want after a restart.</p>
+
+                <p>Two things about it will bite you, and the docs state both plainly enough that I have no excuse.</p>
+
+                <p>First: an empty line arrives every seven seconds as a keep-alive. It is not JSON. It is not an event. Hand it to Jackson and you get a <code>JsonParseException</code> from a stream that has been perfectly healthy for hours.</p>
+
+                <p>Second: only one global event stream can be active per token. Open a second one and the first is closed. This is a sensible design that makes a restart loop far more entertaining than it needs to be, which I'll come back to.</p>
+
+                <pre><code>void streamEvents() throws Exception {
+    var req = HttpRequest.newBuilder(URI.create(BASE + "/api/stream/event"))
+            .header("Authorization", "Bearer " + token)
+            .GET()                       // no .timeout(...) — this never ends
+            .build();
+
+    var resp = http.send(req, HttpResponse.BodyHandlers.ofLines());
+    if (resp.statusCode() != 200) throw new IOException("event stream " + resp.statusCode());
+
+    resp.body().forEach(line -&gt; {
+        if (line.isBlank()) return;      // 7-second keep-alive, not an event
+        JsonNode e = mapper.readTree(line);
+        switch (e.path("type").asText()) {
+            case "challenge"  -&gt; onChallenge(e.path("challenge"));
+            case "gameStart"  -&gt; onGameStart(e.path("game"));
+            case "gameFinish" -&gt; onGameFinish(e.path("game"));
+            default           -&gt; { /* ignore unknown event types */ }
+        }
+    });
+}</code></pre>
+
+                <p><code>BodyHandlers.ofLines()</code> is the piece that makes this pleasant in Java. It gives you a <code>Stream&lt;String&gt;</code> that blocks for the next line and yields it as it arrives, so the whole NDJSON transport is one <code>forEach</code>. No buffer management, no framing code.</p>
+
+                <p>That <code>default</code> branch is the same instinct as the UCI dispatch switch from last post: an unrecognised event type is not an error, it's a thing you don't handle yet. Lichess has added event types before and will again.</p>
+
+                <h2 id="gamestream">The Game Stream</h2>
+
+                <p>A <code>gameStart</code> event gives you a game id. That id gets you a second, separate NDJSON stream at <code>GET /api/bot/game/stream/{gameId}</code>, which runs for the life of that one game and then closes. One thread per active game, plus the event stream thread, which is the whole concurrency model.</p>
+
+                <p>The first line is always <code>gameFull</code>. It carries the immutable facts: <code>id</code>, <code>variant</code>, <code>speed</code>, <code>rated</code>, <code>clock</code> with <code>initial</code> and <code>increment</code> in milliseconds, <code>initialFen</code> (the string <code>"startpos"</code> for a normal game), and <code>white</code> and <code>black</code> objects with the player ids. Nested inside it is a <code>state</code> object which is itself a <code>gameState</code>.</p>
+
+                <p>Every line after that is a <code>gameState</code>, or a <code>chatLine</code>, or an <code>opponentGone</code>. The <code>gameState</code> is the one that matters:</p>
+
+                <pre><code>{"type":"gameState",
+ "moves":"e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6",
+ "wtime":167340,"btime":171120,"winc":2000,"binc":2000,
+ "status":"started"}</code></pre>
+
+                <p>Note what <code>moves</code> is. Not the move that was just played. The <em>entire game</em>, every time, as one space-separated string of UCI moves. On move 40 you receive all eighty of them again.</p>
+
+                <p>My first reaction was that this is wasteful. My second, after about a minute, was that it is the same design decision UCI makes with <code>position startpos moves ...</code>, and for the same reason: the client can never drift out of sync with the server, because it is handed the truth on every update rather than a delta it has to apply correctly. I <a href="/blogs/implementing-the-uci-protocol-in-plain-java.html">already had a replay path</a> that rebuilds the board from a move list in about 90 microseconds, so I reused it and moved on. Cheap and stateless again, and again I was glad.</p>
+
+                <p><code>status</code> is the field people skip. While the game is live it reads <code>started</code>. When it isn't, it reads <code>mate</code>, <code>resign</code>, <code>outoftime</code>, <code>draw</code>, <code>aborted</code>, <code>stalemate</code> and so on, and the correct response to any of those is to stop thinking and close the stream. Skipping that check is how a bot ends up POSTing a move into a game it lost ninety seconds ago.</p>
+
+                <h2 id="turn">Whose Turn Is It, and Which Colour Am I</h2>
+
+                <p>This is the ten-minute silence from the opening paragraph, and I think it's where most first bots break, because both halves look obvious and neither is given to you as a boolean.</p>
+
+                <p>Colour comes from <code>gameFull</code>: compare your own bot account id against <code>white.id</code> and <code>black.id</code>. Not the display name — the id, which is the lowercase form. My bug was using the <code>gameStart</code> event's game object and reading a field that isn't the one I thought it was, which meant that in that first live game the bot concluded it was White, saw that it was Black's turn, and waited politely for its opponent to move. Its opponent, being White, had already moved. Both sides waited. One of them had a clock.</p>
+
+                <p>Turn comes from parity of the move list. Even count, White to move. Odd count, Black to move.</p>
+
+                <pre><code>private boolean myColourWhite;      // set once, from gameFull
+private String  initialFen;         // "startpos" for a normal game
+
+void onGameFull(JsonNode full) {
+    myColourWhite = myBotId.equals(full.path("white").path("id").asText());
+    initialFen    = full.path("initialFen").asText("startpos");
+    onGameState(full.path("state"));
+}
+
+boolean isMyTurn(String moves) {
+    int played = moves.isBlank() ? 0 : moves.trim().split("\\s+").length;
+    boolean whiteToMove = (played % 2 == 0);   // startpos only
+    return whiteToMove == myColourWhite;
+}</code></pre>
+
+                <p>The parity rule assumes the game began from the standard position, which is why <code>initialFen</code> is read and stored. If it isn't <code>"startpos"</code>, side-to-move comes from field two of that FEN and the parity flips accordingly. I don't accept from-position challenges, so in practice this branch never fires for me, but leaving the assumption undocumented in the code felt like setting a trap for myself.</p>
+
+                <p>The guard I'd add on day one if I were starting again: never send a move unless <code>isMyTurn</code> is true <em>and</em> <code>status</code> is <code>started</code>. Both conditions, checked immediately before the POST rather than when the event arrived. Between those two moments a search ran for four seconds, and four seconds is long enough for the game to have ended.</p>
+
+                <h2 id="engine">Feeding the Engine</h2>
+
+                <p>Two options here, and I tried both.</p>
+
+                <p>The first is <code>ProcessBuilder</code>: spawn <code>java -jar kestrel.jar</code> per game, speak UCI to it over stdin and stdout exactly as Arena does, and get the whole protocol layer from post 9 for free including its time management. It's honest, it isolates a crash to one game, and it means the thing playing on Lichess is byte-for-byte the thing you test in cutechess.</p>
+
+                <p>The second is calling the handler in-process: the UCI layer already takes a writer rather than reaching for <code>System.out</code>, precisely so it could be tested in memory, and that same seam lets the bot client drive it directly with no pipes at all.</p>
+
+                <p>I run in-process now, on a single-permit semaphore so two games can never search at once, but I kept the subprocess path behind a flag because it's the better answer when something goes wrong and you want the engine isolated. What both paths share is the move list and a deadline:</p>
+
+                <pre><code>void onGameState(JsonNode st) {
+    String moves = st.path("moves").asText("");
+    if (!"started".equals(st.path("status").asText())) { finish(); return; }
+    if (!isMyTurn(moves)) return;
+
+    long myTime = myColourWhite ? st.path("wtime").asLong() : st.path("btime").asLong();
+    long myInc  = myColourWhite ? st.path("winc").asLong()  : st.path("binc").asLong();
+
+    // same allocator as the UCI layer; movestogo is never sent by Lichess
+    long budget = budgetMillis(myTime, myInc, /* movestogo */ 0) - NETWORK_OVERHEAD;
+
+    engine.setPosition(initialFen, moves);
+    Move best = engine.searchFor(Math.max(50, budget));
+    sendMove(gameId, toUci(best));
+}</code></pre>
+
+                <p><code>budgetMillis</code> is the function from the last post, unchanged: remaining clock divided by an assumed thirty moves to go, plus three quarters of the increment, capped at a quarter of the clock. Lichess never sends anything like <code>movestogo</code>, so the sudden-death branch is the only one that ever runs, which is a small vindication of having written that branch properly instead of assuming the GUI would always tell me.</p>
+
+                <p><code>NETWORK_OVERHEAD</code> is the new term. In UCI the overhead was 50ms for a pipe write. Here it covers a TLS request to Frankfurt and back, and on my box the move POST measured between 180ms and 340ms round trip, with occasional excursions past a second. I set it to 700ms. That is generous to the point of cowardice and I have not lost a game on time since, which was the entire requirement. The scores the search reports still come from <a href="/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">the same tapered evaluation</a> as before — nothing about being online changed the chess.</p>
+
+                <h2 id="move">Sending the Move</h2>
+
+                <p><code>POST /api/bot/game/{gameId}/move/{move}</code>, with the move in the path. There is an optional <code>offeringDraw</code> query parameter if you want to offer or accept a draw with the move.</p>
+
+                <p>The move must be UCI long algebraic. <code>e2e4</code>. <code>e7e8q</code>, lowercase promotion letter. SAN is rejected, so <code>Nf3</code> will simply fail, and because the engine's own move encoder already emits UCI for Arena there was nothing to write here beyond the HTTP.</p>
+
+                <p>Castling carries straight over from post 9. In standard chess you send the king's two-square move — <code>e1g1</code> kingside, <code>e1c1</code> queenside. The schema for the incoming <code>moves</code> string documents a Chess960-compatible king-takes-rook form, so my reader accepts both <code>e1g1</code> and <code>e1h1</code> as a white kingside castle rather than assuming, and it costs one extra condition in the parser I already had.</p>
+
+                <pre><code>void sendMove(String gameId, String uci) throws Exception {
+    var req = HttpRequest.newBuilder(
+                URI.create(BASE + "/api/bot/game/" + gameId + "/move/" + uci))
+            .header("Authorization", "Bearer " + token)
+            .timeout(Duration.ofSeconds(10))          // a POST may time out; a stream may not
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build();
+
+    // ofString, not discarding: on failure the body tells you why
+    var resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+    if (resp.statusCode() == 429) { backoff.penalise(); return; }
+    if (resp.statusCode() != 200) {
+        log.warn("move {} rejected: {} {}", uci, resp.statusCode(), resp.body());
+        // do NOT retry blindly. the next gameState tells you if it landed.
+    }
+}</code></pre>
+
+                <p>That last comment is a scar. More on it below.</p>
+
+                <h2 id="challenges">Challenge Policy</h2>
+
+                <p>A public bot gets challenged by anyone, at any time control, in any variant, and the default of accepting everything is not a policy — it's an outage waiting for a Tuesday evening.</p>
+
+                <p>Accept is <code>POST /api/challenge/{challengeId}/accept</code>. Decline is <code>POST /api/challenge/{challengeId}/decline</code> with a form-encoded <code>reason</code>, and the reason keys are a fixed set: <code>generic</code>, <code>later</code>, <code>tooFast</code>, <code>tooSlow</code>, <code>timeControl</code>, <code>rated</code>, <code>casual</code>, <code>standard</code>, <code>variant</code>, <code>noBot</code>, <code>onlyBot</code>. Lichess translates them into the challenger's own language, which is a nice touch and a good reason to pick an accurate one rather than always sending <code>generic</code>.</p>
+
+                <p>My rules, in order:</p>
+
+                <pre><code>String declineReason(JsonNode ch) {
+    if (!"standard".equals(ch.path("variant").path("key").asText()))
+        return "variant";                       // no Crazyhouse, no Atomic, no 960
+    if (!"correspondence".equals(ch.path("speed").asText())) {
+        int initial = ch.path("timeControl").path("limit").asInt();      // seconds
+        int inc     = ch.path("timeControl").path("increment").asInt();
+        if (initial + 40 * inc &lt; 60)  return "tooFast";   // bullet: I lose on latency
+        if (initial &gt; 1800)           return "tooSlow";   // I am not holding a thread open for an hour
+    } else {
+        return "later";                         // correspondence: not implemented
+    }
+    if (activeGames.size() &gt;= MAX_CONCURRENT) return "later";
+    return null;                                // null means accept
+}</code></pre>
+
+                <p>The bullet cut-off is the one that came from experience rather than taste. Lichess allows bots everything except UltraBullet, so 1+0 is legal, but with a 700ms network overhead a 1+0 game gives the search roughly 800ms per move at best and the bot plays like a much worse engine than it is. Declining <code>tooFast</code> is more honest than losing badly.</p>
+
+                <p><code>MAX_CONCURRENT</code> is 2. The box has four cores, the search is single-threaded, and two simultaneous games leave headroom for the JVM and the streams. I started at 4 and watched move latency climb under load in a way that had nothing to do with the network. Two is a limit I chose for myself; nothing in the API imposes it.</p>
+
+                <h2 id="limits">Rate Limits and Backoff</h2>
+
+                <p>The API introduction gives two instructions that are easy to read past: make one request at a time, and if you get a 429, wait — a minute is usually enough, sometimes longer.</p>
+
+                <p>I collected my first 429 by being clever about a response I didn't understand, which is covered below. The lasting fixes were duller than that.</p>
+
+                <p>Read and close every body. Every one. <code>HttpClient</code> does not release the connection until the body is consumed, so a handler that ignores an error response leaks the connection back into a pool that never recovers it, and requests start queueing behind nothing. This looked like Lichess getting slower over a period of hours. It was me.</p>
+
+                <p>Then exponential backoff with jitter on stream reconnect. Without jitter, a bot that loses its connection during a network blip reconnects on an exact schedule, which is precisely the pattern rate limiters are built to notice.</p>
+
+                <pre><code>private int attempt = 0;
+
+long nextDelayMillis() {
+    long base = Math.min(60_000L, 1_000L &lt;&lt; Math.min(attempt++, 6));  // 1s..60s
+    long jitter = ThreadLocalRandom.current().nextLong(base / 2);     // full-ish jitter
+    return base / 2 + jitter;
+}
+
+void onStreamClosed() {
+    if (attempt &gt; 8) { log.error("giving up; letting systemd restart us"); System.exit(1); }
+    sleep(nextDelayMillis());
+    streamEvents();
+}
+// any successful line resets: attempt = 0;</code></pre>
+
+                <p>The event stream drops on its own, routinely, with no error on either side. It reconnected 11 times on the first full night, all of them clean, none of them my fault. A bot that treats a closed stream as a crash will restart eleven times a night; a bot that treats it as normal will reconnect and keep playing. Resetting <code>attempt</code> on the first successful line rather than on connect matters, because a connection that opens and immediately closes should not look like a success.</p>
+
+                <h2 id="deploy">Deployment</h2>
+
+                <p>An Oracle Cloud free-tier ARM instance: 4 Ampere cores, 24 GB of RAM, Ubuntu 24.04, and a cost of nothing. Temurin 21 for aarch64 from the distribution's own packages. The engine is pure Java with no native code, so the ARM move was a <code>scp</code> and nothing else, which was the first thing all week that worked on the first try.</p>
+
+                <p>The unit file is the whole deployment.</p>
+
+                <pre><code>[Unit]
+Description=Kestrel Lichess bot
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=kestrel
+WorkingDirectory=/opt/kestrel
+EnvironmentFile=/etc/kestrel/env        # chmod 600, holds LICHESS_TOKEN
+ExecStart=/usr/bin/java -Xms256m -Xmx1g -XX:+UseSerialGC \
+          -jar /opt/kestrel/kestrel-bot.jar
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+                <p><code>UseSerialGC</code> is deliberate. G1 is the better default for almost everything, but this is a single-threaded search on a small heap where a concurrent collector's background threads compete with the only thread I care about. Serial GC gave me a slightly higher and much flatter node rate in my own measurements — call it a few percent, measured over a handful of games rather than a benchmark suite. If your bot is multi-threaded, ignore this entirely.</p>
+
+                <p>The token lives in <code>EnvironmentFile</code>, mode 600, owned by the service user. Not in the unit file, which is world-readable, and not in the jar, which I have committed to a public repository.</p>
+
+                <p><code>StartLimitBurst=5</code> over five minutes is the fuse. <code>Restart=always</code> without it will happily restart a broken build several times a second forever, and given that opening a new event stream closes the previous one, a restart loop is a bot repeatedly disconnecting itself.</p>
+
+                <p>Observability is <code>journalctl -u kestrel -f</code> and nothing else. On start the bot logs its account id, its title, and the count of games replayed into the event stream; on every move it logs the game id, the move, the milliseconds it thought and the milliseconds left. That single line is how I knew it was alive, and reading a night of it in the morning is how most of the next section got found.</p>
+
+                <h2 id="broke">What Broke</h2>
+
+                <p><strong>The token that worked in a browser and 401'd everywhere else.</strong> I created a personal access token, tested it by pasting a lichess.org URL into a browser where I was already logged in, saw JSON, and concluded the token was fine. It wasn't the token doing anything — it was my session cookie. The token had been created without <code>bot:play</code>, so every <code>/api/bot</code> call returned 401 while public read endpoints worked perfectly. Scope problems look exactly like bad-token problems from the client side. Check the scopes on the token page before you debug a single line of your header code.</p>
+
+                <p><strong>The upgrade endpoint refusing an account over one casual game.</strong> Covered above, and worth repeating because the failure is a 400 with a short message and the cost is a whole account. One 3+2 game against a stranger while waiting for a confirmation email. The rule is that the account must not have played <em>any</em> game, and casual counts.</p>
+
+                <p><strong>A blank keep-alive line thrown into the JSON parser.</strong> At 03:14, by the timestamp, after six hours of a perfectly healthy stream. The seven-second keep-alive is documented; I had read the page and not retained it. The exception killed the stream thread, the bot stopped accepting challenges, and it looked from the outside like Lichess had gone quiet. Two conditions, one line: skip blank lines, and never let an exception in a line handler kill the loop that reads lines.</p>
+
+                <p><strong>HttpClient's request timeout quietly killing a long-lived stream.</strong> This one cost two days. I had set <code>.timeout(Duration.ofSeconds(30))</code> on every request from a helper method, because that is a sensible default for a request. A streaming response is not a request in that sense — the timeout applies to the whole exchange, so the event stream was being severed after exactly thirty seconds, every time, forever. The symptom was a reconnect loop with no error message worth reading and a suspiciously round period. Set request timeouts per call site, not in a shared builder, and never on a stream.</p>
+
+                <p><strong>Playing both sides of the board.</strong> The opening story. Colour was derived from the wrong field, the bot decided it was White in a game where it was Black, and the resulting behaviour is genuinely funny to watch once and no fun at all to diagnose from logs, because every individual step is doing exactly what it was told. Derive colour from <code>gameFull</code>'s <code>white.id</code> and <code>black.id</code> against your own account id, log it once per game at INFO, and the whole class of bug becomes visible in one line.</p>
+
+                <p><strong>A zombie engine process per game.</strong> From the <code>ProcessBuilder</code> era. When a game ended, the game stream closed and my handler returned — and the child JVM, which had been sent no <code>quit</code>, sat there waiting on a stdin that would never produce another line. After a busy evening there were nine of them, each holding its default heap. The box had 24 GB so nothing crashed, which is why it took a day to notice. Every path out of a game handler, including the exceptional ones, must send <code>quit</code> and then <code>destroyForcibly</code> after a grace period. A <code>try/finally</code> around the entire game loop, not a cleanup call at the bottom of the happy path.</p>
+
+                <p><strong>A 429 lockout from retrying an ambiguous move POST.</strong> A move POST returned a status I hadn't handled, so I did the obvious wrong thing and retried it. The move had actually landed. The retry was rejected, which I read as another failure, so I retried again. Roughly eight rapid moves later I was locked out with 429s and forfeited the game standing still. A move POST is not idempotent from your side and you have no correlation id to check against. The right move is to send once, log, and wait: the next <code>gameState</code> arrives within a second and tells you authoritatively whether your move is in the list. The stream is the source of truth, not the POST's response.</p>
+
+                <p><strong>Moving in a game it had already lost.</strong> The opponent resigned while my search was running. The search finished, the bot POSTed its move into a finished game, got an error, and logged a scary line. Harmless in itself, but it's the same shape as the previous bug and it has the same fix: re-check <code>status</code> immediately before the POST, not when the search started. Four seconds of thinking is plenty of time for a game to end.</p>
+
+                <p><strong>A restart loop that re-accepted the same challenge forever.</strong> The nastiest one, because every component was behaving correctly. On start, the event stream replays your current challenges. My bot accepted one, hit an unrelated bug in the game handler, and exited. systemd restarted it in five seconds. The new process opened a fresh event stream, was handed the same game, and repeated. Roughly forty cycles before I woke up and stopped the service. The fixes were <code>StartLimitBurst</code>, so systemd gives up on a crash loop, and treating any exception inside a game handler as "abandon this game" rather than "exit the process".</p>
+
+                <h2 id="testing">How I Tested It Before Pointing It at Humans</h2>
+
+                <p>Not well enough, obviously, given the list above. But three layers helped, and the cheapest one helped most.</p>
+
+                <p>A recorded NDJSON session replayed from a local server. I saved the raw bytes of one real game's stream to a file — every line, blank keep-alives included — and wrote about forty lines of <code>com.sun.net.httpserver.HttpServer</code> that dribble it back out with the same pauses. The client's base URL is a config value, so pointing it at <code>http://localhost:8080</code> exercises the entire event and game handling path with no network and no account.</p>
+
+                <pre><code>// replay.jsonl is a captured stream, blank keep-alive lines included
+var server = HttpServer.create(new InetSocketAddress(8080), 0);
+server.createContext("/api/bot/game/stream/", ex -&gt; {
+    ex.sendResponseHeaders(200, 0);
+    try (var out = ex.getResponseBody();
+         var lines = Files.lines(Path.of("replay.jsonl"))) {
+        lines.forEach(l -&gt; { write(out, l + "\n"); out.flush(); sleep(120); });
+    }
+});
+server.start();</code></pre>
+
+                <p>This is where I finally caught the blank-line crash, deterministically, in under a second, having previously met it at three in the morning. Capture the real thing once and you can replay its awkwardness forever.</p>
+
+                <p>Then a second Lichess account, a human one, challenging the bot directly. Casual only, per the API's own advice about testing bot logic. This is the only way to see the thing a user sees: how long until it moves, whether it moves at all, whether it says anything in chat. My colour bug would have been caught here in ninety seconds if I had bothered to do it before going public.</p>
+
+                <p>And finally challenging Lichess's own Stockfish levels, which a bot can do through the challenge API and which gives you an opponent that is always available, never confused, and plays at a known strength. Level 3 was a fair fight in 10+5, which tells me roughly where the engine sits and gives me a repeatable opponent for the next few posts. Against level 6 it lost quickly and predictably, mostly to positions it had already seen and searched again from scratch.</p>
+
+                <h2 id="next">What's Next</h2>
+
+                <p>Which brings the detour back to where post 9 left off.</p>
+
+                <p>Live games exposed something the offline harness never made me care about. In a 10+5 game the engine repeatedly reaches the same position through different move orders, and every single time it searches it again from nothing, while a real clock runs. The move list arrives complete on every update, the board gets rebuilt, and everything the previous search learned is discarded. Offline that's an inefficiency. On a clock it's the difference between depth 7 and depth 9.</p>
+
+                <p>So: Zobrist hashing and a transposition table, properly, next post. An incrementally updated 64-bit key that has to survive make, unmake, en passant and castling rights without drifting by a single bit, and a table that has to answer correctly under a depth-preferred replacement scheme. I already know how the first evening goes — the key won't match after unmake, and finding which of the four update sites is wrong will take longer than writing all four of them did.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> The failures above are ones I actually hit, in roughly the order given, running a Java 21 bot on an Oracle Cloud free-tier ARM instance against the live lichess.org API. Endpoint paths, scopes, event types and decline reasons are taken from the official API reference; timings, reconnect counts and the GC and concurrency choices are measurements from my own runs on that one box and should not be read as universal. API behaviour described here is my observation as of July 2026 and Lichess is free to change it.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Can you undo a Lichess BOT account upgrade?</h3>
+                <p>No. The documentation states plainly that the upgrade is irreversible and that the account will only be able to play as a bot from then on. It also requires that the account has not played any game before the upgrade, casual games included. The practical consequence is that you should register a brand new account for the bot rather than upgrading one you already use, and you should confirm the account is clean before sending the request.</p>
+
+                <h3>Why does my Lichess API token return 401 on the bot endpoints?</h3>
+                <p>Almost always a missing scope. Bot endpoints require a token carrying <code>bot:play</code>, and a token created without that box ticked will authenticate fine against public read endpoints while returning 401 on anything under <code>/api/bot</code>. The other common cause is the header itself: the value must be the word <code>Bearer</code>, a space, then the token, and a token pasted with a trailing newline from a file will fail in a way that looks like an invalid token rather than a malformed header.</p>
+
+                <h3>What are the blank lines in the Lichess event stream?</h3>
+                <p>They are keep-alive lines. The event stream documentation says an empty line is sent every seven seconds so that proxies and clients do not treat an idle connection as dead. They are not JSON and they are not events. A reader that hands every line straight to a JSON parser will throw on the first quiet stretch of the stream, which in my case happened at three in the morning rather than during testing. Skip any line that is blank after trimming.</p>
+
+                <h3>How do you tell whose turn it is in a Lichess bot game?</h3>
+                <p>Count the moves. The <code>gameState</code> event carries the whole game as a single space-separated string of moves rather than a delta, so an even number of tokens means White is to move and an odd number means Black is to move, assuming the game started from the normal position. Your own colour comes from comparing your bot account id against the <code>white</code> and <code>black</code> player ids in the opening <code>gameFull</code> event. Combine the two and act only when they agree.</p>
+
+                <h3>What move format does the Lichess bot move endpoint accept?</h3>
+                <p>UCI long algebraic notation, meaning the from square followed by the to square, with a lowercase promotion letter appended when relevant. So <code>e2e4</code> and <code>e7e8q</code>. Standard algebraic notation such as <code>Nf3</code> or <code>exd5</code> is rejected. Castling in standard chess is sent as the king moving two files, <code>e1g1</code> or <code>e1c1</code>, and the schema for the incoming move list documents a Chess960-compatible king-to-rook form as well, so it is worth accepting both when reading and being explicit about which one you send.</p>
+
+                <h3>How should a bot handle a 429 from the Lichess API?</h3>
+                <p>Stop sending for at least a minute, which is the guidance in the API introduction, and then resume at a lower rate rather than retrying immediately. Make one request at a time rather than firing concurrent calls per game. Read and close every response body even when you do not care about its contents, because an HTTP client that leaks connections will start queuing requests and make your effective rate look far worse than your code suggests.</p>
+
+                <h3>How do you keep a Lichess bot running on a server?</h3>
+                <p>A systemd service unit with <code>Restart=always</code> and a <code>RestartSec</code> of a few seconds is enough for a single bot process, with the token supplied through an <code>EnvironmentFile</code> that is readable only by the service user rather than baked into the unit. Logs go to journald automatically, so a single <code>journalctl</code> follow command is your whole observability stack. Add <code>StartLimitBurst</code> and <code>StartLimitIntervalSec</code> so that a genuinely broken build stops restarting instead of looping forever.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">Lichess API</a>
+                <a href="javascript:void(0)" class="tag">Chess Engine</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+                <a href="javascript:void(0)" class="tag">HTTP Streaming</a>
+                <a href="javascript:void(0)" class="tag">Deployment</a>
+                <a href="javascript:void(0)" class="tag">Chess Programming</a>
+                <a href="javascript:void(0)" class="tag">Bots</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/implementing-the-uci-protocol-in-plain-java.html">Implementing the UCI Protocol in Plain Java (No Frameworks)</a></li>
+                        <li><a href="/blogs/writing-a-chess-evaluation-function-material-piece-square-tables-mobility.html">Writing a Chess Evaluation Function: Material, Piece-Square Tables, Mobility</a></li>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/handling-en-passant-castling-rights-and-the-50-move-rule-correctly.html">Handling En Passant, Castling Rights, and the 50-Move Rule Correctly</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
