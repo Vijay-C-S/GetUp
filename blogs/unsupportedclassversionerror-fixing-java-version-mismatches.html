@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="What class file version 61.0 and 65.0 actually mean, why the JVM refuses newer bytecode by design, the three build topologies that produce the mismatch, and why bumping -target is not a fix.">
+    <title>UnsupportedClassVersionError: Fixing Java Version Mismatches</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="UnsupportedClassVersionError: Fixing Java Version Mismatches">
+    <meta property="og:description" content="The bytecode is fine and the code is fine. The machine that compiled it is newer than the machine that runs it, and the JVM will never meet you halfway.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/exception.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="UnsupportedClassVersionError: Fixing Java Version Mismatches">
+    <meta name="twitter:description" content="52 is Java 8, 55 is 11, 61 is 17, 65 is 21. One of those numbers is your compiler and one is your runtime, and getting them backwards is why people fix this in the wrong direction.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/exception.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "UnsupportedClassVersionError: Fixing Java Version Mismatches", "item": "https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "UnsupportedClassVersionError: Fixing Java Version Mismatches",
+        "description": "A practical guide to java.lang.UnsupportedClassVersionError — where it sits in the LinkageError family, how to decode the two numbers in the message and which one is the compiler, the class file major version table from 52 to 69, the three build and deploy topologies that produce a mismatch, how to find the offending class and the jar it came from, the fixes in order of cost, and why -noverify and a bumped -target are not among them.",
+        "datePublished": "2026-08-16",
+        "dateModified": "2026-08-16",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/exception.webp",
+            "caption": "Comparing the class file version stamped into a compiled class against the highest version the runtime JVM will accept",
+            "name": "UnsupportedClassVersionError: Fixing Java Version Mismatches"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What does class file version 61.0 mean?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "61 is the major version and it means the class file was produced for Java 17. The numbering starts at 45 for Java 1.1 and has gone up by exactly one for every release since, which works out to 44 plus the release number: 52 is Java 8, 55 is Java 11, 59 is Java 15, 61 is Java 17, 65 is Java 21 and 69 is Java 25. The .0 after it is the minor version, which is zero for every ordinary class file; the one value you will see in the wild is 65535, which marks a class compiled with --enable-preview and which a JVM will load only if it is the exact same release and you passed --enable-preview at runtime too. The number lives in bytes five to eight of the file, immediately after the CAFEBABE magic, so it is a property of the compiled artifact rather than of your source, and no runtime flag changes how it is interpreted."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I run Java 17 bytecode on a Java 11 JVM?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, and there is no flag, no compatibility mode and no switch that makes it possible. A JVM implements one class file format specification and accepts every version up to its own; anything higher it refuses during class file parsing, before verification, before initialisation and before any of your code runs. The refusal is deliberate rather than an oversight. A newer class file may use constant pool entries, attributes, instructions or structural rules that did not exist when the older JVM was built, so there is no safe way for it to guess: attempting the class file would mean executing something it cannot interpret. Backwards compatibility runs the other way and is very strong — a Java 21 JVM will happily load a version 46 class from 1998 — but forwards compatibility does not exist. Your options are to recompile the class for the older release or to raise the runtime, and nothing else."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the difference between --release and -source/-target?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "-source controls which language features javac accepts, -target controls which class file version it stamps, and neither one changes the API javac compiles against. That last part is the trap: on a JDK 21 compiler, -source 11 -target 11 produces class files marked 55.0 that a Java 11 JVM will happily load, and which may call methods that were added in Java 12 or later because javac resolved them against the JDK 21 class library sitting in front of it. You get a clean build and then a NoSuchMethodError at runtime, which is a worse failure than the one you were trying to avoid because it arrives lazily on one code path instead of immediately at load time. --release 11 sets both of the other two and additionally compiles against the recorded Java 11 API signatures, so a call to something newer fails at compile time where it belongs. Use --release. The only reason to reach for the older pair is a build that genuinely needs the source level and the target level to differ, which is rare and usually a mistake."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I find which jar has the bad class file?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Start from the name in the message, because the error already tells you the class — read it as a path, convert the slashes to dots, and ask your build which artifact provides it. If the class is one of yours, javap -verbose on the compiled file and a look at the major version line settles it in a second. If it belongs to a dependency, the direct approach is to walk every jar on the runtime classpath, read the first class entry out of each and print its major version, which takes a four-line shell loop and is the only method that does not depend on a tool being newer than the file it is inspecting. jdeps is useful for the follow-up question of which artifact your code actually reaches, and jdeps run from the older JDK has a pleasant side effect: it refuses the too-new class itself and names the file it choked on. Once you have the jar, mvn dependency:tree or gradle dependencyInsight tells you who pulled it in, which is usually a transitive upgrade nobody read."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <!-- Consent gate: ads stay non-personalized until the visitor accepts. Must run before the loader below. -->
+    <script>
+    (function () {
+        try {
+            var c = JSON.parse(localStorage.getItem('GetUp_cookie_consent'));
+            if (c && c.expiry > Date.now() && c.value === 'accepted') { return; }
+        } catch (e) { /* unreadable consent; treat as not given */ }
+        (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+    })();
+    </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">UnsupportedClassVersionError: Fixing Java Version Mismatches</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Aug 16, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 14 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/exception.webp" alt="A developer comparing the class file version stamped into a compiled Java class against the highest version the runtime JVM will accept" title="Tracing an UnsupportedClassVersionError back to the gap between the JDK that compiled the class and the JVM that was asked to load it" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">The bytecode was correct. It was four years too new.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">The image built at 08:14 and passed all 914 tests. The deploy went out at 08:31 and the health check went green. At 09:02 the first settlement run of the day started, and the log said this:</p>
+
+                <pre><code>java.lang.UnsupportedClassVersionError: com/acme/ledger/SettlementJob has been
+compiled by a more recent version of the Java Runtime (class file version 65.0),
+this version of the Java Runtime only recognizes class file versions up to 61.0</code></pre>
+
+                <p>The change that did it was three lines in a Dockerfile, merged the previous afternoon. A dependency-update bot had bumped the builder stage from <code>eclipse-temurin:17-jdk</code> to <code>eclipse-temurin:21-jdk</code>. The runtime stage, eleven lines further down the same file, stayed on <code>eclipse-temurin:17-jre</code>. Nobody noticed, including me, because the diff was small and green and the pipeline agreed with it at every step.</p>
+
+                <p>It agreed because the pipeline compiled and tested inside the builder stage. Every one of those 914 tests ran on a Java 21 JVM against Java 21 bytecode, which is a completely coherent thing to do and proves nothing whatsoever about the JVM in the runtime image. The first time that bytecode met the Java 17 runtime was in production, thirty-one minutes after the deploy, on the first class the job happened to touch.</p>
+
+                <p>Then I made it worse. I read the two numbers in the message backwards &mdash; I took 61.0 as the thing that had been compiled wrong and 65.0 as what the runtime wanted &mdash; set <code>maven.compiler.target</code> to 21, rebuilt, and shipped a jar in which every class was now 65.0 instead of merely most of them. The error came back identical and I lost twenty minutes deciding the build cache was lying to me. It was not. I had pushed the numbers further apart while trying to close the gap.</p>
+
+                <p>That is the thing worth saying about this error up front: it is not a code problem. Nothing in <code>SettlementJob.java</code> is wrong, nothing in it would be improved by editing, and the file named in the message is the last place to look. It is a statement about the topology of your build and your deployment &mdash; which JDK compiled, which JVM runs, and the fact that those two were allowed to drift apart without anything failing until a customer was waiting. This post is about reading the message correctly the first time, finding the class and the jar that carry the wrong stamp, and applying the fixes in the order that does not create a second, subtler failure.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#means">What the Error Actually Means</a></li>
+                    <li><a href="#why">Why It Happens: The Format Is Versioned</a></li>
+                    <li><a href="#cause1">Cause 1: The Build JDK Is Newer Than the Runtime JVM</a></li>
+                    <li><a href="#cause2">Cause 2: One Dependency Compiled for a Newer Release</a></li>
+                    <li><a href="#cause3">Cause 3: -source and -target Without --release</a></li>
+                    <li><a href="#fix">How to Fix It, and What Each Fix Costs</a></li>
+                    <li><a href="#prevent">How to Prevent It</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="means">What the Error Actually Means</h2>
+
+                <p>Start with where it lives, because the placement answers three questions at once.</p>
+
+                <pre><code>java.lang.Throwable
+ └── java.lang.Error
+      └── java.lang.LinkageError
+           ├── java.lang.NoClassDefFoundError
+           ├── java.lang.ExceptionInInitializerError
+           ├── java.lang.NoSuchMethodError
+           ├── java.lang.IncompatibleClassChangeError
+           └── java.lang.ClassFormatError
+                └── java.lang.UnsupportedClassVersionError   // ← here</code></pre>
+
+                <p>It is a <code>LinkageError</code>, which puts it in the same family as <a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">NoClassDefFoundError</a> and means exactly what that family always means: the pieces you compiled and the pieces you are running do not agree. It is specifically a <code>ClassFormatError</code>, which narrows it further &mdash; the JVM is not saying the class is missing or incomplete or wired to something absent. It is saying the bytes are not a class file it knows how to read.</p>
+
+                <p>And it is an <code>Error</code>, not an exception, which settles the question people ask next. There is no handler. Nothing in your code was supposed to anticipate this and nothing in your code can recover from it, because the class in question does not exist as a loaded type and never will on this JVM.</p>
+
+                <p>The timing is the part that surprises people. This is thrown during class file parsing, which happens the moment the loader defines the class &mdash; before verification proper, before preparation, long before <code>&lt;clinit&gt;</code>, and before a single instruction of the class's own code executes. The JVM reads the first eight bytes, compares one number against its own ceiling, and stops. Everything after those eight bytes is irrelevant. A class file that is complete, correct, well-formed and perfectly written fails here just as fast as a corrupt one.</p>
+
+                <p>Now the message, which contains exactly two numbers and is where most of the wasted time happens:</p>
+
+                <pre><code>com/acme/ledger/SettlementJob has been compiled by a more recent version of the
+Java Runtime (class file version 65.0), this version of the Java Runtime only
+recognizes class file versions up to 61.0
+                             ▲                                              ▲
+                             │                                              │
+              the COMPILER that produced the file        the RUNTIME reading it now
+                     (65 = JDK 21)                            (61 = JDK 17)</code></pre>
+
+                <p>The first number is the artifact. The second number is the machine. The first is always higher than the second, in every instance of this error that has ever been printed, because a lower first number is not an error at all. If you remember one thing, remember that the number in parentheses is the one you built and the number at the end is the one you are running on, and your job is to bring them together from whichever end is cheaper.</p>
+
+                <p>Here is the table, which is the single thing most people arrive looking for:</p>
+
+                <pre><code>major   Java release        major   Java release
+-----   ------------        -----   ------------
+   45   Java 1.1               58   Java 14
+   46   Java 1.2               59   Java 15
+   47   Java 1.3               60   Java 16
+   48   Java 1.4               61   Java 17    (LTS)
+   49   Java 5                 62   Java 18
+   50   Java 6                 63   Java 19
+   51   Java 7                 64   Java 20
+   52   Java 8     (LTS)       65   Java 21    (LTS)
+   53   Java 9                 66   Java 22
+   54   Java 10                67   Java 23
+   55   Java 11    (LTS)       68   Java 24
+   56   Java 12                69   Java 25    (LTS)
+   57   Java 13
+
+# The rule underneath it: 45 was Java 1.1 and the number has gone up by
+# exactly one for every release since, which for Java 5 and later works
+# out to  major = 44 + N.   52 = 44 + 8.  61 = 44 + 17.  65 = 44 + 21.
+#
+# The minor version (the ".0") is 0 for every ordinary class file.
+# The one value you will meet is 65535, which marks a class compiled
+# with --enable-preview. Those load only on the exact same release,
+# and only if you also passed --enable-preview at runtime.</code></pre>
+
+                <p>You can read the number straight out of the file, and it is worth doing once so that it stops feeling like folklore. The first four bytes of every class file are <code>CA FE BA BE</code>; the next two are the minor version; the two after that are the major:</p>
+
+                <pre><code>$ xxd -l 8 target/classes/com/acme/ledger/SettlementJob.class
+00000000: cafe babe 0000 0041                      ........
+
+# 0x0000 = minor 0.  0x0041 = 65 decimal = Java 21.</code></pre>
+
+                <p>That is the whole mechanism. Two bytes, written by javac, checked by the JVM, and the entire failure lives in the gap between them.</p>
+
+                <p>It is worth knowing that the JVM is not the only thing performing this check, because the error turns up in places where no application is running at all. Anything that reads class files has a ceiling of its own: <code>javap</code>, <code>jdeps</code>, a bytecode-rewriting agent, a coverage tool, a shading plugin, a static analyser, an application server scanning a deployment for annotations. A build that fails with this error inside a Maven plugin is telling you that the plugin is running on an older JVM than the classes it was pointed at, which is a different problem from the same message at runtime and has a different fix &mdash; usually upgrading the plugin or the JVM the build itself runs on, not the target release.</p>
+
+                <h2 id="why">Why It Happens: The Format Is Versioned</h2>
+
+                <p>The class file format is a specification with revisions, and each Java release may add to it. Java 7 added <code>invokedynamic</code> and the method handle constant pool entries that go with it. Java 11 added nest-based access control, which changed how nested classes reach each other's private members. Java 16 added records, which arrive as a new attribute. Java 17 added sealed classes and a <code>PermittedSubclasses</code> attribute. None of that is source-level sugar that disappears before the bytes are written &mdash; it is structure inside the file, and a JVM that predates it has no code that knows what to do with those bytes.</p>
+
+                <p>So the version number is not a label or a courtesy. It is a contract: <em>this file may use anything the format permitted as of release N</em>. A JVM built for release N minus four cannot honour that contract, and it cannot inspect its way out of the problem either, because the only way to discover whether a particular file uses anything unfamiliar is to parse it &mdash; using the parser that does not understand the format. The check exists precisely so that the failure is a clean refusal at byte eight rather than an undefined crash somewhere in the middle of a constant pool.</p>
+
+                <p>The asymmetry follows from that and it is total. <strong>Backwards compatibility is excellent.</strong> A Java 21 JVM will load a version 46 class file compiled in 1999 without complaint, because every structure that file can possibly contain was already understood when it was written and has been kept understood since. Java's commitment to running old bytecode is one of the strongest in the industry, and it is why twenty-year-old jars still work. <strong>Forwards compatibility does not exist and never will.</strong> There is no flag, no compatibility mode, no <code>--i-know-what-i-am-doing</code>, and asking for one is asking the JVM to interpret bytes whose meaning was defined after it was compiled.</p>
+
+                <p>The other half of the picture is that <strong>bytecode is not source</strong>, and this is what makes the error feel unfair. Your <code>.java</code> file may be entirely compatible with Java 8 &mdash; no records, no sealed types, no switch expressions, nothing added in the last decade. That is irrelevant. javac stamps the class file with the target it was asked for, not with the newest feature you happened to use, so a file containing a single method that returns a constant is stamped 65.0 if it was compiled with a JDK 21 toolchain at its defaults. The compatibility of your <em>source</em> and the version of your <em>artifact</em> are separate facts, and only the second one is checked at load time.</p>
+
+                <p>Which is why this belongs in the build-and-deploy column rather than the code column. Every instance is the same shape: two environments that were supposed to agree about a Java version, and a path by which they were allowed to disagree. A developer's <code>JAVA_HOME</code>, a CI runner image, a builder container, a base image, an application server's bundled JRE, a Lambda runtime, a customer's laptop. The bug is not in a file. It is in the fact that no single thing owned the answer to "which Java?" and two different things answered it differently.</p>
+
+                <p>One more consequence of the timing, and it explains why this error tends to show up late. Class loading is lazy. A class is not parsed until something references it, so a bad class file sitting in a rarely-used code path is invisible at startup, invisible to the health check and invisible to the smoke test. Mine surfaced thirty-one minutes after deploy because that was when the scheduled job first ran. That laziness is exactly the trap described in the <a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">ClassNotFoundException and NoClassDefFoundError</a> post, and it catches people here for the same reason: a deploy that starts successfully has not demonstrated that its classes can be loaded.</p>
+
+                <h2 id="cause1">Cause 1: The Build JDK Is Newer Than the Runtime JVM</h2>
+
+                <p>The common case by a wide margin, and mine. Something upgrades the compiler and nothing upgrades the runtime.</p>
+
+                <p>The multi-stage Dockerfile is the modern shape of it, because the two Java versions are written eleven lines apart in the same file and look like they are related:</p>
+
+                <pre><code># --- build stage -------------------------------------------------
+FROM eclipse-temurin:21-jdk AS build          # ← bumped by a bot, 12 Aug
+WORKDIR /src
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+RUN mvn -B -q clean package -DskipTests=false
+
+# --- runtime stage -----------------------------------------------
+FROM eclipse-temurin:17-jre                   # ← nobody touched this
+COPY --from=build /src/target/ledger-service.jar /app/app.jar
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]</code></pre>
+
+                <p>Nothing about that build fails. Maven has a JDK 21 compiler and no instruction to target anything older, so it produces 65.0 class files and reports success. The tests run in the same stage against the same JDK and pass, which is worth dwelling on: <strong>a green test suite is evidence about the build JVM, not about the runtime JVM</strong>, and if your pipeline never starts the runtime image you have tested one of the two Java versions you shipped.</p>
+
+                <p>The same mistake wears other clothes. A CI runner image that was refreshed to the latest LTS while the deployment target stayed put. A developer whose <code>JAVA_HOME</code> points at whatever their package manager installed last, producing a local build that works on their machine and nowhere else. An application server &mdash; Tomcat, WildFly, a vendor appliance &mdash; running on a JRE the ops team owns and the application team never sees. A Lambda or Cloud Run runtime pinned in infrastructure code that lives in a different repository from the build.</p>
+
+                <p>The tell is that <em>everything</em> fails, not one thing. If the first class the process touches is yours, the error arrives at startup with your main class named in it. If your entry point is a framework, you may get a few seconds of successful startup logging before the first application class is loaded and the whole thing stops. Either way, once you find one bad class you will find that all of them are bad, and that is the signature of this cause rather than the next one.</p>
+
+                <p>Confirming it takes two commands, and I run both before touching anything:</p>
+
+                <pre><code># what the runtime image actually has
+$ docker run --rm --entrypoint java ledger-service:1.44.0 -version
+openjdk version "17.0.12" 2024-07-16
+OpenJDK Runtime Environment Temurin-17.0.12+7 (build 17.0.12+7)
+OpenJDK 64-Bit Server VM Temurin-17.0.12+7 (build 17.0.12+7, mixed mode)
+
+# what the build actually produced
+$ javap -verbose -cp target/ledger-service.jar com.acme.ledger.SettlementJob \
+    | grep -E '^  (major|minor) version'
+  minor version: 0
+  major version: 65</code></pre>
+
+                <p>65 against 61. That is the entire diagnosis, it took under a minute, and it is the minute I skipped in favour of guessing.</p>
+
+                <h2 id="cause2">Cause 2: One Dependency Compiled for a Newer Release</h2>
+
+                <p>Your build is correct. Your classes are stamped exactly right. One jar on the classpath is not, and it takes the process down the first time anything reaches into it.</p>
+
+                <p>This one is nastier than cause 1 for three reasons: the failure is partial, it is lazy, and the class named in the message belongs to code you have never read. The application starts. The health check passes. Requests are served. Then a particular path executes for the first time and:</p>
+
+                <pre><code>2026-08-16T09:02:41.118Z ERROR [ledger-worker-3] c.a.l.SettlementRunner
+java.lang.UnsupportedClassVersionError: com/acme/common/retry/BackoffPolicy has been
+compiled by a more recent version of the Java Runtime (class file version 65.0),
+this version of the Java Runtime only recognizes class file versions up to 61.0
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1017)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:862)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:759)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+	at com.acme.ledger.SettlementRunner.retryable(SettlementRunner.java:88)</code></pre>
+
+                <p>Read the trace from the bottom. One frame of yours, then <code>loadClass</code>, then <code>defineClass1</code>, which is the native method that parses the bytes. There are no intermediate application frames because nothing application-level happened &mdash; the JVM was asked for a type and refused at the parse. That trace shape is diagnostic on its own: <code>defineClass1</code> immediately above your frame means the failure is the class file itself, not anything the class does.</p>
+
+                <p>How the jar got there is almost always a transitive upgrade nobody read. An internal shared library whose own pipeline moved to JDK 21 six weeks ago and published <code>4.2.0</code> without a note. A third-party dependency that raised its minimum supported Java in a minor version, which happens more often than the version number suggests. A shaded uber-jar assembled by a different team. A driver or agent dropped into a <code>lib/</code> directory by an operator rather than by the build.</p>
+
+                <p>Finding it is a scan of the runtime classpath. This is the version I keep, because it depends on nothing being installed and nothing being newer than the files it reads:</p>
+
+                <pre><code># Print the class file major version of the first class in every jar.
+$ for j in lib/*.jar; do
+>   entry=$(unzip -Z1 "$j" '*.class' | head -1)
+>   ver=$(unzip -p "$j" "$entry" | od -An -t u1 -j 7 -N 1 | tr -d ' ')
+>   printf '%-44s %s\n' "$(basename "$j")" "$ver"
+> done | sort -k2 -n
+
+jackson-databind-2.17.2.jar                  52
+slf4j-api-2.0.13.jar                         52
+postgresql-42.7.3.jar                        52
+spring-core-6.1.11.jar                       61
+spring-boot-3.3.2.jar                        61
+acme-common-4.2.0.jar                        65        # ← this one
+</code></pre>
+
+                <p>Byte 7 (zero-indexed) is the low byte of the major version, which is why <code>od</code> with those flags is enough. Note how ordinary the rest of the list is: most published jars target 52 or 55 deliberately, because library authors have every incentive to reach as many runtimes as possible. A 65 sitting among them is conspicuous the moment you sort.</p>
+
+                <p>Two caveats. The first class in a jar is a sample rather than a proof &mdash; a multi-release jar carries several versions of the same class under <code>META-INF/versions/</code>, and those are supposed to be higher, so check whether the offending entry sits under that directory before accusing anyone. Second, if you have a very large classpath the loop is worth pointing at every entry rather than the first, which costs seconds and removes the doubt.</p>
+
+                <p>Once you have the jar, ask the build who wanted it:</p>
+
+                <pre><code>$ mvn -q dependency:tree -Dincludes=com.acme:acme-common
+[INFO] com.acme:ledger-service:jar:1.44.0
+[INFO] \- com.acme:reporting-client:jar:2.9.0:compile
+[INFO]    \- com.acme:acme-common:jar:4.2.0:compile      # transitive, via reporting-client
+
+# Gradle equivalent
+$ ./gradlew dependencyInsight --dependency acme-common --configuration runtimeClasspath</code></pre>
+
+                <p>Nobody added <code>acme-common</code>. A version bump on <code>reporting-client</code> dragged it in, which is why the change that broke production does not appear anywhere in the diff of the change that broke production.</p>
+
+                <h2 id="cause3">Cause 3: -source and -target Without --release</h2>
+
+                <p>The third one is the mistake people make while fixing the first two, which is why it belongs here rather than in a footnote.</p>
+
+                <p>The instinctive repair for a version mismatch is to tell the compiler to target the older release, and the flags everybody reaches for are <code>-source</code> and <code>-target</code>:</p>
+
+                <pre><code>&lt;!-- Compiles on JDK 21. Stamps 55.0. Looks completely correct. --&gt;
+&lt;properties&gt;
+  &lt;maven.compiler.source&gt;11&lt;/maven.compiler.source&gt;
+  &lt;maven.compiler.target&gt;11&lt;/maven.compiler.target&gt;
+&lt;/properties&gt;</code></pre>
+
+                <p><code>-source</code> decides which language features javac will accept. <code>-target</code> decides which class file version it stamps. Neither of them changes <em>which class library javac compiles against</em>, and that omission is the entire problem: on a JDK 21 compiler, the JDK 21 <code>java.base</code> is what your code is resolved against, so a call to a method that was added in Java 12 compiles cleanly and gets written into the constant pool of a class file marked 55.0.</p>
+
+                <pre><code>// Compiles without a murmur under -source 11 -target 11 on a JDK 21 javac.
+String json = payload.strip();                 // Java 11, fine
+byte[] raw  = stream.readAllBytes();           // Java 9, fine
+String pad  = header.repeat(3);                // Java 11, fine
+var list    = records.stream().toList();       // Java 16 — resolved against JDK 21's API</code></pre>
+
+                <p>The Java 11 JVM loads that class perfectly happily, because 55.0 is a version it recognises. Then it reaches the <code>toList</code> call and throws <code>NoSuchMethodError</code>, at whatever moment that line first executes, with a message about a method rather than a version.</p>
+
+                <p>That trade is a bad one and it is worth being explicit about why. You have converted a failure that happens at load time, deterministically, on every machine, into one that happens lazily, on one code path, possibly in front of a customer. <code>UnsupportedClassVersionError</code> is the well-behaved member of the <code>LinkageError</code> family: it is loud, it is early, and it names a version. <code>NoSuchMethodError</code> is the one that hides in the branch nobody exercised. Silencing the first by producing the second is not a fix; it is a downgrade in failure quality dressed up as progress.</p>
+
+                <p><code>--release</code> exists precisely for this and has since Java 9:</p>
+
+                <pre><code>&lt;!-- Sets source, sets target, AND compiles against the recorded Java 11 API. --&gt;
+&lt;properties&gt;
+  &lt;maven.compiler.release&gt;11&lt;/maven.compiler.release&gt;
+&lt;/properties&gt;</code></pre>
+
+                <pre><code>$ mvn -B clean package
+[ERROR] SettlementJob.java:[64,42] cannot find symbol
+[ERROR]   symbol:   method toList()
+[ERROR]   location: interface java.util.stream.Stream
+[ERROR] BUILD FAILURE</code></pre>
+
+                <p>That is the build failing at 08:14 on a laptop instead of at 09:02 in production, which is the whole point of a compiler.</p>
+
+                <p>The variant that catches teams with more than one module is the same mistake distributed across a repository. A parent POM sets <code>maven.compiler.release</code> and one child overrides it with its own <code>maven-compiler-plugin</code> configuration, usually years ago, usually for a reason that no longer applies. The build produces a jar in which most classes are 55.0 and one package is 65.0, and the failure looks exactly like cause 2 except that the offending jar is your own:</p>
+
+                <pre><code>&lt;!-- ledger-batch/pom.xml — inherits release 17 from the parent, then does this --&gt;
+&lt;plugin&gt;
+  &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+  &lt;configuration&gt;
+    &lt;source&gt;21&lt;/source&gt;      &lt;!-- added "temporarily" to use a pattern match --&gt;
+    &lt;target&gt;21&lt;/target&gt;
+  &lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
+
+                <p>The IDE version of it is quieter still. IntelliJ and Eclipse keep their own language level and their own output directory, and if the IDE is set to 21 while the build is set to 17, a run launched from the IDE compiles into <code>target/classes</code> at 65.0 and then a packaging step that does not recompile picks those files up. The symptom is a jar whose class versions depend on who built it last, which is genuinely maddening to diagnose and is why toolchains &mdash; covered in the next section &mdash; are worth the ten minutes they take to configure.</p>
+
+                <h2 id="fix">How to Fix It, and What Each Fix Costs</h2>
+
+                <h3>1. Identify the class, then the artifact</h3>
+
+                <p>Do this before deciding anything, because the fix for "all of my classes" and the fix for "one jar I do not control" are different and the message alone does not tell you which you have.</p>
+
+                <pre><code># The class named in the message, if it is yours:
+$ javap -verbose target/classes/com/acme/ledger/SettlementJob.class | grep major
+  major version: 65
+
+# The same class inside a jar, without extracting anything:
+$ javap -verbose -cp target/ledger-service.jar com.acme.ledger.SettlementJob | grep major
+  major version: 65
+
+# And the runtime, from the machine that will actually run it:
+$ java -version
+openjdk version "17.0.12" 2024-07-16</code></pre>
+
+                <p>If the process you are diagnosing is still up, ask it directly rather than inferring from an image tag, because the JVM that is actually running is the only authority on what it accepts:</p>
+
+                <pre><code>$ jcmd 1 VM.version
+1:
+OpenJDK 64-Bit Server VM version 17.0.12+7
+JDK 17.0.12
+
+# and the flags and classpath it was actually started with
+$ jcmd 1 VM.command_line | head -4</code></pre>
+
+                <p>Then widen it. If every class in your own jar is 65, you have cause 1 and the answer is a build or runtime alignment. If your classes are 61 and one dependency is 65, you have cause 2 and the answer is that dependency. If your own jar is mixed, you have cause 3 and the answer is in a module POM or an IDE setting.</p>
+
+                <p><code>jdeps</code> is the tool for the follow-up question of what your code actually reaches into, and it has a useful accident: run it from the older JDK and it refuses the too-new class itself, naming the file, which is a one-command version of the scan above.</p>
+
+                <pre><code>$ jdeps -summary -cp "lib/*" target/ledger-service.jar
+ledger-service.jar -> java.base
+ledger-service.jar -> lib/acme-common-4.2.0.jar
+ledger-service.jar -> lib/spring-core-6.1.11.jar</code></pre>
+
+                <p>Cost: about two minutes, and it is the only step on this list with no downside. Skipping it is what cost me twenty.</p>
+
+                <h3>2. Raise the runtime</h3>
+
+                <p>If the runtime is yours and the newer release is one you are willing to run, this is the cheapest correct fix and often the right one. The bytecode is already valid; you are giving it a JVM that can read it.</p>
+
+                <pre><code>-FROM eclipse-temurin:17-jre
++FROM eclipse-temurin:21-jre</code></pre>
+
+                <p>Cost: real, and not zero. You are now running a JVM the application has never run on, so garbage collector defaults, TLS defaults, and behaviour around reflective access to JDK internals can all shift under you, and some agents and instrumentation libraries need a matching upgrade. Treat it as a runtime upgrade with a test cycle, not as a one-line diff. The consolation is that it is an upgrade you were going to do eventually, and doing it deliberately is better than doing it accidentally in a Dockerfile.</p>
+
+                <p>This is not available at all when the runtime is not yours: a customer-deployed agent, a vendor appliance, a managed platform pinned to an older release, an Android toolchain. In those cases skip to the next fix, which is the one you actually want anyway.</p>
+
+                <h3>3. Recompile with --release</h3>
+
+                <p>Target the release you deploy to, and use <code>--release</code> so the API is checked as well as the version stamped.</p>
+
+                <pre><code>&lt;!-- Maven --&gt;
+&lt;properties&gt;
+  &lt;maven.compiler.release&gt;17&lt;/maven.compiler.release&gt;
+&lt;/properties&gt;
+
+# javac directly
+$ javac --release 17 -d target/classes $(find src/main/java -name '*.java')</code></pre>
+
+                <pre><code>// Gradle — toolchain, not sourceCompatibility.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}</code></pre>
+
+                <p>The Gradle toolchain block is stronger than it looks. It does not merely target 17; it tells Gradle to <em>find or provision a JDK 17</em> and compile with it, so the build stops depending on which JDK happens to be running Gradle. That removes the whole class of "works on my machine" that cause 3 lives in. Maven has the equivalent in the toolchains plugin, and it is worth the setup on any repository with more than a couple of contributors.</p>
+
+                <p>Cost: you give up the language features of the newer releases. If a module has already adopted pattern matching for switch or records that a 17 target does not permit, this is a real code change and not a configuration change, and you should find that out from a compiler error rather than from a production log. That is exactly what <code>--release</code> gives you.</p>
+
+                <h3>4. Make the build and runtime images the same family</h3>
+
+                <p>Cause 1 exists because two versions were written in two places and only one of them was maintained. Write it once:</p>
+
+                <pre><code>ARG JAVA_VERSION=17
+
+FROM eclipse-temurin:${JAVA_VERSION}-jdk AS build
+WORKDIR /src
+COPY . .
+RUN mvn -B -q clean package
+
+FROM eclipse-temurin:${JAVA_VERSION}-jre
+COPY --from=build /src/target/ledger-service.jar /app/app.jar
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]</code></pre>
+
+                <p>One argument, both stages, and a bot that bumps it bumps both. Cost: nothing, beyond remembering that <code>ARG</code> before the first <code>FROM</code> is global and must be redeclared inside a stage if you want it in a <code>RUN</code>. This is the highest-value ten minutes in the entire post.</p>
+
+                <h3>5. Deal with the dependency</h3>
+
+                <p>For cause 2, in order of preference: find a version of the library that still supports your runtime, ask the owner to publish one, or upgrade your runtime to meet it. If the library is internal, the conversation is short and the fix belongs in their pipeline &mdash; a library that raises its minimum Java release has made a breaking change and should say so in its version number.</p>
+
+                <p>Cost: coordination, and sometimes time you do not have during an incident. The mitigation that actually holds during an outage is a pin plus a rollback of the transitive upgrade, followed by the real fix on a normal working day.</p>
+
+                <h3>What is not a fix</h3>
+
+                <p><strong>Catching it.</strong> The same argument as everywhere else in this cluster, with an extra edge: there is nothing to recover to. The type does not exist and will not exist for the lifetime of the process, so a handler that swallows the error produces a service that runs, answers health checks, and fails every request that touches that code path. A process that dies gets replaced. A process that limps stays in the load-balancer pool returning 500s, which is the same outcome I described for <a href="/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">OutOfMemoryError</a> and is just as unhelpful here.</p>
+
+                <p><strong><code>-noverify</code> and <code>-Xverify:none</code>.</strong> This one deserves the bluntest wording, because it is the top suggestion on half the forum threads about this error and it is simply wrong. It does not work. The version check happens in class file parsing, not in the bytecode verifier, so disabling the verifier does not skip it &mdash; you get the identical error, having also turned off the mechanism that stops malformed bytecode from corrupting the JVM. And on modern releases the flags are obsolete and ignored with a warning anyway. A suggestion that both fails to help and removes a safety net is not a workaround; it is two mistakes that happen to cancel out into no effect.</p>
+
+                <p><strong>Bumping <code>-target</code> to make the message go away.</strong> If the runtime is the constraint, raising the target raises the number the runtime rejects &mdash; that is the twenty minutes I lost. If the runtime is not the constraint, raising the target without raising the runtime you actually deploy to just moves the failure to a machine you have not tested on yet. And raising <code>-source</code>/<code>-target</code> in place of <code>--release</code>, as covered above, trades a load-time error for a lazy <code>NoSuchMethodError</code>. Every version of this reflex makes the failure later, quieter, and further from the change that caused it. A build that fails on your laptop is a gift; do not spend it.</p>
+
+                <p><strong>Downgrading a dependency blindly.</strong> Pinning <code>acme-common</code> back to <code>4.1.0</code> is a legitimate incident mitigation and I have done it at two in the morning. It is not a fix, because you have not learned whether the upgrade was the only thing that moved, and the next transitive bump reintroduces it. Pin, get the service back, then work out whether the runtime or the library is the thing that should change.</p>
+
+                <h2 id="prevent">How to Prevent It</h2>
+
+                <p>Make the build refuse to run on the wrong JDK. The Maven Enforcer plugin does this in about eight lines and turns a class of production failures into a build failure with a sentence in it:</p>
+
+                <pre><code>&lt;plugin&gt;
+  &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+  &lt;artifactId&gt;maven-enforcer-plugin&lt;/artifactId&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;id&gt;enforce-java&lt;/id&gt;
+      &lt;goals&gt;&lt;goal&gt;enforce&lt;/goal&gt;&lt;/goals&gt;
+      &lt;configuration&gt;
+        &lt;rules&gt;
+          &lt;requireJavaVersion&gt;
+            &lt;version&gt;[17,18)&lt;/version&gt;   &lt;!-- 17.x only, not "17 or newer" --&gt;
+          &lt;/requireJavaVersion&gt;
+        &lt;/rules&gt;
+      &lt;/configuration&gt;
+    &lt;/execution&gt;
+  &lt;/executions&gt;
+&lt;/plugin&gt;</code></pre>
+
+                <p>Note the half-open range. <code>[17,)</code> means "17 or anything newer" and is the version most people write, and it permits precisely the situation that caused this incident. If you are targeting one release, say one release.</p>
+
+                <p>Use toolchains so the build does not depend on whoever's <code>JAVA_HOME</code> ran it. Gradle's <code>toolchain</code> block and Maven's toolchains plugin both make the JDK a declared property of the project rather than a property of the machine, and a build that provisions its own compiler produces the same bytes on a laptop, a CI runner and a colleague's machine that still has 11 installed from a project two years ago. This is the single control that closes cause 3 permanently.</p>
+
+                <p>Run something on the runtime image in CI. Not the test suite necessarily &mdash; a container that starts the application, waits for the health endpoint and exits is enough, and it costs about forty seconds. That one step would have caught my incident before the merge, because the first class the process loads on startup would have failed on the Java 17 JVM in exactly the way it eventually did in production. If you can afford more, a test matrix that runs the suite on both the build JDK and the deployment JDK is better still, and it is the only way to catch the lazily-loaded cause-2 shape.</p>
+
+                <p>Record the class file version in the artifact itself so the question can be answered without a running JVM. The manifest is the obvious place, and one line in the packaging configuration puts the build JDK and the target release next to the version number where an operator can read them:</p>
+
+                <pre><code>Implementation-Version: 1.44.0
+Build-Jdk-Spec: 17
+Build-Jdk: 17.0.12
+Created-By: Maven JAR Plugin 3.4.1</code></pre>
+
+                <p>Maven writes <code>Build-Jdk-Spec</code> by default and most people never look at it. It is the fastest possible answer to "what compiled this", it survives being copied between machines, and it costs nothing because it is already there. Reading it before you start unzipping jars has saved me more than once.</p>
+
+                <p>Write the Java version once and derive everything else from it. One <code>ARG</code> in the Dockerfile, one property in the parent POM, one variable in the CI configuration that feeds both. Every additional place the number appears is a place it can be updated alone, and every one of those is a future incident with a five-minute diagnosis and a thirty-minute outage.</p>
+
+                <p>And read dependency upgrades for a raised minimum Java release, which is the review habit this error rewards. Library maintainers move their baseline in minor versions more often than anyone would like, and the release note usually says so in one line that nobody reads because the diff is a version number. When a bot opens a pull request that bumps a library across a major release, the question worth asking is not only "does it still compile" &mdash; it compiles on the build JDK, that is the trap &mdash; but "what does this now require at runtime". The same review reflex that catches a static collection with no eviction policy, described in the <a href="/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">OutOfMemoryError</a> post, catches this: the diff looks like nothing, and the consequence is a class of failure that only appears in production.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> The major-version table here is checked against current LTS OpenJDK builds and the rule underneath it has held since Java 1.1, but it extends by one with every six-month release, so treat the top of the table as the state of things at the time of writing rather than as a closed list. The exact wording of the error message, the phrasing of <code>javap</code> and <code>jdeps</code> output, and which diagnostic flags are still honoured have all changed across JDK versions and will again &mdash; the message text in particular is a message string and not a specification guarantee, so do not parse it in tooling. Verify with <code>javap -verbose</code> and <code>java -version</code> on your own toolchain rather than trusting any snippet here, including mine. The version numbers, jar names and timestamps in the examples come from one incident on one service and are shown to demonstrate the method, not as values to copy.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>What does class file version 61.0 mean?</h3>
+                <p>61 is the major version and it means the class file was produced for Java 17. The numbering starts at 45 for Java 1.1 and has gone up by exactly one for every release since, which works out to 44 plus the release number: 52 is Java 8, 55 is Java 11, 59 is Java 15, 61 is Java 17, 65 is Java 21 and 69 is Java 25. The <code>.0</code> after it is the minor version, which is zero for every ordinary class file; the one value you will see in the wild is 65535, which marks a class compiled with <code>--enable-preview</code> and which a JVM will load only if it is the exact same release and you passed <code>--enable-preview</code> at runtime too. The number lives in bytes five to eight of the file, immediately after the <code>CAFEBABE</code> magic, so it is a property of the compiled artifact rather than of your source, and no runtime flag changes how it is interpreted.</p>
+
+                <h3>Can I run Java 17 bytecode on a Java 11 JVM?</h3>
+                <p>No, and there is no flag, no compatibility mode and no switch that makes it possible. A JVM implements one class file format specification and accepts every version up to its own; anything higher it refuses during class file parsing, before verification, before initialisation and before any of your code runs. The refusal is deliberate rather than an oversight. A newer class file may use constant pool entries, attributes, instructions or structural rules that did not exist when the older JVM was built, so there is no safe way for it to guess: attempting the class file would mean executing something it cannot interpret. Backwards compatibility runs the other way and is very strong &mdash; a Java 21 JVM will happily load a version 46 class from 1998 &mdash; but forwards compatibility does not exist. Your options are to recompile the class for the older release or to raise the runtime, and nothing else.</p>
+
+                <h3>What is the difference between --release and -source/-target?</h3>
+                <p><code>-source</code> controls which language features javac accepts, <code>-target</code> controls which class file version it stamps, and neither one changes the API javac compiles against. That last part is the trap: on a JDK 21 compiler, <code>-source 11 -target 11</code> produces class files marked 55.0 that a Java 11 JVM will happily load, and which may call methods that were added in Java 12 or later because javac resolved them against the JDK 21 class library sitting in front of it. You get a clean build and then a <code>NoSuchMethodError</code> at runtime, which is a worse failure than the one you were trying to avoid because it arrives lazily on one code path instead of immediately at load time. <code>--release 11</code> sets both of the other two and additionally compiles against the recorded Java 11 API signatures, so a call to something newer fails at compile time where it belongs. Use <code>--release</code>. The only reason to reach for the older pair is a build that genuinely needs the source level and the target level to differ, which is rare and usually a mistake.</p>
+
+                <h3>How do I find which jar has the bad class file?</h3>
+                <p>Start from the name in the message, because the error already tells you the class &mdash; read it as a path, convert the slashes to dots, and ask your build which artifact provides it. If the class is one of yours, <code>javap -verbose</code> on the compiled file and a look at the major version line settles it in a second. If it belongs to a dependency, the direct approach is to walk every jar on the runtime classpath, read the first class entry out of each and print its major version, which takes a four-line shell loop and is the only method that does not depend on a tool being newer than the file it is inspecting. <code>jdeps</code> is useful for the follow-up question of which artifact your code actually reaches, and <code>jdeps</code> run from the older JDK has a pleasant side effect: it refuses the too-new class itself and names the file it choked on. Once you have the jar, <code>mvn dependency:tree</code> or <code>gradle dependencyInsight</code> tells you who pulled it in, which is usually a transitive upgrade nobody read.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">UnsupportedClassVersionError</a>
+                <a href="javascript:void(0)" class="tag">Class File Version</a>
+                <a href="javascript:void(0)" class="tag">LinkageError</a>
+                <a href="javascript:void(0)" class="tag">JVM</a>
+                <a href="javascript:void(0)" class="tag">Maven</a>
+                <a href="javascript:void(0)" class="tag">Gradle</a>
+                <a href="javascript:void(0)" class="tag">Java Exceptions</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">OutOfMemoryError: Java Heap Space &mdash; Diagnosing With Heap Dumps</a></li>
+                        <li><a href="/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It</a></li>
+                        <li><a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">ClassNotFoundException vs NoClassDefFoundError: The Difference Actually Matters</a></li>
+                        <li><a href="/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html">NullPointerException in Java 21: Reading the Helpful Message</a></li>
+                        <li><a href="/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
