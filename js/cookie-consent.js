@@ -36,25 +36,24 @@
         }
     }
 
-    function enableAnalytics() {
-        // Google Analytics is already loaded async; ensure it's not blocked
-        // Google Analytics removed: no-op
-    }
-
-    function disableAnalytics() {
-        // Google Analytics removed: no-op
+    // The AdSense loader is gated by an inline script in <head> that reads the
+    // same stored consent and sets requestNonPersonalizedAds when it is absent
+    // or declined. That runs before the loader, so a choice made here applies
+    // from the next page view onwards — ads already requested on this page
+    // cannot be recalled. Nothing else on the site sets non-essential cookies.
+    function applyConsent(value) {
+        if (value !== 'accepted') {
+            (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+        }
     }
 
     function init() {
         var consent = getConsent();
-        if (consent === 'accepted') {
-            enableAnalytics();
-            return; // Don't show banner
+        if (consent === 'accepted' || consent === 'declined') {
+            applyConsent(consent);
+            return; // Choice already on record; don't show banner
         }
-        if (consent === 'declined') {
-            disableAnalytics();
-            return; // Don't show banner
-        }
+        applyConsent(null); // No choice yet — stay non-personalized
 
         // No consent yet — show banner
         var banner = document.getElementById('cookie-consent');
@@ -69,7 +68,7 @@
         if (acceptBtn) {
             acceptBtn.addEventListener('click', function () {
                 setConsent('accepted');
-                enableAnalytics();
+                applyConsent('accepted');
                 hideBanner();
             });
         }
@@ -77,7 +76,7 @@
         if (declineBtn) {
             declineBtn.addEventListener('click', function () {
                 setConsent('declined');
-                disableAnalytics();
+                applyConsent('declined');
                 hideBanner();
             });
         }

@@ -164,6 +164,16 @@
 <link rel="stylesheet" href="css/cookie-consent.css">
 
     <!-- Google AdSense verification -->
+    <!-- Consent gate: ads stay non-personalized until the visitor accepts. Must run before the loader below. -->
+    <script>
+    (function () {
+        try {
+            var c = JSON.parse(localStorage.getItem('GetUp_cookie_consent'));
+            if (c && c.expiry > Date.now() && c.value === 'accepted') { return; }
+        } catch (e) { /* unreadable consent; treat as not given */ }
+        (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+    })();
+    </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="css/theme-terminal.css">
 </head>
@@ -239,10 +249,13 @@
                 <ul>
                     <li><strong>Device Information:</strong> Browser type, operating system, device type</li>
                     <li><strong>Usage Data:</strong> Pages visited, time spent on pages, referring URLs</li>
-                    <li><strong>IP Address:</strong> For analytics and security purposes</li>
+                    <li><strong>IP Address:</strong> For ad delivery, fraud prevention and security purposes</li>
                     <li><strong>Cookies:</strong> Small data files stored on your device (see Cookie Policy section)
                     </li>
                 </ul>
+                <p>
+                    GetUp is a static website and we do not operate our own analytics or server-side logging. The information above is collected by the third-party services listed in Section 5 &mdash; principally Google, through the AdSense script and our web font and icon providers &mdash; and is handled under their own privacy policies. We do not receive it in an individually identifiable form.
+                </p>
 
                 <h2>3. How We Use Your Information</h2>
                 <p>We use the collected information for the following purposes:</p>
@@ -264,20 +277,18 @@
                     <li>Remember your preferences (like dark mode settings)</li>
                     <li>Understand how you use our website</li>
                     <li>Provide relevant content</li>
-                    <li>Analyze traffic through services like Google Analytics</li>
                 </ul>
                 <p>
                     You can control cookies through your browser settings. However, disabling cookies may affect some
                     functionality of our website.
                 </p>
                 <p>
-                    If you decline cookies via our cookie consent banner, we will not activate non-essential analytics or advertising cookies. Functional cookies necessary for theme preferences and basic site navigation may still be used to ensure the website operates correctly.
+                    If you decline via our cookie consent banner, we instruct Google to serve only non-personalized ads, which are selected from the content of the page rather than from your browsing history. Ads still appear, and Google still sets a limited number of cookies for ad measurement, frequency capping and fraud prevention. Functional storage for your theme preference and for your consent decision remains in use so the website operates correctly.
                 </p>
 
                 <h2>5. Third-Party Services</h2>
                 <p>We may use third-party services that collect, monitor, and analyze information:</p>
                 <ul>
-                    <li><strong>Google Analytics:</strong> For website traffic analysis and audience measurement</li>
                     <li><strong>Google AdSense:</strong> For serving relevant advertisements on our website. Google AdSense uses cookies and similar technologies to serve ads based on your prior visits to our website and other websites. You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer nofollow">Google Ads Settings</a>.</li>
                     <li><strong>Font Awesome &amp; Google Fonts:</strong> For website styling and icon display</li>
                 </ul>
@@ -328,7 +339,7 @@
                 <h2>9. Regional Privacy Rights</h2>
                 <h3 style="font-size: 1.2rem; color: var(--text-primary); margin-top: 1.5rem;">EU/EEA Users &mdash; GDPR</h3>
                 <p>
-                    If you are located in the European Union or EEA, you have rights under the General Data Protection Regulation (GDPR). Our legal basis for processing personal data includes your consent (for analytics and advertising cookies), our legitimate interests (for security and fraud prevention), and legal obligations. You may withdraw consent at any time by contacting us at the address in Section 13.
+                    If you are located in the European Union or EEA, you have rights under the General Data Protection Regulation (GDPR). Our legal basis for processing personal data includes your consent (for personalized advertising), our legitimate interests (for security and fraud prevention), and legal obligations. You may withdraw consent at any time by contacting us at the address in Section 13.
                 </p>
 
                 <h3 style="font-size: 1.2rem; color: var(--text-primary); margin-top: 1.5rem;">California Residents &mdash; CCPA/CPRA</h3>

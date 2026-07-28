@@ -123,6 +123,16 @@
     </script>
 
     <!-- Google AdSense verification -->
+    <!-- Consent gate: ads stay non-personalized until the visitor accepts. Must run before the loader below. -->
+    <script>
+    (function () {
+        try {
+            var c = JSON.parse(localStorage.getItem('GetUp_cookie_consent'));
+            if (c && c.expiry > Date.now() && c.value === 'accepted') { return; }
+        } catch (e) { /* unreadable consent; treat as not given */ }
+        (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+    })();
+    </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="../css/theme-terminal.css">
 </head>
@@ -538,7 +548,6 @@ void publish(InvoiceEvent event) {
                 </div>
                 <div class="sidebar-widget">
                     <h3>Related Reading</h3>
-                    <!-- TODO: add the remaining exceptions-cluster siblings here as they are published; CI fails the build on links to pages that do not exist yet -->
                     <ul>
                         <li><a href="/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">OutOfMemoryError: Java Heap Space &mdash; Diagnosing With Heap Dumps</a></li>
                         <li><a href="/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It</a></li>

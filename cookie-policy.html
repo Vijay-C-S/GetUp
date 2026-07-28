@@ -52,6 +52,16 @@
     <link rel="stylesheet" href="css/cookie-consent.css">
 
     <!-- Google AdSense -->
+    <!-- Consent gate: ads stay non-personalized until the visitor accepts. Must run before the loader below. -->
+    <script>
+    (function () {
+        try {
+            var c = JSON.parse(localStorage.getItem('GetUp_cookie_consent'));
+            if (c && c.expiry > Date.now() && c.value === 'accepted') { return; }
+        } catch (e) { /* unreadable consent; treat as not given */ }
+        (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+    })();
+    </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
 
     <style>
@@ -217,18 +227,6 @@
                                 <td>1 year</td>
                             </tr>
                             <tr>
-                                <td><span class="badge badge-analytics">Analytics</span></td>
-                                <td>_ga, _ga_* (Google Analytics)</td>
-                                <td>Distinguishes unique visitors, tracks sessions, pages visited, and traffic sources</td>
-                                <td>2 years</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-analytics">Analytics</span></td>
-                                <td>_gid (Google Analytics)</td>
-                                <td>Distinguishes users for session tracking</td>
-                                <td>24 hours</td>
-                            </tr>
-                            <tr>
                                 <td><span class="badge badge-advertising">Advertising</span></td>
                                 <td>__gads, __gpi (Google AdSense)</td>
                                 <td>Measures ad performance and delivers relevant ads to visitors based on their interests</td>
@@ -245,7 +243,7 @@
                 </div>
 
                 <div class="info-box">
-                    <p><strong>Note on Advertising Cookies:</strong> Google AdSense places advertising cookies on our site to serve personalized ads. You can opt out of personalized advertising at any time by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer nofollow" style="color:var(--primary);">Google Ads Settings</a>.</p>
+                    <p><strong>Note on Advertising Cookies:</strong> Until you accept via the banner, we ask Google to serve only non-personalized ads. Non-personalized ads are selected from the content of the page rather than from your browsing history, but Google still sets a limited number of cookies for frequency capping, ad measurement and fraud prevention. Accepting enables personalized ads. You can also opt out of personalized advertising across all sites at any time via <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer nofollow" style="color:var(--primary);">Google Ads Settings</a>.</p>
                 </div>
 
                 <h2>4. Third-Party Cookies</h2>
@@ -253,7 +251,6 @@
                     In addition to our own cookies, we allow third-party service providers to set cookies on our site. These providers have their own privacy policies and cookie practices:
                 </p>
                 <ul>
-                    <li><strong>Google Analytics</strong> — Traffic analysis and visitor behavior insights. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer nofollow" style="color:var(--primary);">Google Privacy Policy</a></li>
                     <li><strong>Google AdSense</strong> — Ad serving and measurement. <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer nofollow" style="color:var(--primary);">Google Advertising Policies</a></li>
                     <li><strong>Google Fonts</strong> — Web fonts delivery. No tracking cookies are set by this service for font delivery.</li>
                 </ul>
@@ -265,7 +262,7 @@
 
                 <h3>Via Our Cookie Banner</h3>
                 <p>
-                    When you first visit GetUp, you will see a cookie consent banner. You can choose to "Accept All" (which enables analytics and advertising cookies) or "Decline" (which limits us to essential functional cookies only). Your choice is stored for one year.
+                    When you first visit GetUp, you will see a cookie consent banner. You can choose "Accept All", which enables personalized advertising, or "Decline", which keeps advertising non-personalized. Your choice is stored in your browser for one year and takes effect from the next page you load. Declining does not remove ads, and it does not stop Google setting the limited cookies it uses for frequency capping and fraud prevention &mdash; it stops your browsing history being used to select them.
                 </p>
 
                 <h3>Via Your Browser Settings</h3>
