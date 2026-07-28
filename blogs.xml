@@ -12,8 +12,8 @@
     <copyright>Copyright 2026 GetUp. All rights reserved.</copyright>
     <managingEditor>contact.us.GetUp@gmail.com (GetUp)</managingEditor>
     <webMaster>contact.us.GetUp@gmail.com (GetUp)</webMaster>
-    <pubDate>Sat, 01 Aug 2026 00:00:00 +0530</pubDate>
-    <lastBuildDate>Sat, 01 Aug 2026 00:00:00 +0530</lastBuildDate>
+    <pubDate>Sat, 06 Aug 2026 00:00:00 +0530</pubDate>
+    <lastBuildDate>Sat, 06 Aug 2026 00:00:00 +0530</lastBuildDate>
     <atom:link href="https://getupdated.tech/blogs.xml" rel="self" type="application/rss+xml" />
     <image>
       <url>https://getupdated.tech/images/favicon.jpg</url>
@@ -160,6 +160,17 @@
       <description>One is a checked exception you asked for, the other is an Error the JVM hands you — and "Could not initialize class" does not mean the class is missing at all. The three loading phases, three real causes, and the fixes with their costs.</description>
       <dc:creator>Vijay</dc:creator>
       <pubDate>Sat, 01 Aug 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It</title>
+      <link>https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html</guid>
+      <description>The repeating group of frames is the diagnosis, not the length of the trace. What a thread stack actually holds, why "how deep can I recurse" has no fixed answer, three real causes, and why raising -Xss belongs last.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 06 Aug 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
     </item>
