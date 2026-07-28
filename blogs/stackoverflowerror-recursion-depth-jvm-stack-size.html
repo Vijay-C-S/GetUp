@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Why StackOverflowError is an Error and not an Exception, how a thread stack is actually laid out, the three causes worth knowing, and the fixes ordered by what they really cost you.">
+    <title>StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It">
+    <meta property="og:description" content="The repeating cycle in the trace is the diagnosis. How thread stacks are laid out, why there is no fixed answer to how deep you can recurse, and why raising -Xss is the last option rather than the first.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/exception.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It">
+    <meta name="twitter:description" content="A thread ran out of stack. The JVM cannot promise you anything after that &mdash; there is no room left to run the handler you were counting on. Read the repeating frames instead.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/exception.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It", "item": "https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It",
+        "description": "A practical guide to StackOverflowError in Java: why it is a VirtualMachineError rather than an exception, how frames, locals and operand stacks consume a thread stack, the three causes that produce it in production, how to read the repeating cycle in a truncated trace, and why raising -Xss belongs last in the list of fixes.",
+        "datePublished": "2026-08-06",
+        "dateModified": "2026-08-06",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/exception.webp",
+            "caption": "Reading a truncated stack trace back to the small cycle of frames that repeated until the thread ran out of stack",
+            "name": "StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How much recursion depth do I actually get in Java?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "There is no fixed number, and any figure you have seen quoted is a measurement of one method on one JVM rather than a property of the language. A thread stack is a byte budget, not a frame budget, and each frame costs as much as that method's local variables, operand stack and frame data require. A trivial method with two int locals might give you tens of thousands of frames on a default stack of roughly 512 KB to 1 MB; a method with a dozen object references and a long expression might give you a fraction of that. If you need a number for your own code, measure it with a counting recursion on the same JVM, the same flags and the same method, and then assume the real limit is lower because your production thread already has frames on it when the recursion starts."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should I just increase -Xss?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Rarely, and never first. Raising -Xss is correct only when you have already established that the recursion is bounded, that the bound is genuinely larger than the default stack allows, and that no iterative formulation is practical. Everywhere else it hides a defect rather than fixing one, and it converts a fast deterministic failure into a slower one that lands under production load. It is also a per-thread setting, so raising it multiplies across every thread the process creates, and a service with a few hundred threads can lose a meaningful amount of virtual address space to reservations that are mostly never touched. If a parser is the reason, configure the parser's own depth limit instead."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I catch StackOverflowError?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "You can write the catch block and the JVM will often run it, but it is not a recovery mechanism. StackOverflowError extends VirtualMachineError, which is the family that says the virtual machine is broken or has run out of a resource it needs to keep operating, and the resource in this case is the very stack your handler has to run on. Any method your catch block calls can overflow again, finally blocks in the unwound frames may have been skipped, and objects on the way out can be left half-initialised. The one narrow case that is defensible is a top-level worker boundary that catches it, logs the trace, abandons that task and lets the thread return to a known-clean state. Even that is fragile, and it is a way to survive a defect while you fix it, not a substitute for fixing it."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why does Jackson throw StackOverflowError on my JPA entity?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because a bidirectional relation is a cycle and the default serialiser has no cycle detection. An Order holds a List of OrderLine, each OrderLine holds a reference back to its Order, and Jackson walks the graph depth-first: order, lines, line, order, lines, line, forever. The stack trace shows the give-away, a short repeating group of BeanSerializer and field-accessor frames rather than any of your own code. The fix is to break the cycle in the serialised view, not to give the thread more stack: annotate the back-reference with @JsonIgnore, or pair @JsonManagedReference and @JsonBackReference, or stop serialising entities altogether and map to a DTO that has no back-pointer. The same cycle will bite equals, hashCode and toString if the back-reference is included there too."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Aug 6, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 13 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/exception.webp" alt="A developer reading a long truncated Java stack trace, looking for the small group of frames that repeats all the way down" title="Reading a truncated stack trace back to the small cycle of frames that repeated until the thread ran out of stack" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">Twelve hundred frames, and only four of them are different.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">The service had been up for nine days. At 03:41 a scheduled job started a catalogue export, and at 03:41:02 a single worker thread died with <code>java.lang.StackOverflowError</code> and 1024 frames of trace, of which four were mine and the other 1020 were the same four repeated 255 times. The export retried at 04:41 and died again. Same second, same depth, same four frames.</p>
+
+                <p>What made it interesting is that the code had not changed in seven months. The data had. Somebody had added a category whose parent chain looped back on itself &mdash; category 8841's parent was 9002, and 9002's parent was 8841 &mdash; and my tree walker had been perfectly correct for every catalogue that was actually a tree.</p>
+
+                <p>That is the shape of most of these. The recursion is not obviously wrong; it is wrong for one input, and the input arrived nine days after the deploy. The trace tells you exactly which cycle it was, if you know that the useful information is the <em>repetition</em> rather than any individual frame.</p>
+
+                <p>This post is about reading that repetition, about what a thread stack actually is so that "how deep can I recurse" stops being a question with a number for an answer, and about the fixes in the order they deserve &mdash; which puts <code>-Xss</code> last rather than first.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#means">What the Error Actually Means</a></li>
+                    <li><a href="#why">Why It Happens: What a Thread Stack Is</a></li>
+                    <li><a href="#cause1">Cause 1: A Base Case That Never Fires</a></li>
+                    <li><a href="#cause2">Cause 2: Mutual Recursion You Did Not Know You Wrote</a></li>
+                    <li><a href="#cause3">Cause 3: Honest Depth on a Stack That Is Too Small</a></li>
+                    <li><a href="#trace">Reading the Trace</a></li>
+                    <li><a href="#fix">How to Fix It, and What Each Fix Costs</a></li>
+                    <li><a href="#prevent">How to Prevent It</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="means">What the Error Actually Means</h2>
+
+                <p>Look at where it sits, because the placement is the whole argument.</p>
+
+                <pre><code>java.lang.Throwable
+ ├── java.lang.Exception
+ │    └── java.lang.RuntimeException
+ │         └── java.lang.IllegalStateException            // a condition
+ └── java.lang.Error
+      ├── java.lang.LinkageError
+      │    └── java.lang.NoClassDefFoundError
+      └── java.lang.VirtualMachineError
+           ├── java.lang.StackOverflowError               // no stack left
+           ├── java.lang.OutOfMemoryError
+           ├── java.lang.InternalError
+           └── java.lang.UnknownError</code></pre>
+
+                <p><code>StackOverflowError</code> is a <code>VirtualMachineError</code>. Its siblings are <code>OutOfMemoryError</code> and <code>InternalError</code>. That family means the virtual machine itself has run out of a resource it needs in order to keep working, or has found itself in a state it cannot describe. It is not a condition in the world that your code was supposed to anticipate.</p>
+
+                <p>The specific reason the JVM cannot promise you much after throwing it is worth stating plainly, because it is the reason every "just catch it" suggestion is weaker than it sounds. Throwing an exception in Java requires running code: constructing the throwable, capturing the stack trace, walking the frames to find a handler, executing any <code>finally</code> blocks along the way. All of that runs on the stack. And the stack is the thing that just ran out.</p>
+
+                <p>In practice implementations reserve a small margin &mdash; a red zone &mdash; specifically so that the error can be thrown and delivered at all, which is why you usually get a full readable trace instead of a process that just dies. But that margin is a courtesy, not a contract. Your catch block runs with whatever is left after the unwinding, and the first method it calls that needs a moderately large frame can overflow again, this time inside your handler.</p>
+
+                <p>So the honest reading is: <strong>a thread asked for a frame and there was no room</strong>. Not "recursion went too deep", which is only the most common cause. Not "the JVM ran out of memory", which is a different error with a different fix. One thread, one stack, one allocation that did not fit.</p>
+
+                <p>That per-thread framing matters more than people expect. Nothing global has failed. The other 200 threads in the process are unaffected and the heap is untouched. A <code>StackOverflowError</code> on a request thread kills that request; it does not kill the service, which is exactly why these can go on quietly for days as an elevated error rate rather than an outage.</p>
+
+                <h2 id="why">Why It Happens: What a Thread Stack Is</h2>
+
+                <p>Every thread gets its own stack when it is created, and that stack is a fixed-size region reserved up front. Each method invocation pushes a <em>frame</em> onto it and each return pops one. The frame holds three things:</p>
+
+                <p><strong>The local variable array.</strong> One slot per parameter and local, plus <code>this</code> for instance methods. A slot is four bytes conceptually, and <code>long</code> and <code>double</code> take two slots each. The size is computed by javac and baked into the class file as <code>max_locals</code>; it does not vary at runtime.</p>
+
+                <p><strong>The operand stack.</strong> The scratch space the bytecode actually computes on &mdash; push two ints, <code>iadd</code>, store the result. Its maximum depth is <code>max_stack</code>, also fixed at compile time. A method with one long arithmetic expression or a call taking eight arguments needs a deeper operand stack than a method that just returns a field.</p>
+
+                <p><strong>Frame data.</strong> The return address, a reference to the constant pool of the class, whatever bookkeeping the implementation needs for exception handling and for linking. This part is entirely implementation-specific and you cannot compute it from the class file.</p>
+
+                <p>Which gives the fact that makes "how deep can I recurse" unanswerable in general: <strong>frame size varies per method</strong>. Two locals and a shallow operand stack might be forty-odd bytes on a 64-bit HotSpot build; a method with fifteen locals, a wide expression and a long argument list can be several times that. Change the method and the depth you can reach changes with it. Add a local variable during a refactor and you can lose a few percent of your headroom without touching a line of the recursion itself.</p>
+
+                <p>And JIT compilation moves the number again. Interpreted frames and compiled frames are not laid out the same way, and inlining removes callee frames entirely, so a recursion that survives the first thousand iterations while interpreted can behave differently once C2 has had a look at it &mdash; or the other way round. Any microbenchmark of "maximum recursion depth" is measuring one method, on one JVM, with one warmup history.</p>
+
+                <p>The size itself is a flag:</p>
+
+                <pre><code>$ java -Xss1m -jar catalogue-service.jar          # per thread, not global
+$ java -XX:ThreadStackSize=1024 -jar app.jar      # same thing, in KB
+
+# what is this JVM actually using?
+$ java -XX:+PrintFlagsFinal -version | grep ThreadStackSize
+     intx ThreadStackSize     = 1024     {pd product} {default}</code></pre>
+
+                <p>Defaults land around 512 KB to 1 MB depending on platform and architecture, and <code>{pd product}</code> in that output literally means platform-dependent. Do not memorise a number; print it on the machine you care about.</p>
+
+                <p>Two consequences of "per thread" that catch people out. First, <code>-Xss</code> applies to every thread the JVM creates, so doubling it in a service with 400 pool threads changes the reservation from a few hundred megabytes of address space to a few hundred more. It is virtual, mostly untouched, and on a 64-bit machine usually harmless &mdash; but in a container with a hard memory limit it counts against you in ways that are annoying to diagnose. Second, the main thread's stack size is often the operating system's rather than the JVM's, which is why a reproduction that runs fine in <code>main</code> can fail inside an executor at the same depth.</p>
+
+                <p>Virtual threads change the picture genuinely. A platform thread's stack is a contiguous OS-level reservation, fixed at creation. A virtual thread's stack lives on the heap as a chunked, growable structure, so its depth is limited by heap rather than by <code>-Xss</code>, and it grows as needed instead of being reserved up front. <code>-Xss</code> does not control it. That does not make deep recursion free &mdash; you can still exhaust the heap, and you will still get a <code>StackOverflowError</code> when the runtime decides the stack cannot grow further &mdash; but the depth at which a given recursion fails can differ substantially between a platform thread and a virtual thread running identical code. If you are migrating to virtual threads, that is a behaviour change worth knowing about rather than discovering.</p>
+
+                <h2 id="cause1">Cause 1: A Base Case That Never Fires</h2>
+
+                <p>The textbook version is a method that forgot to stop:</p>
+
+                <pre><code>static long factorial(long n) {
+    return n * factorial(n - 1);       // no base case at all
+}</code></pre>
+
+                <p>Nobody ships that. What ships is a base case that is correct for the inputs you imagined and unreachable for one you did not. Mine was a category tree:</p>
+
+                <pre><code>package com.acme.catalogue;
+
+public final class CategoryPath {
+
+    /** Walks parent links to the root, building "Home &gt; Books &gt; Fiction". */
+    String pathOf(Category node) {
+        if (node.parentId() == null) {          // base case: only a root stops us
+            return node.name();
+        }
+        Category parent = repository.byId(node.parentId());
+        return pathOf(parent) + " &gt; " + node.name();
+    }
+}</code></pre>
+
+                <p>The base case is not missing, and it is not wrong in any way a reviewer would catch. It is simply the wrong <em>assumption</em>: it says the recursion terminates when it reaches a node with no parent, which is true if and only if the parent links form a tree. Nothing in the schema enforced that. One bad row in an import and 8841 pointed at 9002, which pointed back at 8841.</p>
+
+                <pre><code>Exception in thread "export-worker-3" java.lang.StackOverflowError
+	at com.acme.catalogue.CategoryRepository.byId(CategoryRepository.java:58)
+	at com.acme.catalogue.CategoryPath.pathOf(CategoryPath.java:14)
+	at com.acme.catalogue.CategoryPath.pathOf(CategoryPath.java:15)
+	at com.acme.catalogue.CategoryRepository.byId(CategoryRepository.java:58)
+	at com.acme.catalogue.CategoryPath.pathOf(CategoryPath.java:14)
+	at com.acme.catalogue.CategoryPath.pathOf(CategoryPath.java:15)
+	... the same 3-frame group repeated 255 times ...
+	at com.acme.catalogue.ExportJob.writeRow(ExportJob.java:112)
+	at com.acme.catalogue.ExportJob.run(ExportJob.java:74)</code></pre>
+
+                <p>Note what the trace does <em>not</em> contain: the ids. It tells you the code is looping and gives you no data at all about which node started it. That gap is most of the debugging time in these incidents, and it is why the depth guard in the prevention section carries the id in its message.</p>
+
+                <p>The cyclic-graph version of this is the most common production instance by a distance. Any traversal over data that is <em>supposed</em> to be acyclic &mdash; a category tree, an org chart, a dependency graph, a linked list of revisions &mdash; is a self-terminating recursion right up until the day the data disagrees. Referential integrity constraints do not express acyclicity. A <code>FOREIGN KEY</code> on <code>parent_id</code> happily accepts a two-node cycle.</p>
+
+                <p>There is also the near miss worth naming: an off-by-one that recurses past the base case. <code>if (n == 0) return</code> called with a negative <code>n</code> never matches, and now you are counting down to <code>Long.MIN_VALUE</code> instead. Writing <code>if (n &lt;= 0)</code> rather than <code>if (n == 0)</code> is a one-character habit that removes an entire failure mode.</p>
+
+                <h2 id="cause2">Cause 2: Mutual Recursion You Did Not Know You Wrote</h2>
+
+                <p>These are the ones that do not look like recursion in the source, because no method calls itself. The cycle is spread over two or three methods, or over a framework you did not write.</p>
+
+                <p>The classic is <code>toString</code> and friends:</p>
+
+                <pre><code>@Override
+public String toString() {
+    return "Order{id=" + id + ", customer=" + customer + "}";   // Customer.toString()
+}
+
+// ...and over in Customer:
+@Override
+public String toString() {
+    return "Customer{id=" + id + ", orders=" + orders + "}";    // List.toString() → Order.toString()
+}</code></pre>
+
+                <p>Two perfectly reasonable methods, added by two people, six weeks apart. Neither is recursive. Together they are, and the failure only appears the first time somebody logs an order at DEBUG.</p>
+
+                <p>The same shape hits <code>equals</code> and <code>hashCode</code> when a bidirectional relation is included in both. Lombok's <code>@Data</code> and <code>@EqualsAndHashCode</code> generate over every field by default, which on a JPA entity with a back-reference means <code>Order.hashCode()</code> hashes its lines, each line hashes its order, and you are away. The generated code is invisible in the source, which makes the stack trace the only place the cycle is legible.</p>
+
+                <p>By far the most reported instance is serialisation of a bidirectional JPA relation:</p>
+
+                <pre><code>com.fasterxml.jackson.databind.JsonMappingException: Infinite recursion (StackOverflowError)
+ (through reference chain:
+   com.acme.order.Order["lines"]-&gt;java.util.ArrayList[0]
+   -&gt;com.acme.order.OrderLine["order"]-&gt;com.acme.order.Order["lines"]
+   -&gt;java.util.ArrayList[0]-&gt;com.acme.order.OrderLine["order"] ...)
+	at com.fasterxml.jackson.databind.ser.std.BeanSerializerBase.serializeFields(BeanSerializerBase.java:772)
+	at com.fasterxml.jackson.databind.ser.BeanSerializer.serialize(BeanSerializer.java:178)
+	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serializeContents(CollectionSerializer.java:145)
+	at com.fasterxml.jackson.databind.ser.std.BeanSerializerBase.serializeFields(BeanSerializerBase.java:772)
+	... 4-frame group repeated ~180 times ...</code></pre>
+
+                <p>Jackson is being helpful here in a way the raw error is not: newer versions detect the overflow and rewrap it with the <em>reference chain</em>, which names the exact fields forming the cycle. When you get that, the diagnosis is already done for you. When you get a bare <code>StackOverflowError</code> full of <code>BeanSerializerBase</code> frames, it is the same problem and you have to find the cycle yourself.</p>
+
+                <p>The last flavour is a proxy or interceptor that ends up calling the method it wraps. A Spring AOP advice that invokes the advised bean through the proxy rather than the target, a CGLIB subclass whose overriding method calls <code>super</code> incorrectly, a decorator registered twice in a chain so it delegates to itself. The trace here is unmistakable and unhelpful at once: dozens of frames from <code>org.springframework.aop.framework</code>, then one frame of yours, then the same block again. Count the cycle, find the single frame of your code in it, and start there.</p>
+
+                <h2 id="cause3">Cause 3: Honest Depth on a Stack That Is Too Small</h2>
+
+                <p>This is the minority case, and it is the only one where raising <code>-Xss</code> is on the table. The recursion terminates. It is simply deeper than the stack allows.</p>
+
+                <p>Real instances: a JSON document nested 5,000 levels deep, because a client serialised a linked structure naively; a recursive-descent parser on a pathological expression with 12,000 nested parentheses; a linked list of 200,000 nodes with a recursive <code>length()</code>; a recursive quicksort that degenerates to <em>O(n)</em> depth on already-sorted input because the pivot choice is always the first element.</p>
+
+                <p>That last one is worth pausing on. A recursive quicksort on random data recurses to about log₂(n), which is 20 frames for a million elements &mdash; nothing. On sorted input with a naive pivot, the same code recurses n deep. The algorithm did not change; the data did. That is the same story as cause 1 with a different mechanism.</p>
+
+                <p>Then there is the case that confuses everyone the first time, where the recursion is 40 frames deep and it still overflows. The frames are fat and there are already a lot of them before your code starts:</p>
+
+                <pre><code>java.lang.StackOverflowError
+	at com.acme.rules.RuleNode.evaluate(RuleNode.java:88)
+	at com.acme.rules.RuleNode.evaluate(RuleNode.java:94)        ← only ~40 of these
+	...
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:233)
+	... 90+ framework frames below this point ...</code></pre>
+
+                <p>A servlet request in a typical Spring Security stack arrives at your controller having already spent 80 to 150 frames on filters, interceptors and dispatch. Some of those frames are large. If the deployment also runs an agent that instruments methods, or a reactive pipeline where each operator adds frames, the budget your recursion gets is a fraction of the nominal stack. The recursion looks trivially shallow and it is competing for what is left.</p>
+
+                <p>The tell is the ratio: if the repeating group is short and the non-repeating tail below it is long, you do not have a runaway recursion, you have a stack that was mostly spent before you got there.</p>
+
+                <h2 id="trace">Reading the Trace</h2>
+
+                <p>The diagnostic method is one sentence: <strong>find the repeating group and count its length</strong>.</p>
+
+                <p>A cycle of one frame is direct recursion &mdash; a method calling itself, usually a base case problem. A cycle of two or three is mutual recursion, and the frames name the participants outright. A cycle of ten or more with framework packages in it is a proxy or serialisation loop. A trace with <em>no</em> repetition at all, just a very long list of distinct frames, is cause 3 and nothing else.</p>
+
+                <p>The obstacle is truncation. By default HotSpot caps the recorded trace at 1024 frames, so a runaway recursion gives you the top 1024 and silently drops everything under it &mdash; including, irritatingly, the frames that show what called the recursion in the first place:</p>
+
+                <pre><code>$ java -XX:MaxJavaStackTraceDepth=0 -jar catalogue-service.jar
+# 0 means "no limit" — record every frame</code></pre>
+
+                <p>Setting it to <code>0</code> gives you the whole thing. Be ready for a genuinely enormous trace; on a 1 MB stack with small frames this can be tens of thousands of lines, and writing it to a log has a real cost. Turn it on to diagnose, turn it off afterwards. The reason it is worth the trouble is that the <em>bottom</em> of the trace has the entry point &mdash; which request, which job, which thread pool &mdash; and that is what the truncated version takes away from you.</p>
+
+                <p>For the near-miss case, where a thread is running very deep but has not gone over, <code>jstack</code> is the tool. Nothing has been thrown, so there is no trace in the logs:</p>
+
+                <pre><code>$ jcmd 48812 Thread.print &gt; threads.txt
+$ grep -c 'com.acme.rules.RuleNode.evaluate' threads.txt
+874
+
+$ jstack 48812 | awk '/^"/{name=$1; n=0} /^\tat /{n++} /^$/{if(n&gt;200) print n, name}'
+874 "http-nio-8080-exec-11"
+612 "http-nio-8080-exec-4"</code></pre>
+
+                <p>That is a useful thing to run when the symptom is "some requests are slow" rather than "some requests fail". A thread 900 frames deep in your own code is one input away from the error, and it is also, quite often, why the p99 latency moved.</p>
+
+                <p>One thing to be careful about when reading traces from a live incident: the message is normally empty. <code>StackOverflowError</code> is thrown without a detail message, so anything you see after the class name came from a wrapper &mdash; Jackson's rewrap, a framework's <code>catch (Throwable)</code>, your own logging. Do not read meaning into a message the JVM did not write. That is the same discipline the <a href="/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html">helpful NullPointerException messages</a> reward in the opposite direction: there, the JVM does compose a specific message and it is worth every word.</p>
+
+                <h2 id="fix">How to Fix It, and What Each Fix Costs</h2>
+
+                <h3>1. Fix the base case</h3>
+
+                <p>If the cycle is one frame long, this is the whole job. Make the terminating condition cover the inputs that actually arrive rather than the ones you pictured: <code>&lt;=</code> instead of <code>==</code>, an explicit guard on null and on negative, a check that the structure you are descending is finite.</p>
+
+                <p>Cost: none. This is the fix.</p>
+
+                <h3>2. Break the cycle</h3>
+
+                <p>For graph traversal, carry a visited set:</p>
+
+                <pre><code>String pathOf(Category node, Set&lt;Long&gt; seen) {
+    if (!seen.add(node.id())) {
+        throw new IllegalStateException("Cycle in category parents at id=" + node.id());
+    }
+    if (node.parentId() == null) {
+        return node.name();
+    }
+    return pathOf(repository.byId(node.parentId()), seen) + " &gt; " + node.name();
+}</code></pre>
+
+                <p>That converts a <code>StackOverflowError</code> with no data into an <code>IllegalStateException</code> naming the offending row, which is the difference between a two-hour incident and a two-minute one. It costs an allocation per traversal and it is worth it every time.</p>
+
+                <p>For serialisation, break the cycle in the mapping rather than in the object graph. <code>@JsonIgnore</code> on the back-reference is the blunt version; <code>@JsonManagedReference</code> on the forward side with <code>@JsonBackReference</code> on the reverse is the version that keeps deserialisation working, because Jackson reinstates the back-pointer on the way in. <code>@JsonIdentityInfo</code> handles genuine graphs by emitting ids instead of nested objects, at the cost of a payload shape your clients have to understand.</p>
+
+                <p>For <code>equals</code>, <code>hashCode</code> and <code>toString</code>: exclude navigable relations. On a JPA entity, base equality on the business key or the id, never on a collection of children, and never on a parent reference. With Lombok that is <code>@EqualsAndHashCode(onlyExplicitlyIncluded = true)</code> and <code>@ToString(exclude = "order")</code>. This is also better for reasons that have nothing to do with stack depth &mdash; hashing a lazy collection triggers a database load in the middle of a <code>HashMap</code> lookup, which is its own kind of bad afternoon.</p>
+
+                <p>Cost: an API decision. The serialised shape changes and clients notice. Do it deliberately, in the DTO layer if you have one.</p>
+
+                <h3>3. Convert the recursion to iteration</h3>
+
+                <p>For anything traversing user-supplied or unbounded structure, an explicit stack is the durable answer. The heap is measured in gigabytes; the thread stack is measured in hundreds of kilobytes:</p>
+
+                <pre><code>// Recursive: depth is bounded by the tree, and the tree is not yours.
+long sum(Node n) {
+    if (n == null) return 0;
+    return n.value() + sum(n.left()) + sum(n.right());
+}
+
+// Iterative: depth is bounded by the heap.
+long sum(Node root) {
+    long total = 0;
+    Deque&lt;Node&gt; stack = new ArrayDeque&lt;&gt;();
+    if (root != null) stack.push(root);
+    while (!stack.isEmpty()) {
+        Node n = stack.pop();
+        total += n.value();
+        if (n.right() != null) stack.push(n.right());
+        if (n.left() != null) stack.push(n.left());
+    }
+    return total;
+}</code></pre>
+
+                <p>Cost: readability, honestly. The recursive version is four lines and obviously correct; the iterative one is twelve and has an ordering subtlety in the push sequence. For post-order traversals or anything with work to do on the way back up, the explicit version gets meaningfully worse &mdash; you end up encoding the return state that the call stack was managing for you. It is still the right call for unbounded input, and the wrong call for a balanced structure you control.</p>
+
+                <h3>4. Trampolines, and the tail-call myth</h3>
+
+                <p>You will be told to "make it tail recursive". In Java, that is not a fix. <strong>HotSpot does not perform tail-call elimination.</strong> A tail-recursive method consumes exactly as much stack as any other recursion. There has been long-running work on the idea, and it may arrive eventually, but you cannot write code today that depends on it.</p>
+
+                <p>What does work is doing the elimination by hand. An accumulator turns the tail-recursive shape into a loop directly:</p>
+
+                <pre><code>// tail recursive — and still uses n frames on the JVM
+static long sumTo(long n, long acc) {
+    return n == 0 ? acc : sumTo(n - 1, acc + n);
+}
+
+// the same thing, one frame
+static long sumTo(long n) {
+    long acc = 0;
+    while (n &gt; 0) { acc += n; n--; }
+    return acc;
+}</code></pre>
+
+                <p>A trampoline generalises that for mutual recursion: each step returns a description of the next call rather than making it, and a driver loop keeps invoking steps until one returns a value. It genuinely gives you unbounded depth in constant stack. It also allocates one object per step, obscures the control flow, and turns a stack trace into a driver loop with no history in it. Reach for it when the recursion is mutual and unbounded and iteration is genuinely awkward. Not before.</p>
+
+                <h3>5. Raise -Xss &mdash; last, not first</h3>
+
+                <pre><code>$ java -Xss4m -jar parser-service.jar</code></pre>
+
+                <p>Three reasons this belongs at the bottom of the list.</p>
+
+                <p>It usually hides the bug. If the recursion is unbounded, a bigger stack buys you a longer run before the same failure, and the failure now arrives further from the deploy that caused it. Four megabytes just means the cycle spins 8× longer before dying.</p>
+
+                <p>It multiplies. <code>-Xss</code> is per thread. In a service with 400 threads, moving from 1 MB to 4 MB moves the reservation from 400 MB of address space to 1.6 GB. It is virtual and mostly untouched, so on a large host you may never notice &mdash; but inside a container with a memory limit it is one of the more confusing ways to get killed, because the heap looks perfectly healthy in every dashboard you check.</p>
+
+                <p>It does not do what you want on virtual threads. If part of your workload has moved to virtual threads, <code>-Xss</code> does not govern them, and you now have two different depth limits in one process depending on where the code happens to run.</p>
+
+                <p>When it <em>is</em> right: the recursion is provably bounded, the bound is legitimately large, iteration is impractical, and you have measured the depth you need with headroom. Then raise it, on the specific thread if you can &mdash; <code>new Thread(group, runnable, name, stackSize)</code> takes a per-thread size and lets one deep worker have a big stack without giving one to all 400.</p>
+
+                <h3>What is not a fix</h3>
+
+                <p>Catching <code>StackOverflowError</code> to keep the request loop alive.</p>
+
+                <p>The argument is the same one I made about <a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">NoClassDefFoundError</a>, and it holds here for a stronger reason. Both are <code>Error</code>s because they report a <em>defect</em> rather than a condition &mdash; something that should not have been true was true, and there is no sensible action for the caller to take. Handling one means writing code whose purpose is to continue past a fact that invalidates the program.</p>
+
+                <p>With <code>StackOverflowError</code> there is the extra problem that recovery runs on the broken resource. Your handler has whatever stack is left after unwinding. Frames that were skipped may have left <code>finally</code> blocks unexecuted, so locks may still be held and files may still be open. Objects half-constructed at the moment of the throw are reachable and invalid. And if the handler is generous &mdash; formatting a message, calling a logger that itself recurses through a formatter chain &mdash; it can overflow inside the catch, which produces some genuinely baffling logs.</p>
+
+                <p>The one narrow case I will defend is a top-level worker boundary. A job runner that catches <code>Throwable</code> at the outermost frame of a task, records it, abandons that task, and returns the thread to the pool clean, is doing something reasonable: the stack fully unwinds before anything else runs, and the blast radius is one task. Even that is fragile. It only holds if the abandoned task leaves no shared state behind, if the logging path itself is shallow, and if somebody is actually reading the alert it raises. It is a way to survive a defect while you fix it, not a substitute for fixing it. A <code>catch (Throwable t)</code> in a request handler that swallows this and returns a 500 is not that &mdash; it is the version that lets a cyclic row sit in the catalogue for nine days.</p>
+
+                <h2 id="prevent">How to Prevent It</h2>
+
+                <p>Guard depth wherever the structure comes from outside. Any recursion over user-supplied nesting should carry a depth counter and fail loudly and early with a message that names the input, not silently at frame 12,000 with a trace that names nothing. A limit of a few hundred is plenty for real documents and cheap to enforce:</p>
+
+                <pre><code>private static final int MAX_DEPTH = 256;
+
+Value parse(JsonNode node, int depth) {
+    if (depth &gt; MAX_DEPTH) {
+        throw new IllegalArgumentException(
+            "Nesting exceeds " + MAX_DEPTH + " levels at " + node.path());
+    }
+    ...
+}</code></pre>
+
+                <p>Configure the parser's own limits rather than raising the stack. Jackson 2.15 and later expose <code>StreamReadConstraints</code>, which caps nesting depth, document size and number length before your code ever sees the payload:</p>
+
+                <pre><code>JsonFactory factory = JsonFactory.builder()
+        .streamReadConstraints(StreamReadConstraints.builder()
+                .maxNestingDepth(500)
+                .build())
+        .build();
+ObjectMapper mapper = new ObjectMapper(factory);</code></pre>
+
+                <p>That turns a hostile 50,000-level document into a clean <code>StreamConstraintsException</code> with a 400 response, instead of a <code>StackOverflowError</code> with a 500 and a page of log. XML parsers have equivalents, and so do most YAML libraries. This is the single highest-value item on the list if you accept nested input from anywhere.</p>
+
+                <p>Use iterative traversal by default for anything unbounded. Recursion is the clearer expression and I use it freely for structures I control &mdash; a balanced tree, a bounded expression, a directory walk with a known ceiling. For anything whose depth is a property of data arriving from elsewhere, start iterative. Retrofitting it during an incident is a worse time to do the work.</p>
+
+                <p>Carry a visited set on every graph walk, and make the cycle an error rather than an overflow. The set is the difference between "something recursed" and "row 8841 points at 9002 which points back at 8841". Same discipline that <a href="/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">the fail-fast iterator</a> applies to collections: detect the invalid state at the moment it becomes visible, and say what it was.</p>
+
+                <p>Keep <code>equals</code>, <code>hashCode</code> and <code>toString</code> free of navigable relations. On entities, that means the id or a business key and nothing that can be followed. Audit the Lombok annotations specifically, because generated code is the code least likely to be read.</p>
+
+                <p>Test pathological depth. One test that builds a 10,000-deep structure and asserts that you get your own exception rather than a <code>StackOverflowError</code> is worth a page of documentation, and it runs in milliseconds. Build the input programmatically; nobody wants a 400 KB fixture in the repository.</p>
+
+                <pre><code>@Test
+void rejectsDeeplyNestedInputWithoutOverflowing() {
+    String json = "[".repeat(10_000) + "]".repeat(10_000);
+    assertThrows(StreamConstraintsException.class, () -&gt; mapper.readTree(json));
+}</code></pre>
+
+                <p>And add a constraint if the database can carry one. A cycle in a parent chain is an integrity problem that a foreign key does not express, but a recursive CTE in a nightly check does, and finding it at 02:00 in a report beats finding it at 03:41 in a worker thread.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> The traces here are written to match what current LTS OpenJDK builds actually print, but frame line numbers inside <code>java.base</code>, Spring and Jackson shift between versions, so match on frame names rather than numbers. The 1024-frame trace cap, the red-zone margin that lets the error be thrown at all, frame layout, and whether virtual-thread stacks grow the way they do today are implementation details of the reference implementation rather than guarantees in the JVMS &mdash; they have changed before and may change again. <code>StackOverflowError</code> carries no detail message of its own; any text you see after the class name was added by a wrapper. Do not parse any of it in tooling.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>How much recursion depth do I actually get in Java?</h3>
+                <p>There is no fixed number, and any figure you have seen quoted is a measurement of one method on one JVM rather than a property of the language. A thread stack is a byte budget, not a frame budget, and each frame costs as much as that method's local variables, operand stack and frame data require. A trivial method with two <code>int</code> locals might give you tens of thousands of frames on a default stack of roughly 512 KB to 1 MB; a method with a dozen object references and a long expression might give you a fraction of that. If you need a number for your own code, measure it with a counting recursion on the same JVM, the same flags and the same method, and then assume the real limit is lower because your production thread already has frames on it when the recursion starts.</p>
+
+                <h3>Should I just increase -Xss?</h3>
+                <p>Rarely, and never first. Raising <code>-Xss</code> is correct only when you have already established that the recursion is bounded, that the bound is genuinely larger than the default stack allows, and that no iterative formulation is practical. Everywhere else it hides a defect rather than fixing one, and it converts a fast deterministic failure into a slower one that lands under production load. It is also a per-thread setting, so raising it multiplies across every thread the process creates, and a service with a few hundred threads can lose a meaningful amount of virtual address space to reservations that are mostly never touched. If a parser is the reason, configure the parser's own depth limit instead.</p>
+
+                <h3>Can I catch StackOverflowError?</h3>
+                <p>You can write the catch block and the JVM will often run it, but it is not a recovery mechanism. <code>StackOverflowError</code> extends <code>VirtualMachineError</code>, which is the family that says the virtual machine is broken or has run out of a resource it needs to keep operating, and the resource in this case is the very stack your handler has to run on. Any method your catch block calls can overflow again, <code>finally</code> blocks in the unwound frames may have been skipped, and objects on the way out can be left half-initialised. The one narrow case that is defensible is a top-level worker boundary that catches it, logs the trace, abandons that task and lets the thread return to a known-clean state. Even that is fragile, and it is a way to survive a defect while you fix it, not a substitute for fixing it.</p>
+
+                <h3>Why does Jackson throw StackOverflowError on my JPA entity?</h3>
+                <p>Because a bidirectional relation is a cycle and the default serialiser has no cycle detection. An <code>Order</code> holds a <code>List</code> of <code>OrderLine</code>, each <code>OrderLine</code> holds a reference back to its <code>Order</code>, and Jackson walks the graph depth-first: order, lines, line, order, lines, line, forever. The stack trace shows the give-away, a short repeating group of <code>BeanSerializer</code> and field-accessor frames rather than any of your own code. The fix is to break the cycle in the serialised view, not to give the thread more stack: annotate the back-reference with <code>@JsonIgnore</code>, or pair <code>@JsonManagedReference</code> and <code>@JsonBackReference</code>, or stop serialising entities altogether and map to a DTO that has no back-pointer. The same cycle will bite <code>equals</code>, <code>hashCode</code> and <code>toString</code> if the back-reference is included there too.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">StackOverflowError</a>
+                <a href="javascript:void(0)" class="tag">Recursion</a>
+                <a href="javascript:void(0)" class="tag">JVM</a>
+                <a href="javascript:void(0)" class="tag">Stack Size</a>
+                <a href="javascript:void(0)" class="tag">Java Exceptions</a>
+                <a href="javascript:void(0)" class="tag">Debugging</a>
+                <a href="javascript:void(0)" class="tag">Performance</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <!-- TODO: add the remaining exceptions-cluster siblings here as they are published; CI fails the build on links to pages that do not exist yet -->
+                    <ul>
+                        <li><a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">ClassNotFoundException vs NoClassDefFoundError: The Difference Actually Matters</a></li>
+                        <li><a href="/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html">NullPointerException in Java 21: Reading the Helpful Message</a></li>
+                        <li><a href="/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</a></li>
+                        <li><a href="/blogs/deploying-a-lichess-bot-api-streaming-and-what-broke.html">Deploying a Lichess Bot: BOT Account, API Streaming, and What Broke</a></li>
+                        <li><a href="/blogs/implementing-the-uci-protocol-in-plain-java.html">Implementing the UCI Protocol in Plain Java (No Frameworks)</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
