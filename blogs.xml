@@ -12,8 +12,8 @@
     <copyright>Copyright 2026 GetUp. All rights reserved.</copyright>
     <managingEditor>contact.us.GetUp@gmail.com (GetUp)</managingEditor>
     <webMaster>contact.us.GetUp@gmail.com (GetUp)</webMaster>
-    <pubDate>Mon, 27 Jul 2026 00:00:00 +0530</pubDate>
-    <lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0530</lastBuildDate>
+    <pubDate>Sat, 01 Aug 2026 00:00:00 +0530</pubDate>
+    <lastBuildDate>Sat, 01 Aug 2026 00:00:00 +0530</lastBuildDate>
     <atom:link href="https://getupdated.tech/blogs.xml" rel="self" type="application/rss+xml" />
     <image>
       <url>https://getupdated.tech/images/favicon.jpg</url>
@@ -149,6 +149,17 @@
       <description>JEP 358 turned the emptiest stack trace in Java into a sentence. The grammar of that sentence, three production causes with the exact message each one throws, and the places it still leaves you stranded.</description>
       <dc:creator>Vijay</dc:creator>
       <pubDate>Wed, 22 Jul 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>ClassNotFoundException vs NoClassDefFoundError: The Difference Actually Matters</title>
+      <link>https://getupdated.tech/blogs/classnotfoundexception-vs-noclassdeffounderror.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/classnotfoundexception-vs-noclassdeffounderror.html</guid>
+      <description>One is a checked exception you asked for, the other is an Error the JVM hands you — and "Could not initialize class" does not mean the class is missing at all. The three loading phases, three real causes, and the fixes with their costs.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sat, 01 Aug 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
     </item>
