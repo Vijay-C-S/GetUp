@@ -12,8 +12,8 @@
     <copyright>Copyright 2026 GetUp. All rights reserved.</copyright>
     <managingEditor>contact.us.GetUp@gmail.com (GetUp)</managingEditor>
     <webMaster>contact.us.GetUp@gmail.com (GetUp)</webMaster>
-    <pubDate>Tue, 11 Aug 2026 00:00:00 +0530</pubDate>
-    <lastBuildDate>Tue, 11 Aug 2026 00:00:00 +0530</lastBuildDate>
+    <pubDate>Sun, 16 Aug 2026 00:00:00 +0530</pubDate>
+    <lastBuildDate>Sun, 16 Aug 2026 00:00:00 +0530</lastBuildDate>
     <atom:link href="https://getupdated.tech/blogs.xml" rel="self" type="application/rss+xml" />
     <image>
       <url>https://getupdated.tech/images/favicon.jpg</url>
@@ -182,6 +182,17 @@
       <description>The line in the stack trace is a bystander — whoever allocated last pays for everyone else. Which OOME message you got, three real causes, how to read a dump with dominator trees and retained size, and why -Xmx belongs last.</description>
       <dc:creator>Vijay</dc:creator>
       <pubDate>Tue, 11 Aug 2026 00:00:00 +0530</pubDate>
+      <category>Engineering</category>
+      <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
+    </item>
+
+    <item>
+      <title>UnsupportedClassVersionError: Fixing Java Version Mismatches</title>
+      <link>https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html</link>
+      <guid isPermaLink="true">https://getupdated.tech/blogs/unsupportedclassversionerror-fixing-java-version-mismatches.html</guid>
+      <description>Same LinkageError family, opposite problem — the class is right there and the JVM refuses to read it. What 61.0 and 65.0 actually mean, the three build topologies that open the gap, and why bumping -target is not a fix.</description>
+      <dc:creator>Vijay</dc:creator>
+      <pubDate>Sun, 16 Aug 2026 00:00:00 +0530</pubDate>
       <category>Engineering</category>
       <enclosure url="https://getupdated.tech/images/exception.webp" type="image/webp" length="0" />
     </item>
