@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Why the stack trace on an OutOfMemoryError names an innocent line, how to read a heap dump with histograms, dominator trees and paths to GC roots, and why raising -Xmx belongs last.">
+    <title>OutOfMemoryError: Java Heap Space &mdash; Diagnosing With Heap Dumps</title>
+    <link rel="icon" type="image/jpeg" href="../images/favicon.jpg">
+    <link rel="canonical" href="https://getupdated.tech/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">
+    <link rel="alternate" hreflang="en-in" href="https://getupdated.tech/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">
+    <link rel="alternate" hreflang="x-default" href="https://getupdated.tech/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="OutOfMemoryError: Java Heap Space &mdash; Diagnosing With Heap Dumps">
+    <meta property="og:description" content="The allocation that failed is almost never the one to blame. How to get a heap dump before the incident, how to read it, and the fixes in the order they deserve.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getupdated.tech/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html">
+    <meta property="og:site_name" content="GetUp">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:image" content="https://getupdated.tech/images/exception.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="OutOfMemoryError: Java Heap Space &mdash; Diagnosing With Heap Dumps">
+    <meta name="twitter:description" content="Whoever allocated last pays for everyone else. Read the dump, not the trace &mdash; histogram, dominator tree, retained size, paths to GC roots.">
+    <meta name="twitter:image" content="https://getupdated.tech/images/exception.webp">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" type="application/rss+xml" title="GetUp Blog Feed" href="https://getupdated.tech/blogs.xml">
+    <link rel="stylesheet" href="../blog-styles.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupdated.tech/" },
+            { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://getupdated.tech/blogs.html" },
+            { "@type": "ListItem", "position": 3, "name": "OutOfMemoryError: Java Heap Space — Diagnosing With Heap Dumps", "item": "https://getupdated.tech/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html" }
+        ]
+    }
+    </script>
+
+    <!-- Schema.org Article Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "OutOfMemoryError: Java Heap Space — Diagnosing With Heap Dumps",
+        "description": "A practical guide to java.lang.OutOfMemoryError: Java heap space — how it differs from the other OOME messages, why the failing allocation is innocent, the three causes that produce it in production, how to capture and actually read a heap dump using histograms, dominator trees, retained size and paths to GC roots, and why raising -Xmx belongs at the end of the fix list rather than the start.",
+        "datePublished": "2026-08-11",
+        "dateModified": "2026-08-11",
+        "author": {
+            "@type": "Person",
+            "name": "Vijay",
+            "url": "https://getupdated.tech/about.html"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GetUp",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://getupdated.tech/images/favicon.jpg"
+            }
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://getupdated.tech/blogs/outofmemoryerror-java-heap-space-diagnosing-with-heap-dumps.html"
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://getupdated.tech/images/exception.webp",
+            "caption": "Reading a heap dump back from the failed allocation to the object that was actually holding the heap",
+            "name": "OutOfMemoryError: Java Heap Space — Diagnosing With Heap Dumps"
+        }
+    }
+    </script>
+
+    <!-- FAQPage Schema for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Where do I find the heap dump after an OutOfMemoryError?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Only where you told the JVM to put it, and only if you asked for one before the incident. -XX:+HeapDumpOnOutOfMemoryError is off by default, so a process that dies without it leaves nothing behind but the log line. With the flag on, -XX:HeapDumpPath decides the destination: give it a directory and the JVM writes java_pid<pid>.hprof inside it, give it a filename and it writes exactly that, and give it nothing and the file lands in the process working directory, which in a container is usually a layer that disappears when the container is replaced. Point it at a mounted volume that survives a restart, make sure the filesystem has room for a file the size of your live heap, and check the JVM's own stdout — it prints the path it wrote to, or the reason it could not."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does OutOfMemoryError always mean a memory leak?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, and assuming it does sends you looking for a defect that is not there. There are three distinct shapes behind the same message. A genuine leak, where objects stay reachable forever and the live set climbs steadily across restarts. A working set that is simply larger than the heap, where nothing is retained wrongly but a single request or batch legitimately needs more memory than you gave the process. And a retention pattern, where a small object transitively holds a large one alive and the total is much bigger than the code implies. Two heap dumps taken several minutes apart tell them apart faster than any amount of code reading: if the live set after a full GC has grown between the dumps and keeps growing, it is a leak; if it is flat and merely high, it is capacity."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Should I just increase -Xmx?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Only after you know which of the three shapes you have, and never as the first move. Against a genuine leak, more heap buys time and nothing else: the same failure arrives later, with a bigger live set, a longer GC pause on the way down and a heap dump that is now too large to open comfortably on a laptop. Against a working set that is honestly too big, more heap is the correct fix and you should stop apologising for it. The check that decides it is the live set after a full GC over time. Flat and close to the ceiling means you need more room. Rising monotonically means you have a defect, and giving it more room only changes the date on the incident."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Why did my container get OOM-killed with no Java heap dump?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Because nothing in the JVM failed. A container OOM kill is the kernel deciding the cgroup exceeded its memory limit and sending SIGKILL to the process; the JVM gets no chance to throw anything, run a handler or write a dump, which is why the application log simply stops mid-line and the platform reports exit code 137. A Java heap OutOfMemoryError is the opposite: the collector tried, failed to free enough room under -Xmx, and the JVM threw an error it can log and dump from. The usual cause of the kill is total process memory rather than heap — heap plus metaspace plus code cache plus thread stacks plus direct byte buffers plus the native allocator all count against the cgroup limit, and an -Xmx set close to the container limit leaves nothing for the rest. Set the heap as a fraction of the limit with -XX:MaxRAMPercentage and leave real headroom for the non-heap footprint."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Google AdSense verification -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5560164925295152" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../css/theme-terminal.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;" onfocus="this.style.cssText='position:fixed;left:0;top:0;width:auto;height:auto;overflow:visible;z-index:9999;padding:1rem;background:#3fb950;color:#04140a;text-decoration:none;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to content</a>
+    <noscript><div style="background:#1e293b;color:#e2e8f0;text-align:center;padding:1rem;font-family:sans-serif;">This website works best with JavaScript enabled. Please enable JavaScript for the full experience.</div></noscript>
+    <nav class="navbar scrolled" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Get<span class="highlight">Up</span></span>
+            </a>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#blogs" class="nav-link active">Blogs</a>
+                <a href="/about.html" class="nav-link">About</a>
+                <a href="/contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark and light mode">
+                    <span class="toggle-circle"></span>
+                    <span class="toggle-label toggle-label-night">NIGHT</span>
+                    <span class="toggle-label toggle-label-day">DAY</span>
+                </button>
+                <div class="hamburger" id="hamburger" role="button" aria-label="Open navigation menu" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Blog Content -->
+    <main class="blog-wrapper" role="main" aria-label="Blog content">
+        <div class="blog-layout">
+            <article class="blog-article" aria-label="Blog article">
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">OutOfMemoryError: Java Heap Space &mdash; Diagnosing With Heap Dumps</h1>
+                <div class="article-meta">
+                    <span class="article-meta-item">Aug 11, 2026</span>
+                    <span class="article-meta-item"><i class="far fa-clock"></i> 15 min read</span>
+                    <span class="article-meta-item">by <a href="/about.html#author" class="author-link">Vijay</a></span>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            <div class="featured-image-container">
+                <img src="../images/exception.webp" alt="A developer reading a Java heap dump, tracing a large retained size back to the single object holding it" title="Reading a heap dump back from the failed allocation to the object that was actually holding the heap" class="featured-image" width="800" height="450" loading="lazy">
+                <p class="image-caption">The line that threw allocated 48 bytes. The problem was 2.1 GB somewhere else.</p>
+            </div>
+
+            <!-- Article Content -->
+            <div class="article-content" id="main-content">
+                <p class="lead">The first alert came in at 17:12 on a Thursday, and the stack trace pointed at a line that formats a currency amount. Fourteen characters into a <code>StringBuilder</code>. That is the allocation that failed, and I spent forty minutes reading the formatting code before I accepted that it had nothing to do with anything.</p>
+
+                <p>The heap dump, once I finally had one, said the process was holding 2.1 GB in a single <code>ConcurrentHashMap</code> that a colleague had added eleven months earlier as a "temporary" idempotency cache. It had never evicted anything. It had been fine for eleven months because the traffic had been fine for eleven months, and that Thursday a partner started replaying a backlog.</p>
+
+                <p>That gap &mdash; between where the error is thrown and where the memory actually went &mdash; is the whole difficulty with <code>OutOfMemoryError: Java heap space</code>. Every other Java failure gives you a trace that names the problem. This one names a bystander. Whoever allocated last pays for everyone else, and the code in the trace is usually the most innocent code in the process, guilty of nothing except asking for a few bytes at the wrong microsecond.</p>
+
+                <p>So the diagnostic method is different. You do not read the trace. You read the heap, and this post is mostly about how to do that: what to turn on before the incident, how to get a dump out of a live process, and what to actually look at once you have a two-gigabyte file open in front of you.</p>
+
+                <h2>Table of Contents</h2>
+                <ul>
+                    <li><a href="#means">What the Error Actually Means</a></li>
+                    <li><a href="#why">Why It Happens: Reachability, Not Usefulness</a></li>
+                    <li><a href="#cause1">Cause 1: A Genuine Leak</a></li>
+                    <li><a href="#cause2">Cause 2: No Leak, Just Too Much Live Data</a></li>
+                    <li><a href="#cause3">Cause 3: Retention You Did Not Expect</a></li>
+                    <li><a href="#dumps">Diagnosing With Heap Dumps</a></li>
+                    <li><a href="#fix">How to Fix It, and What Each Fix Costs</a></li>
+                    <li><a href="#prevent">How to Prevent It</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ul>
+
+                <h2 id="means">What the Error Actually Means</h2>
+
+                <p>Same family as the last one:</p>
+
+                <pre><code>java.lang.Throwable
+ └── java.lang.Error
+      └── java.lang.VirtualMachineError
+           ├── java.lang.StackOverflowError               // no stack left
+           ├── java.lang.OutOfMemoryError                 // no heap left
+           └── java.lang.InternalError</code></pre>
+
+                <p><code>OutOfMemoryError</code> is a <code>VirtualMachineError</code>, which means the JVM is telling you it can no longer do the job you gave it. It is not an exception describing a condition your code was supposed to anticipate. There is no correct handler.</p>
+
+                <p>The next thing to do, before anything else, is read the message after the colon. <code>OutOfMemoryError</code> is one class carrying at least six distinct failures, and the message decides where you look. Getting this wrong costs hours, because you will happily spend an afternoon in a heap dump for a problem that has nothing to do with the heap.</p>
+
+                <pre><code>java.lang.OutOfMemoryError: Java heap space
+    → the collector could not make room in the heap under -Xmx. This post.
+
+java.lang.OutOfMemoryError: GC overhead limit exceeded
+    → same underlying problem, caught earlier: >98% of time in GC,
+      <2% of heap recovered. A heap-space failure that announced itself.
+
+java.lang.OutOfMemoryError: Metaspace
+    → class metadata, not objects. Classloader leak, or a framework
+      generating proxies in a loop. -Xmx is irrelevant here.
+
+java.lang.OutOfMemoryError: Requested array size exceeds VM limit
+    → someone asked for an array near Integer.MAX_VALUE elements.
+      Almost always a corrupt length field read off a stream.
+
+java.lang.OutOfMemoryError: unable to create native thread
+    → the OS refused a thread. Ulimits, cgroup pids limit, or an
+      unbounded executor. Heap is fine; you have too many threads.
+
+java.lang.OutOfMemoryError: Direct buffer memory
+    → off-heap ByteBuffers under MaxDirectMemorySize. NIO, Netty,
+      a driver. Will not appear in an ordinary heap dump.</code></pre>
+
+                <p>Only the first two send you to a heap dump. The others are different problems wearing the same class name, and the most common wasted afternoon in this whole area is someone analysing object retention for a <code>Metaspace</code> failure.</p>
+
+                <p>For the rest of this post, the message is <code>Java heap space</code>. What that specifically means is: a thread asked the allocator for room, the allocator could not find it, the collector ran &mdash; usually a full, stop-the-world collection, and usually not the first one &mdash; and afterwards there was still not enough contiguous space to satisfy the request. Only then does the JVM give up and throw.</p>
+
+                <p>Two consequences follow from that, and both matter.</p>
+
+                <p>First, <strong>the throw site is not the leak</strong>. The failing allocation is whichever one happened to arrive after the heap was already full. It is a lottery, and small frequent allocations win it disproportionately &mdash; string formatting, boxing, an <code>ArrayList</code> growing by one. If you find yourself optimising the code in the trace, stop. It is a witness, not a suspect.</p>
+
+                <p>Second, <strong>the process was already unwell before it threw</strong>. A JVM does not go from healthy to <code>OutOfMemoryError</code> in one step. It spends minutes, sometimes hours, doing progressively more full GCs that recover progressively less. Latency degrades, throughput drops, and every one of those symptoms is visible in GC logs before the error appears. By the time you see the error, you have missed several chances to see it coming.</p>
+
+                <p>And unlike <a href="/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">StackOverflowError</a>, which kills one thread and leaves the other two hundred perfectly fine, this one is global. The heap is shared. Every thread in the process is now allocating into the same exhausted space, so the failure spreads: one thread throws, then another, then the health-check endpoint, and a process that is technically still running answers nothing. Half-completed work is scattered everywhere, because each of those threads died at an arbitrary point.</p>
+
+                <h2 id="why">Why It Happens: Reachability, Not Usefulness</h2>
+
+                <p>The heap is where every object you allocate with <code>new</code> lives, along with every array, every string, every lambda capture. It is sized between <code>-Xms</code> and <code>-Xmx</code>, and <code>-Xmx</code> is a hard ceiling: the JVM will not exceed it no matter how much free memory the machine has.</p>
+
+                <p>Collectors divide it up in various ways &mdash; generations in G1 and Parallel, regions, survivor spaces &mdash; and those details change how <em>efficiently</em> memory is reclaimed, not <em>what</em> can be reclaimed. The rule underneath every collector is one sentence, and it is the sentence people quietly disbelieve:</p>
+
+                <p><strong>An object is collectable if and only if it is unreachable from a GC root.</strong></p>
+
+                <p>Not "if you are done with it". Not "if it has fallen out of scope". Not "if it is old". Reachability, and nothing else. GC roots are the anchors: static fields of loaded classes, local variables and parameters on every live thread stack, JNI references, active threads themselves, and a few internal structures. If there is any chain of references from any root to your object, it stays, and the collector will never take a view about whether it deserves to.</p>
+
+                <p>This is exactly why memory leaks in Java feel unfair. You cannot leak by forgetting to free something. You leak by <em>remembering</em> &mdash; by holding a reference in a structure that outlives the thing it points at. A static <code>Map</code> is a GC root with a hole in it: everything you put in is permanently reachable, and the collector will faithfully preserve two gigabytes of dead session data for as long as the process runs, because you told it to.</p>
+
+                <p>So there are only two ways to run out. Either the live set is genuinely bigger than <code>-Xmx</code> &mdash; you legitimately need more memory than you have &mdash; or something is reachable that should not be. Every real incident is one of those, and the whole job of a heap dump is deciding which.</p>
+
+                <p>One more thing worth internalising, because it saves you from a bad reflex during an incident: the JVM has already tried everything by the time it throws. It ran full collections. It compacted. On most collectors it cleared every <code>SoftReference</code> it had, which is the last-ditch measure, and if a soft-reference cache was holding memory it is already gone by the time you see the error. There is no additional work you can ask for. This is the reason <code>System.gc()</code> in a catch block does nothing except add a pause: the collector you are politely asking to run has just run, exhaustively, and failed.</p>
+
+                <h2 id="cause1">Cause 1: A Genuine Leak</h2>
+
+                <p>Something accumulates, and nothing ever removes it. The live set climbs across the lifetime of the process, the sawtooth in your memory graph drifts upward instead of returning to the same floor, and the time-to-failure is a function of uptime and traffic rather than of any single request.</p>
+
+                <p>My idempotency cache was the plainest version of this:</p>
+
+                <pre><code>package com.acme.payments;
+
+public final class IdempotencyGuard {
+
+    // "temporary — replace with Redis before launch"  (added 2025-09)
+    private static final Map&lt;String, PaymentResult&gt; SEEN =
+            new ConcurrentHashMap&lt;&gt;();
+
+    public PaymentResult once(String key, Supplier&lt;PaymentResult&gt; work) {
+        return SEEN.computeIfAbsent(key, k -&gt; work.get());
+    }
+}</code></pre>
+
+                <p>Static field, so it is a GC root. Nothing removes. Every distinct payment key the service has ever seen is still in there, along with the full <code>PaymentResult</code> each one produced, and each of those holds a line-item list and a copy of the request payload. Eleven months and roughly 3.4 million keys later, a partner replayed a backlog and pushed it over.</p>
+
+                <p>The three shapes I have actually seen in production, in order of how often:</p>
+
+                <p><strong>The unbounded cache.</strong> Every one of them started as a <code>HashMap</code> with a comment promising an eviction policy. If a map is a cache it needs a bound and an eviction rule from the first commit, because the version without one works perfectly right up until it does not, and there is no intermediate state where somebody notices.</p>
+
+                <p><strong>The registry nobody deregisters.</strong> A listener list, a callback registry, an event-bus subscription, a metrics registry keyed by something with unbounded cardinality. Registration is easy to write and easy to review. Deregistration happens on a path somebody forgot &mdash; the error path, the timeout path, the path where the client disconnects mid-request. Each orphaned listener holds its enclosing object, which holds a request context, which holds a response buffer. One leaked lambda can retain a surprising amount.</p>
+
+                <p><strong>ThreadLocal on a pooled thread.</strong> This one is a design trap rather than an oversight. <code>ThreadLocal</code> is fine when the thread dies afterwards. On a pool thread that lives for the life of the process, whatever you set stays set until someone removes it, and the next four thousand requests handled by that thread inherit a slot holding the first request's data.</p>
+
+                <pre><code>private static final ThreadLocal&lt;RequestContext&gt; CTX = new ThreadLocal&lt;&gt;();
+
+// in the filter
+CTX.set(new RequestContext(request));   // 200 pool threads
+try {
+    chain.doFilter(request, response);
+} finally {
+    CTX.remove();                       // ← the line that is always missing
+}</code></pre>
+
+                <p>Without the <code>finally</code>, you retain 200 request contexts forever &mdash; and worse, they are the contexts of 200 arbitrary historical requests, which makes the dump confusing to read because the retained objects have no relationship to current traffic. The half-fix people reach for is a <code>WeakReference</code> in the value, which does not help: the <code>ThreadLocalMap</code> entry's key is already weak, and it is the strongly-held <em>value</em> that pins your object.</p>
+
+                <p>In a dump this shape is unmistakable. The dominator tree has one entry near the top holding a large fraction of the heap, a single collection with an implausible element count, and a path to GC roots that terminates in a static field. It is the easiest of the three to diagnose and usually the easiest to fix.</p>
+
+                <h2 id="cause2">Cause 2: No Leak, Just Too Much Live Data</h2>
+
+                <p>Nothing is retained wrongly. Every object in the heap at the moment of failure is genuinely in use by work that is genuinely in progress. There is simply more of it than <code>-Xmx</code> allows.</p>
+
+                <p>This is the one people resist, because "we have a memory leak" is a more satisfying story than "we asked for too much at once". It is also, in my experience, at least as common.</p>
+
+                <pre><code>// Ran nightly for two years. 10k rows, ~40 MB, never a problem.
+List&lt;Transaction&gt; all = repository.findAllByAccount(accountId);
+byte[] pdf = reportRenderer.render(all);</code></pre>
+
+                <p>Nothing about that is wrong. It is correct, readable, well-tested code that encodes one assumption nowhere written down: that the result set is small. Then a corporate account onboards with 4.1 million transactions, and the same line asks for a list roughly four hundred times bigger than the one anybody tested. The heap does not leak. It is asked, in a single call, for more than it has.</p>
+
+                <p>The variants are all the same mistake with different nouns. <code>Files.readAllBytes</code> on a file whose size is a property of somebody else's upload. <code>new String(bytes)</code> on an HTTP response with no content-length cap. A JPA query without pagination, which is the same unbounded query wearing a framework. A batch size tuned when a batch meant ten thousand rows. A Kafka consumer that buffers a whole partition's worth of records because <code>max.poll.records</code> was never set and the messages turned out to be a hundred times larger than they used to be.</p>
+
+                <p>The concurrency multiplier is what usually turns it into an incident. A request that materialises 80 MB is fine alone and fatal at forty concurrent. Your capacity is not the size of one request; it is one request times peak concurrency, plus everything else the process needs, and almost nobody tests the second number.</p>
+
+                <p>The tell in a dump is the absence of a smoking gun. No single dominator holds more than a few percent. Instead there are two hundred instances of the same request-scoped object, each holding a few megabytes, all of them legitimately alive, all of them referenced from a thread stack rather than a static. When the paths-to-GC-roots all end at live threads doing real work, you are not looking at a leak. You are looking at capacity, and the fix is to make each unit of work smaller rather than to hunt for a defect.</p>
+
+                <h2 id="cause3">Cause 3: Retention You Did Not Expect</h2>
+
+                <p>The heap holds far more than the code suggests, because a small object is keeping a large one alive. Everything is reachable, so the collector is behaving correctly, and reading the source tells you nothing because the retention is in a reference you did not think about.</p>
+
+                <p>The canonical form is a slice that pins its backing store:</p>
+
+                <pre><code>// Reads a 12 MB file, keeps 40 characters, retains all 12 MB.
+final class Header {
+    private final byte[] raw;      // the whole file
+    private final int off, len;    // the bit we care about
+
+    String value() { return new String(raw, off, len, UTF_8); }
+}</code></pre>
+
+                <p>Cache a few thousand <code>Header</code> objects and you have quietly cached a few thousand whole files. The shallow size of a <code>Header</code> is about 32 bytes. Its retained size is twelve megabytes. That gap between shallow and retained is the single most useful idea in heap analysis and I will come back to it.</p>
+
+                <p>Java's own <code>String.substring</code> used to do exactly this &mdash; before Java 7u6, a substring shared the parent's <code>char[]</code>, so keeping one word of a large document kept the document. It was fixed by copying, and the pattern survives everywhere people write wrappers: a <code>ByteBuffer</code> slice, a wrapper around a <code>byte[]</code>, a parsed record holding a reference to the raw payload it came from, a domain object that kept the JSON it was deserialised from "for debugging".</p>
+
+                <p>The one that surprised me most involved an exception. Someone was collecting failures for a summary report:</p>
+
+                <pre><code>class BatchFailure {
+    final String recordId;
+    final Exception cause;    // ← this
+}
+List&lt;BatchFailure&gt; failures = new ArrayList&lt;&gt;();</code></pre>
+
+                <p>Holding an exception holds its stack trace, and every frame in that trace holds nothing much &mdash; but the exception was constructed with the request object as a field so the message could be built lazily, and that request held a parsed document. Twelve thousand failures in a bad run, each retaining about 900 KB, and the "summary" list was three quarters of the heap. The code reads as if it stores an id and an error.</p>
+
+                <p>Then there are references people believe are magic. A <code>WeakReference</code> is only weak if there is no strong reference elsewhere, and putting a weak reference inside a strongly-held wrapper achieves precisely nothing. <code>WeakHashMap</code> is weak in its <em>keys</em>, so a value that points back at its own key keeps the entry alive forever, which is a genuinely nasty bug to find. <code>SoftReference</code> is not a cache policy; the specification lets the collector clear soft references whenever it likes and in practice HotSpot clears them all just before throwing this error, so a soft-reference cache is either useless under memory pressure or invisible in the dump you took afterwards.</p>
+
+                <p>And listeners on long-lived objects. An anonymous inner class or a non-capturing-looking lambda that references an instance field captures <code>this</code>, and <code>this</code> may be a controller holding a whole object graph. Registering it on a singleton event bus and never removing it retains that graph for the life of the process. The source line is one lambda. The retained size is a subsystem.</p>
+
+                <h2 id="dumps">Diagnosing With Heap Dumps</h2>
+
+                <p>A heap dump is a snapshot of every object in the heap: classes, fields, references, array contents, and enough structure to reconstruct the entire object graph. It is the only artefact that answers the question you actually have, which is not "what failed" but "what was in there".</p>
+
+                <h3>Turn the flags on before you need them</h3>
+
+                <p>These belong in your base image, not in a runbook step you perform after the first outage:</p>
+
+                <pre><code>-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/var/log/app/dumps/
+-Xlog:gc*:file=/var/log/app/gc.log:time,uptime,level:filecount=5,filesize=20M</code></pre>
+
+                <p>The first is off by default and costs nothing while the process is healthy. The second decides where the file goes: a directory gets you <code>java_pid&lt;pid&gt;.hprof</code>, a filename gets you exactly that name, and omitting it drops the file in the working directory &mdash; which in a container is usually an ephemeral layer that vanishes with the pod. Point it at a mounted volume. The third gives you the GC log, which is how you would have seen this coming.</p>
+
+                <p>Three warnings that people learn the expensive way. The file is roughly the size of the live heap, so an 8 GB heap writes an 8 GB file, and if the volume has 2 GB free you get a truncated dump and a second error in the log. Writing it takes time &mdash; tens of seconds for a large heap &mdash; during which the process is unresponsive, so your orchestrator may kill it mid-write unless the termination grace period allows for it. And by default only one dump is written per process lifetime, which is the right default: you do not want a crash-looping pod filling a volume.</p>
+
+                <p>The dump also contains everything in memory, which means every password, token, PII field and cached response body sitting in the heap at that moment. Treat the file as production data with production access controls. I have seen an <code>.hprof</code> attached to a public ticket more than once.</p>
+
+                <h3>Getting a dump from a live process</h3>
+
+                <p>Often better, because you can take one before the process dies and another a few minutes later. <code>jcmd</code> is the current tool:</p>
+
+                <pre><code>$ jcmd -l
+48812 com.acme.payments.PaymentServiceApplication
+
+$ jcmd 48812 GC.heap_dump -all=false /var/log/app/dumps/t1.hprof
+48812:
+Heap dump file created [1841266432 bytes in 9.412 secs]
+
+# five minutes later, same process
+$ jcmd 48812 GC.heap_dump -all=false /var/log/app/dumps/t2.hprof
+
+# quick shape of the heap without writing a file at all
+$ jcmd 48812 GC.class_histogram | head -12</code></pre>
+
+                <p>Be honest with yourself about the cost. <code>GC.heap_dump</code> stops the world for the duration of the write. Nine seconds on a 1.8 GB heap here; on a 16 GB heap it can be a minute, and every request in flight times out. This is a deliberate act with a real availability cost, not a diagnostic you sprinkle around. Take it from one instance out of rotation if you can.</p>
+
+                <p><code>-all=false</code> is the default and the one you want: it runs a full GC first so the dump contains only reachable objects. <code>-all=true</code> includes unreachable ones too, which makes the file bigger and the analysis harder for the sake of a question you are rarely asking. <code>jmap -dump:live,format=b,file=...</code> does the same thing and still works; <code>jcmd</code> is where the tooling is going.</p>
+
+                <h3>Reading it: histogram first</h3>
+
+                <p>Open the dump in Eclipse MAT if it is large &mdash; it handles multi-gigabyte files better than anything else free &mdash; or VisualVM if it is small and you want something already installed. Start with the histogram, which is just object counts and shallow sizes grouped by class:</p>
+
+<pre><code>Class Name                                    Objects    Shallow Heap   Retained Heap
+--------------------------------------------------------------------------------------
+byte[]                                      1,204,882     1,412,338,K      1,412,338,K
+java.lang.String                            1,198,441        28,762,K      1,441,004,K
+java.util.concurrent.ConcurrentHashMap$Node 3,401,772       108,856,K      2,147,483,K
+com.acme.payments.PaymentResult             3,398,104       190,293,K      2,038,911,K
+com.acme.payments.LineItem                  9,442,006       302,144,K        302,144,K
+java.util.HashMap$Node                        482,119        15,428,K         92,006,K
+--------------------------------------------------------------------------------------</code></pre>
+
+                <p>Read that top down and the histogram tells you almost nothing useful. <code>byte[]</code> and <code>String</code> are at the top of every histogram ever taken; that is what Java programs are made of. The line that matters is the fourth: <strong>3.4 million <code>PaymentResult</code> objects</strong>. That is a domain class, and a domain class with a seven-figure instance count is a fact about your application, not about Java.</p>
+
+                <p>So the histogram question is not "what is biggest" &mdash; it is <em>"which of these counts is absurd?"</em> Three million results in a service handling a few hundred payments a minute is absurd. Nine million line items is the consequence of the first number, not an independent problem. That one observation took me from "somewhere in the heap" to "something is keeping every payment result" in about fifteen seconds.</p>
+
+                <h3>Then the dominator tree</h3>
+
+                <p>The histogram groups by class, which scatters one logical problem across six rows. The dominator tree groups by <em>who is responsible</em>. Object A dominates B if every path from any GC root to B goes through A &mdash; so if A were collected, B would be too, and A's retained size is the memory that would actually come back.</p>
+
+<pre><code>Class Name                                             Shallow    Retained    Pct
+---------------------------------------------------------------------------------
+com.acme.payments.IdempotencyGuard$SEEN
+  └─ java.util.concurrent.ConcurrentHashMap                 64   2,147,483,K   87.4%
+     └─ ConcurrentHashMap$Node[4194304]                16,777,K   2,147,419,K   87.4%
+        ├─ ConcurrentHashMap$Node                           32           612    0.0%
+        ├─ ConcurrentHashMap$Node                           32           598    0.0%
+        └─ ... 3,401,770 more entries ...
+org.apache.tomcat.util.threads.TaskThread @ 0x7f2a1c        88     104,882,K    4.2%
+java.lang.ref.Finalizer                                     40      12,004,K    0.4%
+---------------------------------------------------------------------------------</code></pre>
+
+                <p>There it is, in one line. One map, 87.4% of the heap, 3.4 million entries, and the label above it names the static field holding it. Notice how each individual entry is trivially small &mdash; 612 bytes &mdash; which is exactly why nothing in the histogram screamed and why no code review would have caught it. Nothing here is big. There are just far too many things, and one map is responsible for all of them.</p>
+
+                <p>Compare that to the shape of cause 2: no single row above 3%, and the top entries are all threads. When the dominator tree's biggest holders are thread objects doing live work, the memory is in flight rather than stuck.</p>
+
+                <h3>Shallow versus retained</h3>
+
+                <p>The distinction the whole tool is built on. <strong>Shallow size</strong> is the object's own header and fields &mdash; a few dozen bytes, and for anything with references it tells you nothing. <strong>Retained size</strong> is everything that would be freed if that object became unreachable: itself plus everything it exclusively dominates.</p>
+
+                <p>The <code>Header</code> class from cause 3 has a shallow size of about 32 bytes and a retained size of 12 MB. Sort a dump by shallow size and you will never see it. Sort by retained and it is the first thing you notice. If you take one operational habit from this post, make it that: <strong>sort by retained size, always</strong>, and treat any object whose retained size is wildly disproportionate to its shallow size as a suspect.</p>
+
+                <h3>Paths to GC roots &mdash; the question that actually answers "why"</h3>
+
+                <p>The dominator tree tells you what is holding the heap. It does not tell you why it is still alive. For that, pick the object and ask MAT for <em>Path to GC Roots</em>, excluding weak and soft references so you only see the references that genuinely prevent collection:</p>
+
+<pre><code>com.acme.payments.PaymentResult @ 0x6c40a8b90
+ ↑ value of java.util.concurrent.ConcurrentHashMap$Node @ 0x6c40a8b40
+ ↑ [1874318] of java.util.concurrent.ConcurrentHashMap$Node[4194304] @ 0x6c1000000
+ ↑ table of java.util.concurrent.ConcurrentHashMap @ 0x6c0fffe20
+ ↑ SEEN of class com.acme.payments.IdempotencyGuard @ 0x6c0a41200
+ ↑ &lt;system class loader&gt;  ← GC root: static field</code></pre>
+
+                <p>Read it bottom-up and it is a sentence: a static field named <code>SEEN</code> on <code>IdempotencyGuard</code> holds a map, whose table holds a node, whose value is this result. That is the leak, stated completely, in five lines. No code reading required.</p>
+
+                <p>The last line is the one to read first, because the root type classifies the problem. <em>Static field</em> means a class-level structure &mdash; a cache, a registry, a singleton. <em>Thread</em> means a live stack frame is holding it, so the work is in progress and you are probably in cause 2. <em>Busy monitor</em> or <em>JNI global</em> points at native code or a driver. And a path that runs through <code>ThreadLocalMap</code> names the ThreadLocal problem outright.</p>
+
+                <h3>Two dumps beat one</h3>
+
+                <p>A single dump tells you what the heap contains. It cannot tell you whether that is a leak or a high-water mark, and the difference decides your entire fix. So take two, several minutes apart, under comparable load, and compare them &mdash; MAT does this directly with a histogram delta:</p>
+
+<pre><code>$ jcmd 48812 GC.class_histogram | head -6      # t1, 17:04
+ num     #instances         #bytes  class name
+   1:       2,904,118      179,142,K  com.acme.payments.PaymentResult
+   2:       2,901,004       92,832,K  java.util.concurrent.ConcurrentHashMap$Node
+
+$ jcmd 48812 GC.class_histogram | head -6      # t2, 17:09
+ num     #instances         #bytes  class name
+   1:       3,398,104      190,293,K  com.acme.payments.PaymentResult      (+494k)
+   2:       3,401,772      108,856,K  java.util.concurrent.ConcurrentHashMap$Node</code></pre>
+
+                <p>Half a million instances in five minutes, and none of the older ones went away. That is monotonic growth, which is a leak. If both dumps had shown 2.9 million and the count had been flat, the same 2.9 million would be a working set that is merely large &mdash; annoying, possibly worth reducing, but not a defect and not fixable by finding a missing <code>remove()</code> call.</p>
+
+                <p>Note that <code>GC.class_histogram</code> also forces a full GC, so what you are comparing is live objects both times. That is what you want, and it is also why you should not run it every thirty seconds on a busy service.</p>
+
+                <h3>When you cannot take a dump</h3>
+
+                <p>Sometimes the honest answer is that the dump is not available or not useful. The heap is 60 GB and no machine you have can open it. The process is crash-looping and dies before you can attach. The dump was written to a container layer that no longer exists. Or you take it and everything looks completely reasonable, because the leak is slow and you caught it at 30% of the way there.</p>
+
+                <p>JFR's old-object-sample event is the answer for the last two. It samples a small number of allocations and keeps them under observation, recording the allocation stack trace and the path that kept them alive &mdash; so instead of a snapshot of what is alive now, you get a low-overhead record of what got old and why, and it will run continuously in production at a cost you will struggle to measure:</p>
+
+                <pre><code>$ java -XX:StartFlightRecording=settings=profile,filename=app.jfr,maxsize=200M -jar app.jar
+
+# or attach to something already running
+$ jcmd 48812 JFR.start name=leak settings=profile
+$ jcmd 48812 JFR.dump name=leak filename=/var/log/app/leak.jfr</code></pre>
+
+                <p>Open that in JDK Mission Control and look at the TLAB and old-object-sample views. It is less complete than a heap dump and much cheaper, and for a leak that takes three days to develop it is often the only practical option.</p>
+
+                <h2 id="fix">How to Fix It, and What Each Fix Costs</h2>
+
+                <h3>1. Bound the collection</h3>
+
+                <p>If the dump named a cache, give it a size limit and an eviction policy. Do not write your own; Caffeine has spent years on the eviction algorithm you would get wrong:</p>
+
+                <pre><code>private static final Cache&lt;String, PaymentResult&gt; SEEN = Caffeine.newBuilder()
+        .maximumSize(100_000)
+        .expireAfterWrite(Duration.ofHours(24))
+        .recordStats()
+        .build();</code></pre>
+
+                <p>Cost: correctness, and you have to think about it rather than wave at it. For an idempotency guard, eviction means a replayed request older than the window executes twice, so the bound has to be at least as long as the retry window your partners actually use, and the memory ceiling has to accommodate that. That is a real trade-off with a real conversation attached. It is still the fix, and <code>maximumSize</code> plus <code>expireAfterWrite</code> is the version I reach for by default because it bounds both memory and staleness.</p>
+
+                <p>For registries, the fix is symmetry: every <code>register</code> has a <code>deregister</code> in a <code>finally</code>, and every <code>ThreadLocal.set</code> has a <code>ThreadLocal.remove</code> in a <code>finally</code>. Cost: nothing but discipline.</p>
+
+                <h3>2. Stream instead of materialising</h3>
+
+                <p>For cause 2, stop holding the whole thing:</p>
+
+                <pre><code>// Before: the entire result set in memory.
+List&lt;Transaction&gt; all = repository.findAllByAccount(accountId);
+byte[] pdf = renderer.render(all);
+
+// After: one row at a time, straight to the output.
+try (Stream&lt;Transaction&gt; rows = repository.streamByAccount(accountId)) {
+    renderer.renderTo(outputStream, rows);
+}</code></pre>
+
+                <p>Same for files &mdash; <code>Files.lines</code> or a buffered read loop rather than <code>readAllBytes</code>, and a streaming JSON parser rather than binding a whole document to a tree. Peak memory stops being a function of input size and becomes a function of buffer size.</p>
+
+                <p>Cost: real, and worth stating plainly. The streaming version holds a database cursor and a transaction open for the length of the render, so a slow consumer now holds a connection; you need <code>setFetchSize</code> configured or the driver will helpfully buffer everything anyway and you will have changed nothing; and you can no longer make two passes over the data or ask it for its size up front. Some report formats need a total before they can write the header, and for those you need a separate count query. It is more code and more care. It also converts a failure mode into a non-issue permanently.</p>
+
+                <h3>3. Page the query, cap the batch</h3>
+
+                <p>Where streaming does not fit, put a ceiling on the unit of work. Paginate the query. Set <code>max.poll.records</code>. Chunk the batch into slices of a size you have actually tested, and enforce a request-level cap that returns a 413 rather than trying and dying. Cost: pagination is fiddly if the underlying data mutates between pages, and you need a stable sort key.</p>
+
+                <h3>4. Fix the retention</h3>
+
+                <p>For cause 3, copy the small thing out and let the big thing go:</p>
+
+                <pre><code>// Before: retains the whole 12 MB backing array.
+this.value = new Slice(raw, off, len);
+
+// After: retains 40 bytes.
+this.value = new String(raw, off, len, UTF_8);</code></pre>
+
+                <p>Null out the reference to the payload once you have parsed it. Do not store the source document on the domain object "for debugging". Do not put a request object inside an exception you intend to keep. Cost: an allocation and a copy at the point of extraction, which is nothing next to retaining the source.</p>
+
+                <h3>5. Container limits and MaxRAMPercentage</h3>
+
+                <p>Before touching <code>-Xmx</code>, get the relationship between heap and container right, because these two failures look nothing alike and get confused constantly:</p>
+
+                <pre><code># A Java heap OOME: the JVM threw it, logged it, and dumped.
+java.lang.OutOfMemoryError: Java heap space
+  Dumping heap to /var/log/app/dumps/java_pid1.hprof ...
+
+# A container OOM kill: no exception, no dump, log stops mid-line.
+$ kubectl get pod payments-7d9f -o jsonpath='{.status.containerStatuses[0].lastState}'
+{"terminated":{"exitCode":137,"reason":"OOMKilled"}}</code></pre>
+
+                <p>Exit code 137 is SIGKILL from the kernel. The JVM never got a say, which is why there is no trace and no dump &mdash; and why "we set HeapDumpOnOutOfMemoryError and got nothing" is nearly always this. The cause is total process memory, not heap: heap plus metaspace plus code cache plus thread stacks plus direct buffers plus native allocator overhead all count against the cgroup limit. Setting <code>-Xmx</code> to the container limit guarantees this eventually.</p>
+
+                <pre><code># Fragile: a fixed heap that ignores what the container actually got.
+-Xmx2g                          # in a 2 GiB container. This will be killed.
+
+# Better: heap as a fraction of the detected limit, leaving native headroom.
+-XX:MaxRAMPercentage=70.0
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/var/log/app/dumps/</code></pre>
+
+                <p>Modern JVMs are container-aware and read the cgroup limit rather than the host's memory, so <code>MaxRAMPercentage</code> does the right thing automatically. Somewhere between 50% and 75% is the usual landing zone; the correct figure depends on how many threads you run and how much direct memory your stack uses, so measure the process RSS under load rather than trusting mine. Confirm what you actually got with <code>java -XX:+PrintFlagsFinal -version | grep MaxHeapSize</code> instead of assuming.</p>
+
+                <h3>6. Raise -Xmx &mdash; last, not first</h3>
+
+                <pre><code>$ java -Xmx4g -jar payment-service.jar</code></pre>
+
+                <p>Last, and only once you know which shape you have. If the live set after a full GC is flat and simply close to the ceiling, this is the right fix and there is nothing clever to do instead &mdash; you need more memory, so buy more memory.</p>
+
+                <p>Against a leak it is not a fix at all, and it actively makes things worse in three ways. It buys time and nothing else: doubling the heap doubles the interval between incidents, so the failure now arrives at a less convenient hour and further from the deploy that caused it. It makes the eventual failure worse, because a bigger heap means longer full GCs on the way down and a longer period of degraded latency before anything actually breaks. And it makes diagnosis harder, because your heap dump is now 8 GB instead of 2 GB, takes a minute of stopped-world time to write, needs a volume with room for it, and requires a machine with more memory than your laptop to open.</p>
+
+                <p>Raising <code>-Xmx</code> against a leak means the next person to debug it has strictly less to work with than you did.</p>
+
+                <h3>What is not a fix</h3>
+
+                <p>Catching <code>OutOfMemoryError</code> to keep the service up.</p>
+
+                <p>The same argument I made about <a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">NoClassDefFoundError</a> and about StackOverflowError applies, and here it has an extra edge. Your handler needs to allocate &mdash; a log message, a formatted string, a metric &mdash; and allocation is exactly what just failed. Worse, catching it does not restore anything: the memory is still gone, the collector has already tried everything including clearing every soft reference, and the next allocation on any of your other threads fails too. What you get is a process that stays alive, fails every request, keeps passing a health check that does not allocate, and stays in the load-balancer pool doing nothing but returning 500s. A process that dies is removed and replaced. A process that limps is not.</p>
+
+                <p>The narrow defensible case is the same as before: an outermost worker boundary that catches <code>Throwable</code>, abandons the task, and lets the thread return clean &mdash; and even that only if you also alert on it, because a leak that quietly retries forever is worse than one that crashes.</p>
+
+                <p><code>System.gc()</code> in the handler does nothing. The collector has just run, fully, and failed. What you have added is a stop-the-world pause to an already-dying process.</p>
+
+                <p>Switching collectors to make the symptom move is the third one. Going from G1 to ZGC or Parallel changes pause behaviour and allocation throughput, and it can genuinely shift the point at which a marginal workload falls over &mdash; which is what makes it tempting and what makes it a trap. No collector can free a reachable object. If your live set exceeds the heap, every collector fails, and the only thing you have bought is a different date and an unfamiliar set of GC logs to learn during the next incident. Choose a collector for latency and throughput goals. Never as a response to this error.</p>
+
+                <h2 id="prevent">How to Prevent It</h2>
+
+                <p>Put the heap-dump flags in the base image. Not in a runbook, not in a "we'll add it if it happens again" ticket &mdash; in the image, so that every process everywhere already has them on. They cost nothing when nothing is wrong, and the first incident without them costs you an entire repeat outage to gather what you should have had the first time. Same for GC logging with rotation. This is the highest-value item on the list and it takes twenty minutes.</p>
+
+                <p>Alert on the live set after a full GC, not on used heap. Used heap is a sawtooth that touches the ceiling constantly during normal operation, which makes it a terrible alerting signal &mdash; you either page constantly or set the threshold so high it fires after the failure. What you want is the floor of the sawtooth: how much is still alive once the collector has done its best. In JMX that is the <code>G1 Old Gen</code> pool's <code>CollectionUsage</code> rather than <code>Usage</code>, and Micrometer exposes it as <code>jvm.memory.used</code> tagged with the pool. Alert when that floor rises for several consecutive collections, and you find leaks days before they become incidents.</p>
+
+                <p>Load test with production-shaped data, which mostly means production-shaped <em>sizes</em>. A test fixture with 50 rows exercises none of the behaviour that matters. Take your largest real account, or synthesise one that matches it, and run the report for it &mdash; at peak concurrency, not one at a time, because one request that materialises 80 MB is fine and forty of them are not. Almost every cause-2 incident I have seen would have been caught by one test that used the ninety-ninth percentile input instead of the median.</p>
+
+                <p>Bound every cache at the moment you create it. Not later. A <code>HashMap</code> field with a comment about eviction is a scheduled outage, and the interval between writing that comment and the outage is however long it takes your traffic to grow. If it is a cache, it has a maximum size and an expiry from the first commit.</p>
+
+                <p>And build the review habits that catch accumulation, because these are all visible on the diff if you know what to look for. A <code>static</code> collection with no removal path. A <code>findAll</code> with no pagination. A <code>ThreadLocal.set</code> whose <code>remove</code> is not in a <code>finally</code>. A listener registration on a long-lived object with no matching deregistration. A domain object holding the raw payload it was parsed from. None of these are subtle once named &mdash; the same way the fail-fast behaviour in <a href="/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">ConcurrentModificationException</a> is obvious once you know the modCount check exists. The trick is that they all look completely reasonable if you are reading the diff for logic rather than for lifetime.</p>
+
+                <div class="lesson-box" style="border-left:4px solid #3fb950;background:rgba(63,185,80,0.08);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:6px;">
+                    <p style="margin:0;"><strong>Author's note:</strong> The flags, the <code>jcmd</code> subcommands and the HPROF-based dump format here match current LTS OpenJDK builds, but flag names and diagnostic-command output have changed across versions and will again &mdash; check <code>jcmd &lt;pid&gt; help</code> on the JVM you are actually running rather than trusting a snippet. Exactly when the collector clears soft references, how much it collects before giving up, and the precise wording of the message after <code>OutOfMemoryError:</code> are implementation details of the reference implementation, not guarantees in the specification, so do not parse them in tooling. The sizes, counts and percentages in the dump excerpts are from one service on one afternoon and are shown to demonstrate the reading method, not as thresholds &mdash; measure your own.</p>
+                </div>
+
+                <h2 id="faq">Frequently Asked Questions</h2>
+
+                <h3>Where do I find the heap dump after an OutOfMemoryError?</h3>
+                <p>Only where you told the JVM to put it, and only if you asked for one before the incident. <code>-XX:+HeapDumpOnOutOfMemoryError</code> is off by default, so a process that dies without it leaves nothing behind but the log line. With the flag on, <code>-XX:HeapDumpPath</code> decides the destination: give it a directory and the JVM writes <code>java_pid&lt;pid&gt;.hprof</code> inside it, give it a filename and it writes exactly that, and give it nothing and the file lands in the process working directory, which in a container is usually a layer that disappears when the container is replaced. Point it at a mounted volume that survives a restart, make sure the filesystem has room for a file the size of your live heap, and check the JVM's own stdout &mdash; it prints the path it wrote to, or the reason it could not.</p>
+
+                <h3>Does OutOfMemoryError always mean a memory leak?</h3>
+                <p>No, and assuming it does sends you looking for a defect that is not there. There are three distinct shapes behind the same message. A genuine leak, where objects stay reachable forever and the live set climbs steadily across restarts. A working set that is simply larger than the heap, where nothing is retained wrongly but a single request or batch legitimately needs more memory than you gave the process. And a retention pattern, where a small object transitively holds a large one alive and the total is much bigger than the code implies. Two heap dumps taken several minutes apart tell them apart faster than any amount of code reading: if the live set after a full GC has grown between the dumps and keeps growing, it is a leak; if it is flat and merely high, it is capacity.</p>
+
+                <h3>Should I just increase -Xmx?</h3>
+                <p>Only after you know which of the three shapes you have, and never as the first move. Against a genuine leak, more heap buys time and nothing else: the same failure arrives later, with a bigger live set, a longer GC pause on the way down and a heap dump that is now too large to open comfortably on a laptop. Against a working set that is honestly too big, more heap is the correct fix and you should stop apologising for it. The check that decides it is the live set after a full GC over time. Flat and close to the ceiling means you need more room. Rising monotonically means you have a defect, and giving it more room only changes the date on the incident.</p>
+
+                <h3>Why did my container get OOM-killed with no Java heap dump?</h3>
+                <p>Because nothing in the JVM failed. A container OOM kill is the kernel deciding the cgroup exceeded its memory limit and sending <code>SIGKILL</code> to the process; the JVM gets no chance to throw anything, run a handler or write a dump, which is why the application log simply stops mid-line and the platform reports exit code 137. A Java heap <code>OutOfMemoryError</code> is the opposite: the collector tried, failed to free enough room under <code>-Xmx</code>, and the JVM threw an error it can log and dump from. The usual cause of the kill is total process memory rather than heap &mdash; heap plus metaspace plus code cache plus thread stacks plus direct byte buffers plus the native allocator all count against the cgroup limit, and an <code>-Xmx</code> set close to the container limit leaves nothing for the rest. Set the heap as a fraction of the limit with <code>-XX:MaxRAMPercentage</code> and leave real headroom for the non-heap footprint.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="article-tags">
+                <span class="tag-label">Tags:</span>
+                <a href="javascript:void(0)" class="tag">OutOfMemoryError</a>
+                <a href="javascript:void(0)" class="tag">Heap Dump</a>
+                <a href="javascript:void(0)" class="tag">Memory Leak</a>
+                <a href="javascript:void(0)" class="tag">JVM</a>
+                <a href="javascript:void(0)" class="tag">Garbage Collection</a>
+                <a href="javascript:void(0)" class="tag">Java Exceptions</a>
+                <a href="javascript:void(0)" class="tag">Debugging</a>
+                <a href="javascript:void(0)" class="tag">Java</a>
+            </div>
+
+            </article>
+
+            <!-- Sidebar -->
+            <aside class="blog-sidebar" aria-label="Related blog content">
+                <div class="sidebar-widget">
+                    <h3>Search</h3>
+                    <form class="search-form" action="/blogs.html" role="search" aria-label="Search blog posts">
+                        <label for="blog-search" style="position:absolute;left:-9999px;">Search blog posts</label>
+                        <input type="text" id="blog-search" name="q" class="search-input" placeholder="Search blogs..." aria-label="Search blog posts">
+                        <button type="submit" class="search-btn">Search</button>
+                    </form>
+                </div>
+                <div class="sidebar-widget">
+                    <h3>Related Reading</h3>
+                    <ul>
+                        <li><a href="/blogs/stackoverflowerror-recursion-depth-jvm-stack-size.html">StackOverflowError: Recursion Depth, JVM Stack Size, and How to Debug It</a></li>
+                        <li><a href="/blogs/classnotfoundexception-vs-noclassdeffounderror.html">ClassNotFoundException vs NoClassDefFoundError: The Difference Actually Matters</a></li>
+                        <li><a href="/blogs/nullpointerexception-in-java-21-reading-the-helpful-message.html">NullPointerException in Java 21: Reading the Helpful Message</a></li>
+                        <li><a href="/blogs/concurrentmodificationexception-why-your-for-loop-breaks.html">ConcurrentModificationException: Why Your For-Loop Breaks and Four Ways to Fix It</a></li>
+                        <li><a href="/blogs/perft-testing-how-i-found-4-move-generation-bugs-in-one-afternoon.html">Perft Testing: How I Found 4 Move-Generation Bugs in One Afternoon</a></li>
+                        <li><a href="/blogs/minimax-to-alpha-beta-measuring-the-actual-node-reduction.html">Minimax to Alpha-Beta: Measuring the Actual Node Reduction</a></li>
+                        <li><a href="/blogs/why-i-built-a-chess-engine-in-java-instead-of-a-crud-app.html">Why I Built a Chess Engine in Java Instead of Another CRUD App</a></li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="blog-footer">
+        <div class="blog-footer-content">
+            <div class="blog-footer-links">
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Contact Us</a>
+                <a href="/blogs.html">All Blogs</a>
+                <a href="/privacy-policy.html">Privacy Policy</a>
+                <a href="/terms-of-service.html">Terms of Service</a>
+                <a href="/disclaimer.html">Disclaimer</a>
+                <a href="/editorial-policy.html">Editorial Policy</a>
+                <a href="/cookie-policy.html">Cookie Policy</a>
+                <a href="/dmca.html">DMCA Policy</a>
+                <a href="/sitemap-page.html">Sitemap</a>
+            </div>
+            <p class="blog-footer-copy">&copy; 2026 GetUp</p>
+        </div>
+    </footer>
+
+    <script src="../script.js" defer></script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="cookie-consent-inner">
+            <div class="cookie-consent-text">
+                We use cookies and similar technologies to enhance your experience, analyze traffic, improve our content, and serve personalized advertisements. By clicking "Accept All", you consent to our use of cookies. Read our <a href="/privacy-policy.html">Privacy Policy</a> for more details.
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+            </div>
+        </div>
+    </div>
+    <script src="../js/cookie-consent.js" defer></script>
+</body>
+</html>
